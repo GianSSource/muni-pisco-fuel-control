@@ -356,6 +356,17 @@ tbody tr:hover {
     color: #166534;
 }
 
+.fuel-type-pill {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
 .empty-state {
     text-align: center;
     color: var(--muted);

@@ -84,6 +84,17 @@
                         </select>
                     </div>
 
+                    <!-- 2b. Tipo de Combustible -->
+                    <div class="filter-field">
+                        <label for="filterFuelType">⛽ Tipo de Combustible</label>
+                        <select id="filterFuelType" name="fuel_type" class="filter-select">
+                            <option value="">-- Todos los tipos --</option>
+                            <option value="Diesel B5 S-50">Diesel B5 S-50</option>
+                            <option value="Gasohol Regular">Gasohol Regular</option>
+                            <option value="Gasohol Premium">Gasohol Premium</option>
+                        </select>
+                    </div>
+
                     <!-- 3. Destino / Área -->
                     <div class="filter-field">
                         <label for="filterDestination">📍 Destino / Área</label>
@@ -157,6 +168,7 @@
                         <th>Fecha y Hora</th>
                         <th>Vehículo / Placa</th>
                         <th>Conductor</th>
+                        <th>Tipo Combustible</th>
                         <th>Destino / Área</th>
                         <th>Cantidad</th>
                         <th>Estado</th>
@@ -177,6 +189,9 @@
                                     <strong><?= htmlspecialchars($d['vehicle_plate']) ?></strong>
                                 </td>
                                 <td><?= htmlspecialchars($d['driver_name']) ?></td>
+                                <td>
+                                    <span class="fuel-type-pill"><?= htmlspecialchars($d['fuel_type'] ?? 'Diesel B5') ?></span>
+                                </td>
                                 <td><?= htmlspecialchars($d['destination'] ?? 'Despacho General') ?></td>
                                 <td>
                                     <span class="quantity-highlight"><?= number_format((float) $d['gallons'], 2) ?> Gal</span>
@@ -193,7 +208,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr id="emptyRow">
-                            <td colspan="8" class="empty-state">
+                            <td colspan="9" class="empty-state">
                                 🔍 No se encontraron despachos de combustible que coincidan con la búsqueda.
                             </td>
                         </tr>
@@ -285,7 +300,7 @@
         if (deliveries.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="empty-state">
+                    <td colspan="9" class="empty-state">
                         🔍 No se encontraron despachos de combustible que coincidan con los filtros aplicados.
                     </td>
                 </tr>
@@ -309,6 +324,7 @@
                 <td><span class="text-muted">${escapeHtml(dateStr)}</span></td>
                 <td><strong>${escapeHtml(d.vehicle_plate)}</strong></td>
                 <td>${escapeHtml(d.driver_name)}</td>
+                <td><span class="fuel-type-pill">${escapeHtml(d.fuel_type || 'Diesel B5')}</span></td>
                 <td>${escapeHtml(d.destination || 'Despacho General')}</td>
                 <td><span class="quantity-highlight">${gallonsFormatted} Gal</span></td>
                 <td><span class="status-pill status-completed">${escapeHtml(d.status || 'Completado')}</span></td>
@@ -344,12 +360,12 @@
                         <strong>${escapeHtml(d.driver_name)}</strong>
                     </div>
                     <div class="modal-field">
-                        <span class="lbl">📍 Destino / Área:</span>
-                        <span>${escapeHtml(d.destination || 'Despacho General')}</span>
+                        <span class="lbl">⛽ Tipo de Combustible:</span>
+                        <strong style="color: var(--primary);">${escapeHtml(d.fuel_type || 'Diesel B5')}</strong>
                     </div>
                     <div class="modal-field">
-                        <span class="lbl">📌 Estado:</span>
-                        <span>${escapeHtml(d.status || 'Completado')}</span>
+                        <span class="lbl">📍 Destino / Área:</span>
+                        <span>${escapeHtml(d.destination || 'Despacho General')}</span>
                     </div>
                     <div class="modal-field highlight-field">
                         <span class="lbl">⛽ Cantidad Despachada:</span>

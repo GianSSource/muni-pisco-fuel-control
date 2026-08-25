@@ -189,7 +189,7 @@
                 <form action="<?= BASE_URL ?>despachos" method="GET" class="dash-search-form">
                     <div class="dash-search-input-wrap">
                         <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" id="dashSearchInput" name="q" placeholder="Buscar vale, placa, conductor..." class="dash-search-input">
+                        <input type="text" id="dashSearchInput" name="q" placeholder="Buscar vale, placa, conductor..." class="dash-search-input" maxlength="40">
                     </div>
                 </form>
                 <a href="<?= BASE_URL ?>despachos" class="link-more">Buscador Avanzado →</a>
@@ -204,6 +204,7 @@
                         <th>Fecha y Hora</th>
                         <th>Vehículo / Placa</th>
                         <th>Conductor</th>
+                        <th>Tipo de Combustible</th>
                         <th>Destino</th>
                         <th>Cantidad</th>
                         <th>Estado</th>
@@ -223,6 +224,9 @@
                                     <strong><?= htmlspecialchars($entrega['vehicle_plate']) ?></strong>
                                 </td>
                                 <td><?= htmlspecialchars($entrega['driver_name']) ?></td>
+                                <td>
+                                    <span class="fuel-type-pill"><?= htmlspecialchars($entrega['fuel_type'] ?? 'Diesel B5') ?></span>
+                                </td>
                                 <td><?= htmlspecialchars($entrega['destination'] ?? 'N/A') ?></td>
                                 <td>
                                     <span class="quantity-highlight"><?= number_format((float) $entrega['gallons'], 2) ?> Gal</span>
@@ -236,7 +240,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="7" class="empty-state">No se registran entregas recientes.</td>
+                            <td colspan="8" class="empty-state">No se registran entregas recientes.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -264,12 +268,12 @@
 
             <div class="filter-group">
                 <label for="unidad">Por Unidad / Placa:</label>
-                <input type="text" id="unidad" name="unidad" placeholder="Ej: EAB-123 o MUNI-01">
+                <input type="text" id="unidad" name="unidad" placeholder="Ej: EAB-123 o MUNI-01" maxlength="40">
             </div>
 
             <div class="filter-group">
                 <label for="responsable">Por Responsable / Conductor:</label>
-                <input type="text" id="responsable" name="responsable" placeholder="Ej: Carlos Mendoza">
+                <input type="text" id="responsable" name="responsable" placeholder="Ej: Carlos Mendoza" maxlength="40">
             </div>
 
             <div class="report-buttons">
