@@ -7,6 +7,7 @@ use App\Controllers\CalendarController;
 use App\Controllers\ClientController;
 use App\Controllers\DashboardController;
 use App\Controllers\FuelController;
+use App\Controllers\IncomeController;
 use App\Controllers\ProjectController;
 use App\Controllers\ReportController;
 use App\Core\Router;
@@ -53,6 +54,9 @@ $router->get('/api/calendario/eventos', CalendarController::class, 'apiEvents');
 $router->get('/despachos', FuelController::class, 'index');
 $router->get('/api/despachos/buscar', FuelController::class, 'searchApi');
 $router->get('/api/fuel/chart-stats', FuelController::class, 'statsApi');
+
+$router->get('/ingresos/nuevo', IncomeController::class, 'create');
+$router->post('/ingresos/guardar', IncomeController::class, 'store');
 
 $router->get('/clientes', ClientController::class, 'index');
 $router->get('/clientes/nuevos', ClientController::class, 'create');

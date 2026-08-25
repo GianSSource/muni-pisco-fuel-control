@@ -9,7 +9,7 @@
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
                 Nuevo Despacho
             </a>
-            <a class="button secondary" href="<?= BASE_URL ?>clientes/nuevos">
+            <a class="button secondary" href="<?= BASE_URL ?>ingresos/nuevo">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
                 Registrar Ingreso
             </a>

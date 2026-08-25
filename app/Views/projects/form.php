@@ -1,50 +1,61 @@
-<?php $editing = is_array($project); ?>
-<section class="page-head">
-    <h1><?= $editing ? 'Editar proyecto' : 'Nuevo proyecto' ?></h1>
-</section>
+<div class="search-page-wrapper" style="max-width: 650px; margin: 0 auto;">
+    <section class="page-head">
+        <div>
+            <h1>⛽ Registrar Nuevo Despacho de Combustible</h1>
+            <p class="subtitle">Emite un vale de despacho para vehículos y maquinaria municipal</p>
+        </div>
+        <div class="actions">
+            <a class="button secondary" href="<?= BASE_URL ?>dashboard">← Volver al Dashboard</a>
+        </div>
+    </section>
 
-<form method="post" action="<?= BASE_URL . ($editing ? 'proyectos/actualizar' : 'proyectos/guardar') ?>" class="form wide">
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-    <?php if ($editing): ?><input type="hidden" name="id" value="<?= (int) $project['id'] ?>"><?php endif; ?>
+    <div class="search-filter-card" style="padding: 24px; border-radius: 12px; background: var(--bg-card, #fff); border: 1px solid var(--border, #e2e8f0);">
+        <form method="post" action="<?= BASE_URL ?>proyectos/guardar" class="form wide">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
 
-    <label>Cliente
-        <select name="client_id" required>
-            <option value="">Seleccione</option>
-            <?php foreach ($clients as $client): ?>
-                <option value="<?= (int) $client['id'] ?>" <?= (int) ($project['client_id'] ?? 0) === (int) $client['id'] ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($client['name']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </label>
+            <div class="filter-field" style="margin-bottom: 16px;">
+                <label for="correlativo" style="display: block; font-weight: 600; margin-bottom: 6px;">📄 N° Vale / Correlativo</label>
+                <input type="text" name="correlativo" id="correlativo" class="filter-input" placeholder="Ej: VAL-2026-0012" maxlength="40" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);" required>
+            </div>
 
-    <label>Nombre del proyecto
-        <input type="text" name="name" required value="<?= htmlspecialchars($project['name'] ?? '') ?>">
-    </label>
+            <div class="filter-field" style="margin-bottom: 16px;">
+                <label for="placa" style="display: block; font-weight: 600; margin-bottom: 6px;">🚗 Vehículo / Placa</label>
+                <input type="text" name="placa" id="placa" class="filter-input" placeholder="Ej: EAB-123 o MUNI-01" maxlength="40" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);" required>
+            </div>
 
-    <label>Estado
-        <select name="status">
-            <?php foreach (['Planificado', 'En progreso', 'En pausa', 'Finalizado'] as $status): ?>
-                <option value="<?= $status ?>" <?= ($project['status'] ?? '') === $status ? 'selected' : '' ?>><?= $status ?></option>
-            <?php endforeach; ?>
-        </select>
-    </label>
+            <div class="filter-field" style="margin-bottom: 16px;">
+                <label for="responsable" style="display: block; font-weight: 600; margin-bottom: 6px;">👤 Conductor / Responsable</label>
+                <input type="text" name="responsable" id="responsable" class="filter-input" placeholder="Ej: Carlos Mendoza" maxlength="40" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);" required>
+            </div>
 
-    <label>Fecha de inicio
-        <input type="date" name="start_date" value="<?= htmlspecialchars((string) ($project['start_date'] ?? '')) ?>">
-    </label>
+            <div class="filter-field" style="margin-bottom: 16px;">
+                <label for="tipo_combustible" style="display: block; font-weight: 600; margin-bottom: 6px;">⛽ Tipo de Combustible</label>
+                <select name="tipo_combustible" id="tipo_combustible" class="filter-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);" required>
+                    <option value="Diesel B5 S-50">Diesel B5 S-50</option>
+                    <option value="Gasohol Regular">Gasohol Regular</option>
+                    <option value="Gasohol Premium">Gasohol Premium</option>
+                </select>
+            </div>
 
-    <label>Fecha de fin
-        <input type="date" name="end_date" value="<?= htmlspecialchars((string) ($project['end_date'] ?? '')) ?>">
-    </label>
+            <div class="filter-field" style="margin-bottom: 16px;">
+                <label for="cantidad" style="display: block; font-weight: 600; margin-bottom: 6px;">📦 Cantidad Entregada (Galones)</label>
+                <input type="number" step="0.01" min="0.1" name="cantidad" id="cantidad" class="filter-input" placeholder="Ej: 15.50" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);" required>
+            </div>
 
-    <label>Presupuesto
-        <input type="number" step="0.01" name="budget" value="<?= htmlspecialchars((string) ($project['budget'] ?? '0')) ?>">
-    </label>
+            <div class="filter-field" style="margin-bottom: 16px;">
+                <label for="destino" style="display: block; font-weight: 600; margin-bottom: 6px;">📍 Destino / Área Solicitante</label>
+                <input type="text" name="destino" id="destino" class="filter-input" placeholder="Ej: Recolección de Residuos / Obras" maxlength="40" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+            </div>
 
-    <label>Descripcion
-        <textarea name="description"><?= htmlspecialchars($project['description'] ?? '') ?></textarea>
-    </label>
+            <div class="filter-field" style="margin-bottom: 24px;">
+                <label for="observaciones" style="display: block; font-weight: 600; margin-bottom: 6px;">📝 Observaciones</label>
+                <input type="text" name="observaciones" id="observaciones" class="filter-input" placeholder="Ej: Turno Mañana" maxlength="40" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+            </div>
 
-    <button type="submit">Guardar</button>
-</form>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <a href="<?= BASE_URL ?>dashboard" class="button secondary">Cancelar</a>
+                <button type="submit" class="button primary">Emitir Despacho</button>
+            </div>
+        </form>
+    </div>
+</div>
