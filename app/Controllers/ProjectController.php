@@ -49,6 +49,13 @@ final class ProjectController extends Controller
 
         try {
             $db = \App\Core\Database::getConnection();
+
+            // Si el correlativo viene vacío o autogenerado, calcular el siguiente VAL-YYYY-XXXX
+            if (empty($correlativo) || strpos($correlativo, 'AUTO') !== false) {
+                $stmtNext = $db->query('SELECT COUNT(*) + 1 AS next_num FROM recibos');
+                $nextNum = (int) ($stmtNext->fetch(\PDO::FETCH_ASSOC)['next_num'] ?? 1);
+                $correlativo = 'VAL-' . date('Y') . '-' . str_pad((string)$nextNum, 4, '0', STR_PAD_LEFT);
+            }
             
             // 1. Obtener o crear vehículo por placa
             $stmtV = $db->prepare('SELECT id FROM vehiculos WHERE placa = :placa LIMIT 1');

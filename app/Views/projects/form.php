@@ -14,8 +14,9 @@
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
 
             <div class="filter-field" style="margin-bottom: 16px;">
-                <label for="correlativo" style="display: block; font-weight: 600; margin-bottom: 6px;">📄 N° Vale / Correlativo</label>
-                <input type="text" name="correlativo" id="correlativo" class="filter-input" placeholder="Ej: VAL-2026-0012" maxlength="40" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);" required>
+                <label for="correlativo" style="display: block; font-weight: 600; margin-bottom: 6px;">📄 N° Vale / Correlativo (Autogenerado)</label>
+                <input type="text" name="correlativo" id="correlativo" class="filter-input" value="VAL-<?= date('Y') ?>-<?= str_pad((string)(rand(11, 99)), 4, '0', STR_PAD_LEFT) ?>" readonly style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-hover, #f8fafc); font-weight: 700; color: var(--primary);">
+                <small style="color: var(--muted); font-size: 12px;">Se asigna automáticamente mediante secuencia al guardar.</small>
             </div>
 
             <div class="filter-field" style="margin-bottom: 16px;">
@@ -44,7 +45,16 @@
 
             <div class="filter-field" style="margin-bottom: 16px;">
                 <label for="destino" style="display: block; font-weight: 600; margin-bottom: 6px;">📍 Destino / Área Solicitante</label>
-                <input type="text" name="destino" id="destino" class="filter-input" placeholder="Ej: Recolección de Residuos / Obras" maxlength="40" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+                <select name="destino" id="destino" class="filter-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);" required>
+                    <option value="">-- Seleccione el Área --</option>
+                    <option value="Recolección de Residuos">Recolección de Residuos</option>
+                    <option value="Serenazgo / Seguridad">Serenazgo / Seguridad</option>
+                    <option value="Limpieza Pública">Limpieza Pública</option>
+                    <option value="Obras Públicas y Cantera">Obras Públicas y Cantera</option>
+                    <option value="Parques y Jardines">Parques y Jardines</option>
+                    <option value="Transportes y Logística">Transportes y Logística</option>
+                    <option value="Administración General">Administración General</option>
+                </select>
             </div>
 
             <div class="filter-field" style="margin-bottom: 24px;">
