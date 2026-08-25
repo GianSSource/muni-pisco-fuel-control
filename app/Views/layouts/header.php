@@ -7,12 +7,6 @@
     <title><?= htmlspecialchars(($title ?? 'Sistema') . ' - ' . APP_NAME) ?></title>
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        (function() {
-            const savedTheme = localStorage.getItem('app-theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        })();
-    </script>
 </head>
 <body>
     <header class="topbar">
@@ -23,28 +17,9 @@
                     <a href="<?= BASE_URL ?>dashboard">Panel</a>
                     <a href="<?= BASE_URL ?>despachos">Despachos</a>
                     <a href="<?= BASE_URL ?>calendario">Calendario</a>
-                    <a href="<?= BASE_URL ?>clientes">Clientes</a>
-                    <a href="<?= BASE_URL ?>proyectos">Proyectos</a>
                     <a href="<?= BASE_URL ?>logout">Salir</a>
                 </nav>
             <?php endif; ?>
-            <button id="themeToggleBtn" class="theme-toggle-btn" title="Cambiar Tema (Claro / Oscuro)">
-                <span class="theme-icon icon-sun">☀️</span>
-                <span class="theme-icon icon-moon">🌙</span>
-            </button>
         </div>
     </header>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggleBtn = document.getElementById('themeToggleBtn');
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', () => {
-                    const current = document.documentElement.getAttribute('data-theme');
-                    const next = current === 'dark' ? 'light' : 'dark';
-                    document.documentElement.setAttribute('data-theme', next);
-                    localStorage.setItem('app-theme', next);
-                });
-            }
-        });
-    </script>
     <main>

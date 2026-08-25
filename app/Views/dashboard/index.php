@@ -1,7 +1,7 @@
 <div class="dashboard-wrapper">
-    <section class="page-head">
+    <section class="page-head" style="text-align: left; display: flex; justify-content: space-between; align-items: center;">
         <div>
-            <h1>Dashboard General</h1>
+            <h1>Control de Combustible</h1>
             <p class="subtitle">Control y Monitoreo de Combustible y Entregas</p>
         </div>
         <div class="actions">
@@ -290,8 +290,6 @@
             </div>
         </form>
     </section>
-
-
 </div>
 
 <script>
@@ -434,7 +432,6 @@
         const config = chartDataSets[viewKey];
         if (!config) return false;
 
-        // Actualizar estados activos de los botones sin modificar la navegación
         document.querySelectorAll(".switcher-btn").forEach(btn => {
             if (btn.getAttribute("data-view") === viewKey) {
                 btn.classList.add("active");
@@ -443,13 +440,11 @@
             }
         });
 
-        // Actualizar títulos
         const titleEl = document.getElementById("chartTitle");
         const subTitleEl = document.getElementById("chartSubtitle");
         if (titleEl) titleEl.textContent = config.title;
         if (subTitleEl) subTitleEl.textContent = config.subtitle;
 
-        // Renderizado instantáneo en memoria para estabilidad absoluta
         initChart(viewKey);
 
         return false;

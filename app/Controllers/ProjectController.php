@@ -105,13 +105,14 @@ final class ProjectController extends Controller
                 'observaciones' => mb_substr($observaciones !== '' ? $observaciones : $destino, 0, 40)
             ]);
 
-            // 3. Descontar saldo disponible de combustible
+            // 3. Descontar saldo disponible de combustible en la base de datos
             $stmtSaldo = $db->prepare('UPDATE saldos_combustible SET saldo_actual = GREATEST(0, saldo_actual - :qty) WHERE tipo_combustible = :fuel_type');
             $stmtSaldo->execute(['qty' => $cantidad, 'fuel_type' => $tipoCombustible]);
 
             $this->redirect('dashboard?success=Despacho+emitido+correctamente');
         } catch (\Throwable $e) {
-            $this->redirect('dashboard?success=Despacho+emitido+correctamente');
+            // Muestra el error real si ocurre un problema de SQL o conexión, evitando ocultarlo
+            exit("Error crítico al registrar el despacho: " . $e->getMessage());
         }
     }
 
