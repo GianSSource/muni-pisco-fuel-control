@@ -98,6 +98,7 @@
                 </div>
                 <div class="chart-view-switcher" role="tablist">
                     <button type="button" class="switcher-btn active" data-view="diario" onclick="switchChartView(event, 'diario')">Diario</button>
+                    <button type="button" class="switcher-btn" data-view="tipo" onclick="switchChartView(event, 'tipo')">Por Tipo</button>
                     <button type="button" class="switcher-btn" data-view="mensual" onclick="switchChartView(event, 'mensual')">Mensual</button>
                     <button type="button" class="switcher-btn" data-view="anual" onclick="switchChartView(event, 'anual')">Anual</button>
                     <button type="button" class="switcher-btn" data-view="area" onclick="switchChartView(event, 'area')">Por Área</button>
@@ -304,6 +305,14 @@
             color: "rgba(37, 99, 235, 0.85)",
             borderColor: "#1d4ed8",
             data: <?= json_encode($dailyFuel, JSON_UNESCAPED_UNICODE) ?>
+        },
+        tipo: {
+            title: "Despacho por Tipo de Combustible",
+            subtitle: "Distribución de galones consumidos según Diesel B5, Gasohol Regular o Premium",
+            type: "bar",
+            color: "rgba(16, 185, 129, 0.85)",
+            borderColor: "#059669",
+            data: <?= json_encode($typeFuel, JSON_UNESCAPED_UNICODE) ?>
         },
         mensual: {
             title: "Combustible Despachado Mensualmente",

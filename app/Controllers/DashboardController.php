@@ -24,6 +24,7 @@ final class DashboardController extends Controller
         $monthlyFuel = $fuelModel->getMonthlyFuelDispatched();
         $yearlyFuel = $fuelModel->getYearlyFuelDispatched();
         $areaFuel = $fuelModel->getFuelDispatchedByArea();
+        $typeFuel = $fuelModel->getFuelDispatchedByType();
 
         $fuelEvents = $fuelModel->getDeliveryEvents();
         $projectEvents = $projectModel->getDeliveryEvents();
@@ -43,6 +44,7 @@ final class DashboardController extends Controller
             'monthlyFuel' => $monthlyFuel,
             'yearlyFuel' => $yearlyFuel,
             'areaFuel' => $areaFuel,
+            'typeFuel' => $typeFuel,
             'calendarEvents' => $calendarEvents,
             'clientsCount' => count((new Client())->all()),
             'projectsCount' => count((new Project())->all()),
