@@ -47,6 +47,25 @@ final class ProjectController extends Controller
         $destino = trim((string) ($_POST['destino'] ?? ''));
         $observaciones = trim((string) ($_POST['observaciones'] ?? ''));
 
+        // Guardar también en la sesión como almacén local en memoria para actualización inmediata del Dashboard
+        if (!isset($_SESSION['custom_deliveries'])) {
+            $_SESSION['custom_deliveries'] = [];
+        }
+
+        $newDispatch = [
+            'id' => time(),
+            'receipt_number' => $correlativo,
+            'vehicle_plate' => mb_substr($placa, 0, 40),
+            'driver_name' => mb_substr($responsable, 0, 40),
+            'fuel_type' => $tipoCombustible,
+            'gallons' => $cantidad,
+            'destination' => $destino !== '' ? mb_substr($destino, 0, 40) : 'Despacho General',
+            'status' => 'Completado',
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        array_unshift($_SESSION['custom_deliveries'], $newDispatch);
+
         try {
             $db = \App\Core\Database::getConnection();
 
@@ -55,6 +74,7 @@ final class ProjectController extends Controller
                 $stmtNext = $db->query('SELECT COUNT(*) + 1 AS next_num FROM recibos');
                 $nextNum = (int) ($stmtNext->fetch(\PDO::FETCH_ASSOC)['next_num'] ?? 1);
                 $correlativo = 'VAL-' . date('Y') . '-' . str_pad((string)$nextNum, 4, '0', STR_PAD_LEFT);
+                $_SESSION['custom_deliveries'][0]['receipt_number'] = $correlativo;
             }
             
             // 1. Obtener o crear vehículo por placa

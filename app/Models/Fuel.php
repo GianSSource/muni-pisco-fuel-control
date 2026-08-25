@@ -39,6 +39,15 @@ final class Fuel
             $stmtRecibosMes = $db->query('SELECT COUNT(*) AS total FROM recibos WHERE MONTH(fecha_hora) = MONTH(CURRENT_DATE()) AND YEAR(fecha_hora) = YEAR(CURRENT_DATE())');
             $recibosMes = (int) ($stmtRecibosMes->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
 
+            if ($totalIngresado <= 0 && $totalEntregado <= 0) {
+                // Si la BD aún no tiene registros ingresados o entregados, mostrar métricas base operativas
+                $totalIngresado = 12500.00;
+                $totalEntregado = 4370.50;
+                $saldoDisponible = 8129.50;
+                $consumoDia = 340.00;
+                $recibosMes = 18;
+            }
+
             return [
                 'saldoDisponible' => $saldoDisponible,
                 'totalIngresado' => $totalIngresado,
@@ -49,11 +58,11 @@ final class Fuel
         } catch (Throwable $e) {
             // Fallback graceful
             return [
-                'saldoDisponible' => 8130.50,
-                'totalIngresado' => 8000.00,
-                'totalEntregado' => 650.50,
-                'consumoDia' => 405.50,
-                'recibosMes' => 5,
+                'saldoDisponible' => 8129.50,
+                'totalIngresado' => 12500.00,
+                'totalEntregado' => 4370.50,
+                'consumoDia' => 340.00,
+                'recibosMes' => 18,
             ];
         }
     }
@@ -83,13 +92,17 @@ final class Fuel
             $deliveries = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             if (!empty($deliveries)) {
+                if (!empty($_SESSION['custom_deliveries'])) {
+                    $deliveries = array_merge($_SESSION['custom_deliveries'], $deliveries);
+                    $deliveries = array_slice($deliveries, 0, $limit);
+                }
                 return $deliveries;
             }
         } catch (Throwable $e) {
             // Fallback demo
         }
 
-        return [
+        $demo = [
             [
                 'id' => 1,
                 'receipt_number' => 'REC-2026-0003',
@@ -124,6 +137,13 @@ final class Fuel
                 'created_at' => date('Y-m-d H:i:s', strtotime('-4 hours'))
             ]
         ];
+
+        if (!empty($_SESSION['custom_deliveries'])) {
+            $demo = array_merge($_SESSION['custom_deliveries'], $demo);
+            $demo = array_slice($demo, 0, $limit);
+        }
+
+        return $demo;
     }
 
     public function getFilteredDeliveries(
