@@ -171,7 +171,7 @@
 
             <div class="widget-footer">
                 <a href="<?= BASE_URL ?>calendario" class="button secondary full-width">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 0-2-2H5a2 2 0 0-2 2v12a2 2 0 002 2z"></path></svg>
                     Abrir Calendario Interactivo
                 </a>
             </div>
@@ -183,7 +183,7 @@
         <div class="table-header">
             <div>
                 <h2>Últimas Entregas de Combustible</h2>
-                <p class="section-desc">Historial reciente con filtro y búsqueda instantánea</p>
+                <p class="section-desc">Historial reciente con filtro y búsqueda instantánea (Máx. 50)</p>
             </div>
             <div class="table-header-right">
                 <form action="<?= BASE_URL ?>despachos" method="GET" class="dash-search-form">
@@ -211,7 +211,7 @@
                 </thead>
                 <tbody>
                     <?php if (!empty($ultimasEntregas)): ?>
-                        <?php foreach ($ultimasEntregas as $entrega): ?>
+                        <?php foreach (array_slice($ultimasEntregas, 0, 50) as $entrega): ?>
                             <tr>
                                 <td>
                                     <span class="receipt-tag"><?= htmlspecialchars($entrega['receipt_number']) ?></span>
@@ -264,12 +264,12 @@
 
             <div class="filter-group">
                 <label for="unidad">Por Unidad / Placa:</label>
-                <input type="text" id="unidad" name="unidad" placeholder="Ej: EAB-123 o MUNI-01">
+                <input type="text" id="unidad" name="unidad" placeholder="Ej: EAB-123 o MUNI-01" pattern="[A-Za-z0-9\-]+" maxlength="20" autocomplete="off">
             </div>
 
             <div class="filter-group">
                 <label for="responsable">Por Responsable / Conductor:</label>
-                <input type="text" id="responsable" name="responsable" placeholder="Ej: Carlos Mendoza">
+                <input type="text" id="responsable" name="responsable" placeholder="Ej: Carlos Mendoza" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" maxlength="80" autocomplete="off">
             </div>
 
             <div class="report-buttons">
@@ -285,7 +285,6 @@
             </div>
         </form>
     </section>
-
 
 </div>
 
@@ -330,7 +329,6 @@
     document.addEventListener("DOMContentLoaded", () => {
         initChart('diario');
 
-        // Buscador en tiempo real para la tabla del Dashboard
         const dashInput = document.getElementById("dashSearchInput");
         if (dashInput) {
             dashInput.addEventListener("input", () => {
@@ -340,6 +338,20 @@
                     const text = row.innerText.toLowerCase();
                     row.style.display = text.includes(term) ? "" : "none";
                 });
+            });
+        }
+
+        const inputUnidad = document.getElementById("unidad");
+        if (inputUnidad) {
+            inputUnidad.addEventListener("input", (e) => {
+                e.target.value = e.target.value.replace(/[^a-zA-Z0-9\-]/g, '');
+            });
+        }
+
+        const inputResponsable = document.getElementById("responsable");
+        if (inputResponsable) {
+            inputResponsable.addEventListener("input", (e) => {
+                e.target.value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
             });
         }
     });
@@ -421,7 +433,6 @@
         const config = chartDataSets[viewKey];
         if (!config) return false;
 
-        // Actualizar estados activos de los botones sin modificar la navegación
         document.querySelectorAll(".switcher-btn").forEach(btn => {
             if (btn.getAttribute("data-view") === viewKey) {
                 btn.classList.add("active");
@@ -430,13 +441,11 @@
             }
         });
 
-        // Actualizar títulos
         const titleEl = document.getElementById("chartTitle");
         const subTitleEl = document.getElementById("chartSubtitle");
         if (titleEl) titleEl.textContent = config.title;
         if (subTitleEl) subTitleEl.textContent = config.subtitle;
 
-        // Renderizado instantáneo en memoria para estabilidad absoluta
         initChart(viewKey);
 
         return false;
