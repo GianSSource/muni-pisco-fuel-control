@@ -43,7 +43,7 @@
 
             <div>
                 <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Placa Vehicular *</label>
-                <input type="text" name="vehicle_plate" required placeholder="Ej. EAB-123" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); background: var(--input-bg, #fff); color: inherit; text-transform: uppercase;">
+                <input type="text" name="vehicle_plate" maxlength="10" required placeholder="Ej. EAB-123" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); background: var(--input-bg, #fff); color: inherit; text-transform: uppercase;">
             </div>
         </div>
 

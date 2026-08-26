@@ -142,7 +142,7 @@ final class FuelController extends Controller
         $this->verifyCsrf();
 
         $incomeId = (int) ($_POST['fuel_income_id'] ?? 1);
-        $plate = strtoupper(trim((string) ($_POST['vehicle_plate'] ?? '')));
+        $plate = strtoupper(mb_substr(trim((string) ($_POST['vehicle_plate'] ?? '')), 0, 10));
         $driver = trim((string) ($_POST['driver_name'] ?? ''));
         $gallons = (float) ($_POST['gallons'] ?? 0);
         $destination = trim((string) ($_POST['destination'] ?? ''));

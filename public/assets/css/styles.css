@@ -1682,4 +1682,59 @@ tbody tr:hover {
     background: #1e3a8a !important;
     border-color: #3b82f6 !important;
 }
+
+[data-theme="dark"] #fuelTypeBadgeBox {
+    background: rgba(3, 105, 161, 0.4) !important;
+    border-color: #0284c7 !important;
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] #fuelTypeNameText {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .tanks-level-section {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .tanks-level-section h2 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .tanks-level-section p {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .tanks-level-section [style*="background: var(--bg-body"],
+[data-theme="dark"] .tanks-level-section [style*="background: var(--bg-body, #f8fafc)"] {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .tanks-level-section [style*="background: #e2e8f0"] {
+    background: #334155 !important;
+}
+
+[data-theme="dark"] .tanks-level-section [style*="background: #e0f2fe"] {
+    background: rgba(3, 105, 161, 0.4) !important;
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .chart-view-switcher {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .switcher-btn {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .switcher-btn.active {
+    background: #1e293b !important;
+    color: #38bdf8 !important;
+}
+
+
 
