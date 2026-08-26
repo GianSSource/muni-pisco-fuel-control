@@ -292,13 +292,7 @@
                             <strong><?= htmlspecialchars($ev['title']) ?></strong>
                             <div class="event-sub">
                                 <span class="badge <?= $ev['badge_class'] ?>"><?= htmlspecialchars($ev['badge']) ?></span>
-                                <?php if ($ev['type'] === 'fuel'): ?>
-                                    <span>⛽ <?= number_format($ev['gallons'], 2) ?> Gal - 👤
-                                        <?= htmlspecialchars($ev['driver']) ?></span>
-                                <?php else: ?>
-                                    <span>🏢 <?= htmlspecialchars($ev['client']) ?> - 📌
-                                        <?= htmlspecialchars($ev['status']) ?></span>
-                                <?php endif; ?>
+                                <span>⛽ <?= number_format((float)($ev['gallons'] ?? 0), 2) ?> Gal - 👤 <?= htmlspecialchars($ev['driver'] ?? $ev['title'] ?? 'Responsable') ?></span>
                             </div>
                         </div>
                     </div>

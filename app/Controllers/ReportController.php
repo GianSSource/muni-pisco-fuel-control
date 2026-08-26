@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Models\Client;
 use App\Models\Fuel;
 use App\Services\PdfReport;
 
@@ -170,21 +169,5 @@ final class ReportController extends Controller
         echo '</tbody></table>';
         echo '</body></html>';
         exit;
-    }
-
-    public function clients(): void
-    {
-        $this->requireAuth();
-        $pdf = new PdfReport();
-        $pdf->title("Reporte de clientes - " . APP_NAME);
-
-        foreach ((new Client())->all() as $client) {
-            $pdf->text('Cliente: ' . $client['name']);
-            $pdf->text('Empresa: ' . ($client['company'] ?: 'Sin empresa'));
-            $pdf->text('Email: ' . $client['email'] . ' │ Telefono: ' . $client['phone']);
-            $pdf->spacer();
-        }
-
-        $pdf->output('reporte-clientes.pdf');
     }
 }

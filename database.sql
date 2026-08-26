@@ -16,19 +16,12 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- =========================================================
--- CLIENTS
--- =========================================================
-CREATE TABLE IF NOT EXISTS clients (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(160) NOT NULL,
-    email VARCHAR(160) NOT NULL UNIQUE,
-    phone VARCHAR(40) NULL,
-    company VARCHAR(160) NULL,
-    address TEXT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+-- Drop legacy tables if exist
+DROP TABLE IF EXISTS clients;
+DROP TABLE IF EXISTS projects;
+DROP TABLE IF EXISTS recibos;
+DROP TABLE IF EXISTS ingresos_combustible;
+DROP TABLE IF EXISTS saldos_combustible;
 
 -- =========================================================
 -- FUEL_INCOMES (ingresos de combustible)

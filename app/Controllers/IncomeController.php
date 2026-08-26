@@ -80,6 +80,7 @@ final class IncomeController extends Controller
                 $db->exec('ALTER TABLE fuel_incomes ADD COLUMN fuel_type VARCHAR(80) NOT NULL DEFAULT "Diesel B5 S-50"');
             } catch (Throwable $t) {}
 
+            // Sincronizar saldo de lote activo
             $receiptNum = 'REC-ING-' . time();
             $userId = $_SESSION['user']['id'] ?? 1;
 
@@ -93,34 +94,11 @@ final class IncomeController extends Controller
                 'receipt_number' => $receiptNum,
             ]);
 
-            // Intentar sincronizar tabla legacy saldos_combustible si existiera
-            try {
-                $stmtSaldo = $db->prepare('UPDATE saldos_combustible SET saldo_actual = saldo_actual + :qty WHERE tipo_combustible = :fuel_type');
-                $stmtSaldo->execute(['qty' => $quantity, 'fuel_type' => $fuelType]);
-            } catch (Throwable $t) {
-                // ignorar si no existe saldos_combustible
-            }
-
             header('Location: ' . BASE_URL . 'ingresos?success=Ingreso+de+' . $quantity . '+Gal+registrado+correctamente.+Stock+actualizado.');
             exit;
-        } catch (Throwable $e1) {
-            try {
-                $db = Database::getConnection();
-                $stmt = $db->prepare('INSERT INTO ingresos_combustible (proveedor, tipo_combustible, cantidad, factura_guia, observaciones, fecha_registro) VALUES (:supplier, :fuel_type, :quantity, :invoice, :notes, NOW())');
-                $stmt->execute([
-                    'supplier' => $supplier !== '' ? mb_substr($supplier, 0, 40) : 'Proveedor Municipal',
-                    'fuel_type' => $fuelType,
-                    'quantity' => $quantity,
-                    'invoice' => mb_substr($invoice, 0, 40),
-                    'notes' => mb_substr($notes, 0, 40),
-                ]);
-
-                header('Location: ' . BASE_URL . 'dashboard?success=Ingreso+de+' . $quantity . '+Gal+registrado+correctamente.+Stock+actualizado.');
-                exit;
-            } catch (Throwable $e2) {
-                header('Location: ' . BASE_URL . 'dashboard?success=Ingreso+de+' . $quantity . '+Gal+registrado+correctamente.');
-                exit;
-            }
+        } catch (Throwable $e) {
+            header('Location: ' . BASE_URL . 'ingresos/nuevo?error=Error+al+registrar+ingreso:+' . urlencode($e->getMessage()));
+            exit;
         }
     }
 }
