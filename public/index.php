@@ -8,7 +8,6 @@ use App\Controllers\ClientController;
 use App\Controllers\DashboardController;
 use App\Controllers\FuelController;
 use App\Controllers\IncomeController;
-use App\Controllers\ProjectController;
 use App\Controllers\ReportController;
 use App\Core\Router;
 
@@ -52,26 +51,16 @@ $router->get('/calendario', CalendarController::class, 'index');
 $router->get('/api/calendario/eventos', CalendarController::class, 'apiEvents');
 
 $router->get('/despachos', FuelController::class, 'index');
+$router->get('/despachos/nuevo', FuelController::class, 'create');
+$router->post('/despachos/guardar', FuelController::class, 'store');
+$router->get('/despachos/imprimir', FuelController::class, 'printReceipt');
 $router->get('/api/despachos/buscar', FuelController::class, 'searchApi');
 $router->get('/api/fuel/chart-stats', FuelController::class, 'statsApi');
 
+$router->get('/ingresos', IncomeController::class, 'index');
 $router->get('/ingresos/nuevo', IncomeController::class, 'create');
 $router->post('/ingresos/guardar', IncomeController::class, 'store');
 
-$router->get('/clientes', ClientController::class, 'index');
-$router->get('/clientes/nuevos', ClientController::class, 'create');
-$router->post('/clientes/guardar', ClientController::class, 'store');
-$router->get('/clientes/editar', ClientController::class, 'edit');
-$router->post('/clientes/actualizar', ClientController::class, 'update');
-
-$router->get('/proyectos', ProjectController::class, 'index');
-$router->get('/proyectos/nuevo', ProjectController::class, 'create');
-$router->post('/proyectos/guardar', ProjectController::class, 'store');
-$router->get('/proyectos/editar', ProjectController::class, 'edit');
-$router->post('/proyectos/actualizar', ProjectController::class, 'update');
-
-$router->get('/reportes/clientes', ReportController::class, 'clients');
-$router->get('/reportes/proyectos', ReportController::class, 'projects');
 $router->get('/reportes/pdf', ReportController::class, 'entregasPdf');
 $router->get('/reportes/excel', ReportController::class, 'entregasCsv');
 

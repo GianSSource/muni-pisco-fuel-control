@@ -4,10 +4,14 @@
             <h1>Buscador de Despachos de Combustible</h1>
             <p class="subtitle">Filtra y consulta en tiempo real entre todas las características del despacho</p>
         </div>
-        <div class="actions">
-            <a class="button primary" href="<?= BASE_URL ?>proyectos/nuevo">
+        <div class="actions" style="display: flex; gap: 10px;">
+            <a class="button secondary" href="<?= BASE_URL ?>despachos/nuevo" style="background: #3b82f6; color: #ffffff; padding: 10px 16px; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
-                Nuevo Despacho
+                Registrar Despacho
+            </a>
+            <a class="button primary" href="<?= BASE_URL ?>ingresos/nuevo">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+                Registrar Ingreso
             </a>
         </div>
     </section>
@@ -203,6 +207,9 @@
                                 </td>
                                 <td>
                                     <button type="button" class="button secondary small-btn" onclick="event.stopPropagation(); openDetailModal(<?= htmlspecialchars(json_encode($d)) ?>)">Ver Detalle</button>
+                                    <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $d['id'] ?>" target="_blank" onclick="event.stopPropagation();" style="padding: 4px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-left: 6px;">
+                                        🖨️ Imprimir
+                                    </a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -330,6 +337,9 @@
                 <td><span class="status-pill status-completed">${escapeHtml(d.status || 'Completado')}</span></td>
                 <td>
                     <button type="button" class="button secondary small-btn" onclick="event.stopPropagation(); openDetailModal(${JSON.stringify(d).replace(/"/g, '&quot;')})">Ver Detalle</button>
+                    <a href="<?= BASE_URL ?>despachos/imprimir?id=${d.id}" target="_blank" onclick="event.stopPropagation();" style="padding: 4px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-left: 6px;">
+                        🖨️ Imprimir
+                    </a>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -371,6 +381,12 @@
                         <span class="lbl">⛽ Cantidad Despachada:</span>
                         <strong class="qty-val">${parseFloat(d.gallons).toFixed(2)} Galones</strong>
                     </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="<?= BASE_URL ?>despachos/imprimir?id=${d.id}" target="_blank" style="padding: 8px 18px; background: #2563eb; color: #ffffff; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        🖨️ Imprimir Vale Oficial
+                    </a>
                 </div>
             </div>
         `;

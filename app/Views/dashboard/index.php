@@ -4,14 +4,26 @@
             <h1>Dashboard General</h1>
             <p class="subtitle">Control y Monitoreo de Combustible y Entregas</p>
         </div>
-        <div class="actions">
-            <a class="button primary" href="<?= BASE_URL ?>proyectos/nuevo">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
-                Nuevo Despacho
+        <div class="actions" style="display: flex; gap: 10px;">
+            <a class="button secondary" href="<?= BASE_URL ?>despachos/nuevo"
+                style="background: #3b82f6; color: #ffffff; padding: 10px 16px; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14"></path>
+                </svg>
+                Registrar Despacho
             </a>
-            <a class="button secondary" href="<?= BASE_URL ?>ingresos/nuevo">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+            <a class="button primary" href="<?= BASE_URL ?>ingresos/nuevo">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14"></path>
+                </svg>
                 Registrar Ingreso
+            </a>
+            <a class="button secondary" href="<?= BASE_URL ?>despachos">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                Consultar Despachos
             </a>
         </div>
     </section>
@@ -22,7 +34,9 @@
         <article class="stat-card balance-card">
             <div class="stat-header">
                 <span class="stat-icon icon-balance">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
                 </span>
                 <span class="badge badge-success">En Stock</span>
             </div>
@@ -36,7 +50,9 @@
         <article class="stat-card">
             <div class="stat-header">
                 <span class="stat-icon icon-income">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 19V5M5 12l7-7 7 7"></path>
+                    </svg>
                 </span>
             </div>
             <div class="stat-body">
@@ -49,7 +65,9 @@
         <article class="stat-card">
             <div class="stat-header">
                 <span class="stat-icon icon-delivered">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"></path></svg>
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 5v14M5 12l7 7 7-7"></path>
+                    </svg>
                 </span>
             </div>
             <div class="stat-body">
@@ -62,7 +80,9 @@
         <article class="stat-card">
             <div class="stat-header">
                 <span class="stat-icon icon-today">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
                 </span>
                 <span class="badge badge-info">Hoy</span>
             </div>
@@ -76,7 +96,13 @@
         <article class="stat-card">
             <div class="stat-header">
                 <span class="stat-icon icon-receipt">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
                 </span>
                 <span class="badge badge-purple">Mes Actual</span>
             </div>
@@ -87,8 +113,63 @@
         </article>
     </section>
 
-    <!-- Visualizaciones: Gráfico Dinámico Multivista y Resumen del Calendario -->
-    <section class="visuals-grid">
+    <!-- Nivel de Tanques y Depósitos de Combustible -->
+    <section class="tanks-level-section"
+        style="margin-bottom: 24px; background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0); padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+                <h2
+                    style="font-size: 1.15rem; font-weight: 700; margin: 0; color: var(--text-color, #1e293b); display: flex; align-items: center; gap: 8px;">
+                    🛢️ Nivel de Tanques y Depósitos Generales
+                </h2>
+                <p style="font-size: 0.85rem; color: var(--text-muted, #64748b); margin-top: 4px;">Porcentaje de volumen
+                    actual y capacidad nominal por tipo de unidad/depósito</p>
+            </div>
+            <span
+                style="font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: #e0f2fe; color: #0369a1;">
+                Monitoreo en Tiempo Real
+            </span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            <?php if (!empty($tankLevels)): ?>
+                <?php foreach ($tankLevels as $tank): ?>
+                    <div
+                        style="background: var(--bg-body, #f8fafc); border-radius: 10px; border: 1px solid var(--border-color, #cbd5e1); padding: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span
+                                style="font-size: 0.9rem; font-weight: 700; color: var(--text-color, #0f172a);"><?= htmlspecialchars($tank['name']) ?></span>
+                            <span
+                                style="font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: <?= $tank['status_color'] ?>22; color: <?= $tank['status_color'] ?>;">
+                                <?= htmlspecialchars($tank['status_text']) ?>
+                            </span>
+                        </div>
+
+                        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px;">
+                            <strong style="font-size: 1.6rem; font-weight: 800; color: <?= $tank['status_color'] ?>;">
+                                <?= $tank['percentage'] ?>%
+                            </strong>
+                            <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #64748b);">
+                                <?= number_format($tank['current'], 1) ?> / <?= number_format($tank['capacity'], 0) ?> Gal
+                            </span>
+                        </div>
+
+                        <!-- Barra de Nivel Líquido -->
+                        <div
+                            style="width: 100%; height: 12px; border-radius: 6px; background: #e2e8f0; overflow: hidden; position: relative;">
+                            <div
+                                style="width: <?= $tank['percentage'] ?>%; height: 100%; border-radius: 6px; background: linear-gradient(90deg, <?= $tank['status_color'] ?>, <?= $tank['status_color'] ?>dd); transition: width 0.6s ease;">
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </section>
+
+    <!-- Visualizaciones: Gráfico Dinámico Multivista, Gráfico Circular de Stock y Resumen del Calendario -->
+    <section class="visuals-grid"
+        style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px;">
         <!-- Gráfico interactivo con alternancia de vista (Diario, Mensual, Anual, Por Área) -->
         <article class="chart-container-card">
             <div class="card-header-flex chart-header-wrap">
@@ -97,14 +178,19 @@
                     <p class="section-desc" id="chartSubtitle">Volumen diario consumido en galones (últimos 7 días)</p>
                 </div>
                 <div class="chart-view-switcher" role="tablist">
-                    <button type="button" class="switcher-btn active" data-view="diario" onclick="switchChartView(event, 'diario')">Diario</button>
-                    <button type="button" class="switcher-btn" data-view="tipo" onclick="switchChartView(event, 'tipo')">Por Tipo</button>
-                    <button type="button" class="switcher-btn" data-view="mensual" onclick="switchChartView(event, 'mensual')">Mensual</button>
-                    <button type="button" class="switcher-btn" data-view="anual" onclick="switchChartView(event, 'anual')">Anual</button>
-                    <button type="button" class="switcher-btn" data-view="area" onclick="switchChartView(event, 'area')">Por Área</button>
+                    <button type="button" class="switcher-btn active" data-view="diario"
+                        onclick="switchChartView(event, 'diario')">Diario</button>
+                    <button type="button" class="switcher-btn" data-view="tipo"
+                        onclick="switchChartView(event, 'tipo')">Por Tipo</button>
+                    <button type="button" class="switcher-btn" data-view="mensual"
+                        onclick="switchChartView(event, 'mensual')">Mensual</button>
+                    <button type="button" class="switcher-btn" data-view="anual"
+                        onclick="switchChartView(event, 'anual')">Anual</button>
+                    <button type="button" class="switcher-btn" data-view="area"
+                        onclick="switchChartView(event, 'area')">Por Área</button>
                 </div>
             </div>
-            
+
             <div class="chart-wrapper">
                 <canvas id="dailyFuelChart" height="230"></canvas>
             </div>
@@ -112,12 +198,13 @@
             <!-- Fallback visual bar chart si Chart.js tarda en cargar o no tiene soporte -->
             <div class="visual-bars-fallback" id="barsFallback">
                 <?php
-                    $maxGallons = 1;
-                    if (!empty($dailyFuel)) {
-                        foreach ($dailyFuel as $d) {
-                            if ($d['total_gallons'] > $maxGallons) $maxGallons = $d['total_gallons'];
-                        }
+                $maxGallons = 1;
+                if (!empty($dailyFuel)) {
+                    foreach ($dailyFuel as $d) {
+                        if ($d['total_gallons'] > $maxGallons)
+                            $maxGallons = $d['total_gallons'];
                     }
+                }
                 ?>
                 <div class="custom-bars-row">
                     <?php foreach ($dailyFuel as $day): ?>
@@ -132,51 +219,105 @@
             </div>
         </article>
 
-        <!-- Widget del Calendario de Entregas Próximas -->
-        <article class="calendar-widget-card">
-            <div class="card-header-flex">
-                <div>
-                    <h2>Calendario de Entregas</h2>
-                    <p class="section-desc">Próximos despachos y vencimientos de proyectos</p>
-                </div>
-                <a href="<?= BASE_URL ?>calendario" class="link-more">Ver Completo →</a>
+        <!-- Gráfico Circular: Stock de Combustible Disponible por Tipo -->
+        <article class="chart-container-card"
+            style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0); padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="margin-bottom: 12px;">
+                <h2 style="font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-color, #1e293b);">⛽ Stock
+                    Disponible por Tipo</h2>
+                <p class="section-desc" style="font-size: 0.85rem; color: var(--text-muted, #64748b); margin-top: 4px;">
+                    Distribución de galones restantes en inventario</p>
             </div>
 
-            <div class="widget-events-list">
-                <?php if (!empty($calendarEvents)): ?>
-                    <?php $count = 0; ?>
-                    <?php foreach ($calendarEvents as $ev): ?>
-                        <?php if ($count >= 4) break; $count++; ?>
-                        <div class="widget-event-item" onclick="location.href='<?= BASE_URL ?>calendario'">
-                            <div class="event-date-chip">
-                                <span class="d-num"><?= date('d', strtotime($ev['date'])) ?></span>
-                                <span class="d-month"><?= date('M', strtotime($ev['date'])) ?></span>
+            <div
+                style="position: relative; height: 210px; display: flex; align-items: center; justify-content: center;">
+                <canvas id="stockDoughnutChart" height="200"></canvas>
+            </div>
+
+            <div id="stockLegend"
+                style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
+                <?php
+                $colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+                $totalStockRem = array_sum(array_column($stockByFuelType ?? [], 'value'));
+                $idx = 0;
+                ?>
+                <?php if (!empty($stockByFuelType)): ?>
+                    <?php foreach ($stockByFuelType as $st): ?>
+                        <?php
+                        $c = $colors[$idx % count($colors)];
+                        $idx++;
+                        $pct = $totalStockRem > 0 ? round(($st['value'] / $totalStockRem) * 100, 1) : 0;
+                        ?>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span
+                                    style="width: 10px; height: 10px; border-radius: 50%; background: <?= $c ?>; display: inline-block;"></span>
+                                <span><?= htmlspecialchars($st['label']) ?></span>
                             </div>
-                            <div class="event-info">
-                                <strong><?= htmlspecialchars($ev['title']) ?></strong>
-                                <div class="event-sub">
-                                    <span class="badge <?= $ev['badge_class'] ?>"><?= htmlspecialchars($ev['badge']) ?></span>
-                                    <?php if ($ev['type'] === 'fuel'): ?>
-                                        <span>⛽ <?= number_format($ev['gallons'], 2) ?> Gal - 👤 <?= htmlspecialchars($ev['driver']) ?></span>
-                                    <?php else: ?>
-                                        <span>🏢 <?= htmlspecialchars($ev['client']) ?> - 📌 <?= htmlspecialchars($ev['status']) ?></span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
+                            <strong style="color: var(--text-color, #0f172a);"><?= number_format((float) $st['value'], 1) ?> Gal
+                                (<?= $pct ?>%)</strong>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p class="empty-state">No hay próximas fechas de entrega.</p>
+                    <p style="color: var(--text-muted, #94a3b8); font-size: 0.85rem; text-align: center;">Sin información de
+                        lotes</p>
                 <?php endif; ?>
             </div>
-
-            <div class="widget-footer">
-                <a href="<?= BASE_URL ?>calendario" class="button secondary full-width">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    Abrir Calendario Interactivo
-                </a>
-            </div>
         </article>
+    </section>
+
+    <!-- Widget del Calendario de Entregas Próximas -->
+    <article class="calendar-widget-card">
+        <div class="card-header-flex">
+            <div>
+                <h2>Calendario de Entregas</h2>
+                <p class="section-desc">Próximos despachos y entregas de combustible</p>
+            </div>
+            <a href="<?= BASE_URL ?>calendario" class="link-more">Ver Completo →</a>
+        </div>
+
+        <div class="widget-events-list">
+            <?php if (!empty($calendarEvents)): ?>
+                <?php $count = 0; ?>
+                <?php foreach ($calendarEvents as $ev): ?>
+                    <?php if ($count >= 4)
+                        break;
+                    $count++; ?>
+                    <div class="widget-event-item" onclick="location.href='<?= BASE_URL ?>calendario'">
+                        <div class="event-date-chip">
+                            <span class="d-num"><?= date('d', strtotime($ev['date'])) ?></span>
+                            <span class="d-month"><?= date('M', strtotime($ev['date'])) ?></span>
+                        </div>
+                        <div class="event-info">
+                            <strong><?= htmlspecialchars($ev['title']) ?></strong>
+                            <div class="event-sub">
+                                <span class="badge <?= $ev['badge_class'] ?>"><?= htmlspecialchars($ev['badge']) ?></span>
+                                <?php if ($ev['type'] === 'fuel'): ?>
+                                    <span>⛽ <?= number_format($ev['gallons'], 2) ?> Gal - 👤
+                                        <?= htmlspecialchars($ev['driver']) ?></span>
+                                <?php else: ?>
+                                    <span>🏢 <?= htmlspecialchars($ev['client']) ?> - 📌
+                                        <?= htmlspecialchars($ev['status']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="empty-state">No hay próximas fechas de entrega.</p>
+            <?php endif; ?>
+        </div>
+
+        <div class="widget-footer">
+            <a href="<?= BASE_URL ?>calendario" class="button secondary full-width">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                Abrir Calendario Interactivo
+            </a>
+        </div>
+    </article>
     </section>
 
     <!-- 6. Ultimas Entregas Table Section con Buscador Rápido -->
@@ -189,8 +330,13 @@
             <div class="table-header-right">
                 <form action="<?= BASE_URL ?>despachos" method="GET" class="dash-search-form">
                     <div class="dash-search-input-wrap">
-                        <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" id="dashSearchInput" name="q" placeholder="Buscar vale, placa, conductor..." class="dash-search-input" maxlength="40">
+                        <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="dashSearchInput" name="q" placeholder="Buscar vale, placa, conductor..."
+                            class="dash-search-input" maxlength="30">
                     </div>
                 </form>
                 <a href="<?= BASE_URL ?>despachos" class="link-more">Buscador Avanzado →</a>
@@ -209,6 +355,7 @@
                         <th>Destino</th>
                         <th>Cantidad</th>
                         <th>Estado</th>
+                        <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -226,22 +373,29 @@
                                 </td>
                                 <td><?= htmlspecialchars($entrega['driver_name']) ?></td>
                                 <td>
-                                    <span class="fuel-type-pill"><?= htmlspecialchars($entrega['fuel_type'] ?? 'Diesel B5') ?></span>
+                                    <span
+                                        class="fuel-type-pill"><?= htmlspecialchars($entrega['fuel_type'] ?? 'Diesel B5') ?></span>
                                 </td>
                                 <td><?= htmlspecialchars($entrega['destination'] ?? 'N/A') ?></td>
                                 <td>
-                                    <span class="quantity-highlight"><?= number_format((float) $entrega['gallons'], 2) ?> Gal</span>
+                                    <span class="quantity-highlight"><?= number_format((float) $entrega['gallons'], 2) ?>
+                                        Gal</span>
                                 </td>
                                 <td>
                                     <span class="status-pill status-completed">
                                         <?= htmlspecialchars($entrega['status'] ?? 'Completado') ?>
                                     </span>
                                 </td>
+                                <td>
+                                    <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $entrega['id'] ?>" target="_blank" style="padding: 4px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                        🖨️ Imprimir
+                                    </a>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="8" class="empty-state">No se registran entregas recientes.</td>
+                            <td colspan="9" class="empty-state">No se registran entregas recientes.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -269,22 +423,33 @@
 
             <div class="filter-group">
                 <label for="unidad">Por Unidad / Placa:</label>
-                <input type="text" id="unidad" name="unidad" placeholder="Ej: EAB-123 o MUNI-01" maxlength="40">
+                <input type="text" id="unidad" name="unidad" placeholder="Ej: EAB-123 o MUNI-01" maxlength="10">
             </div>
 
             <div class="filter-group">
                 <label for="responsable">Por Responsable / Conductor:</label>
-                <input type="text" id="responsable" name="responsable" placeholder="Ej: Carlos Mendoza" maxlength="40">
+                <input type="text" id="responsable" name="responsable" placeholder="Ej: Carlos Mendoza" maxlength="25">
             </div>
 
             <div class="report-buttons">
-                <button type="submit" formaction="<?= BASE_URL ?>reportes/pdf" formtarget="_blank" class="btn-export pdf-btn">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                <button type="submit" formaction="<?= BASE_URL ?>reportes/pdf" formtarget="_blank"
+                    class="btn-export pdf-btn">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
                     Descargar Reporte PDF
                 </button>
 
                 <button type="submit" formaction="<?= BASE_URL ?>reportes/excel" class="btn-export excel-btn">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="8" y1="13" x2="16" y2="13"></line>
+                        <line x1="8" y1="17" x2="16" y2="17"></line>
+                    </svg>
                     Exportación a CSV para Excel
                 </button>
             </div>
@@ -340,8 +505,11 @@
         }
     };
 
+    const stockData = <?= json_encode($stockByFuelType ?? [], JSON_UNESCAPED_UNICODE) ?>;
+
     document.addEventListener("DOMContentLoaded", () => {
         initChart('diario');
+        initDoughnutChart();
 
         // Buscador en tiempo real para la tabla del Dashboard
         const dashInput = document.getElementById("dashSearchInput");
@@ -356,6 +524,44 @@
             });
         }
     });
+
+    function initDoughnutChart() {
+        if (typeof Chart === 'undefined') return;
+        const canvas = document.getElementById('stockDoughnutChart');
+        if (!canvas) return;
+
+        const labels = stockData.map(i => i.label);
+        const dataValues = stockData.map(i => i.value);
+
+        new Chart(canvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataValues,
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '68%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (ctx) {
+                                return ` ${ctx.label}: ${ctx.parsed.toFixed(2)} Gal`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
 
     function initChart(viewKey) {
         if (typeof Chart === 'undefined') return;
@@ -398,7 +604,7 @@
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 const val = isHorizontal ? context.parsed.x : context.parsed.y;
                                 return ` Total: ${val.toFixed(2)} Galones`;
                             }

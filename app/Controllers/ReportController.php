@@ -7,7 +7,6 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Models\Client;
 use App\Models\Fuel;
-use App\Models\Project;
 use App\Services\PdfReport;
 
 final class ReportController extends Controller
@@ -187,20 +186,5 @@ final class ReportController extends Controller
         }
 
         $pdf->output('reporte-clientes.pdf');
-    }
-
-    public function projects(): void
-    {
-        $this->requireAuth();
-        $pdf = new PdfReport();
-        $pdf->title('Reporte de proyectos - ' . APP_NAME);
-
-        foreach ((new Project())->all() as $project) {
-            $pdf->text('Proyecto: ' . $project['name']);
-            $pdf->text('Cliente: ' . $project['client_name'] . ' │ ' . $project['status']);
-            $pdf->text('Fechas: ' . $project['start_date'] . ' - ' . $project['end_date'] . ' │ Presupuesto: ' . $project['budget']);
-            $pdf->spacer();
-        }
-        $pdf->output('reporte-proyectos.pdf');
     }
 }

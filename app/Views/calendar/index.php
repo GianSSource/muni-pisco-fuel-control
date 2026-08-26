@@ -2,7 +2,7 @@
     <section class="page-head">
         <div>
             <h1>Calendario de Entregas y Despachos</h1>
-            <p class="subtitle">Monitoreo de fechas límite de proyectos y despachos diarios de combustible</p>
+            <p class="subtitle">Monitoreo de despachos diarios y entregas de combustible</p>
         </div>
         <div class="actions">
             <a class="button primary" href="<?= BASE_URL ?>dashboard">
@@ -20,9 +20,6 @@
             </button>
             <button class="filter-btn" data-filter="fuel">
                 <span class="dot dot-fuel"></span> Despachos de Combustible
-            </button>
-            <button class="filter-btn" data-filter="project">
-                <span class="dot dot-project"></span> Fechas de Entrega (Proyectos)
             </button>
         </div>
 
@@ -71,15 +68,9 @@
                                     <span class="badge <?= $event['badge_class'] ?>"><?= htmlspecialchars($event['badge']) ?></span>
                                 </div>
                                 <div class="agenda-meta">
-                                    <?php if ($event['type'] === 'fuel'): ?>
-                                        <span>🚗 Placa: <?= htmlspecialchars($event['vehicle']) ?></span>
-                                        <span>⛽ <?= number_format($event['gallons'], 2) ?> Gal</span>
-                                        <span>👤 <?= htmlspecialchars($event['driver']) ?></span>
-                                    <?php else: ?>
-                                        <span>🏢 Cliente: <?= htmlspecialchars($event['client']) ?></span>
-                                        <span>📌 Estado: <?= htmlspecialchars($event['status']) ?></span>
-                                        <span>💰 S/ <?= number_format($event['budget'], 2) ?></span>
-                                    <?php endif; ?>
+                                    <span>🚗 Placa: <?= htmlspecialchars($event['vehicle']) ?></span>
+                                    <span>⛽ <?= number_format($event['gallons'], 2) ?> Gal</span>
+                                    <span>👤 <?= htmlspecialchars($event['driver']) ?></span>
                                 </div>
                             </div>
                         </div>
@@ -264,7 +255,7 @@
         const titleEl = document.getElementById('modalTitle');
         const bodyEl = document.getElementById('modalBody');
 
-        titleEl.textContent = ev.type === 'fuel' ? '⛽ Despacho de Combustible' : '📦 Entrega de Proyecto';
+        titleEl.textContent = '⛽ Despacho de Combustible';
 
         let html = `
             <div class="modal-detail-card">
@@ -273,10 +264,6 @@
                     <span class="modal-date-tag">📅 Fecha: <strong>${ev.date}</strong> ${ev.time ? '⏰ ' + ev.time : ''}</span>
                 </div>
                 <h4>${ev.title}</h4>
-        `;
-
-        if (ev.type === 'fuel') {
-            html += `
                 <div class="modal-grid">
                     <div class="modal-field"><span class="lbl">N° Vale:</span> <strong>${ev.title}</strong></div>
                     <div class="modal-field"><span class="lbl">Vehículo / Placa:</span> <strong>${ev.vehicle}</strong></div>
@@ -284,21 +271,10 @@
                     <div class="modal-field"><span class="lbl">Destino / Área:</span> <span>${ev.destination}</span></div>
                     <div class="modal-field highlight-field"><span class="lbl">Cantidad Despachada:</span> <strong class="qty-val">${ev.gallons} Galones</strong></div>
                 </div>
-            `;
-        } else {
-            html += `
-                <div class="modal-grid">
-                    <div class="modal-field"><span class="lbl">Cliente:</span> <strong>${ev.client}</strong></div>
-                    <div class="modal-field"><span class="lbl">Estado Actual:</span> <span class="status-pill status-completed">${ev.status}</span></div>
-                    <div class="modal-field"><span class="lbl">Presupuesto Asignado:</span> <strong>S/ ${parseFloat(ev.budget).toLocaleString('es-PE', {minimumFractionDigits: 2})}</strong></div>
-                </div>
-                ${ev.description ? `<div class="modal-desc"><strong>Descripción:</strong> <p>${ev.description}</p></div>` : ''}
-            `;
-        }
+            </div>
+        `;
 
-        html += `</div>`;
         bodyEl.innerHTML = html;
-
         document.getElementById('eventModal').classList.add('active');
     }
 
@@ -317,7 +293,7 @@
                         <strong>${ev.title}</strong>
                     </div>
                     <div class="day-modal-sub">
-                        ${ev.type === 'fuel' ? `⛽ ${ev.gallons} Gal - 👤 ${ev.driver}` : `🏢 ${ev.client} - 💰 S/ ${ev.budget}`}
+                        ⛽ ${ev.gallons} Gal - 👤 ${ev.driver}
                     </div>
                 </div>
             `;
