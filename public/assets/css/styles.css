@@ -1580,4 +1580,106 @@ tbody tr:hover {
 .auth-footer a {
     font-weight: 700;
     margin-left: 4px;
-}
+}
+
+/* =========================================================
+   DARK MODE ENHANCEMENTS FOR HIGH CONTRAST TEXT & ELEMENTS
+   ========================================================= */
+[data-theme="dark"] {
+    --card-bg: #1e293b;
+    --text-color: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --input-bg: #0f172a;
+}
+
+[data-theme="dark"] body {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] label,
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] td,
+[data-theme="dark"] li,
+[data-theme="dark"] strong {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .subtitle,
+[data-theme="dark"] .section-desc,
+[data-theme="dark"] .stat-body span,
+[data-theme="dark"] .event-sub,
+[data-theme="dark"] th {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] th {
+    background: #0f172a !important;
+    border-bottom-color: #334155 !important;
+}
+
+[data-theme="dark"] tbody tr:hover {
+    background-color: #334155 !important;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] option {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .receipt-tag {
+    background: #334155 !important;
+    color: #38bdf8 !important;
+    border-color: #475569 !important;
+}
+
+[data-theme="dark"] .quantity-highlight {
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .widget-event-item {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .widget-event-item:hover {
+    background: #334155 !important;
+    border-color: #3b82f6 !important;
+}
+
+[data-theme="dark"] .calendar-day {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .calendar-day.other-month {
+    background: #0f172a !important;
+    opacity: 0.4;
+}
+
+[data-theme="dark"] .calendar-day.is-today {
+    background: #1e3a8a !important;
+    border-color: #3b82f6 !important;
+}
+
