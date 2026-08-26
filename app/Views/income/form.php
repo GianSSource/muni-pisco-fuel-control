@@ -20,22 +20,35 @@
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
 
             <div class="filter-field" style="margin-bottom: 16px;">
-                <label for="fuel_type" style="display: block; font-weight: 600; margin-bottom: 6px;">⛽ Tipo de Combustible</label>
+                <label for="fuel_type" style="display: block; font-weight: 600; margin-bottom: 6px;">⛽ Tipo de Combustible *</label>
                 <select name="fuel_type" id="fuel_type" class="filter-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);" required>
-                    <option value="Diesel B5 S-50">Diesel B5 S-50</option>
-                    <option value="Gasohol Regular">Gasohol Regular</option>
-                    <option value="Gasohol Premium">Gasohol Premium</option>
+                    <?php if (!empty($fuelTypes)): ?>
+                        <?php foreach ($fuelTypes as $ft): ?>
+                            <option value="<?= htmlspecialchars($ft) ?>"><?= htmlspecialchars($ft) ?></option>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <option value="Diesel B5 S-50">Diesel B5 S-50</option>
+                        <option value="Gasohol Regular">Gasohol Regular</option>
+                        <option value="Gasohol Premium">Gasohol Premium</option>
+                    <?php endif; ?>
                 </select>
             </div>
 
             <div class="filter-field" style="margin-bottom: 16px;">
-                <label for="quantity" style="display: block; font-weight: 600; margin-bottom: 6px;">📦 Cantidad de Galones</label>
+                <label for="quantity" style="display: block; font-weight: 600; margin-bottom: 6px;">📦 Cantidad de Galones *</label>
                 <input type="number" step="0.01" min="0.1" name="quantity" id="quantity" class="filter-input" placeholder="Ej: 500.00" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);" required>
             </div>
 
             <div class="filter-field" style="margin-bottom: 16px;">
-                <label for="supplier" style="display: block; font-weight: 600; margin-bottom: 6px;">🏢 Proveedor / Grifo</label>
-                <input type="text" name="supplier" id="supplier" class="filter-input" placeholder="Ej: Repsol Pisco / Petroperú" maxlength="40" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+                <label for="supplier" style="display: block; font-weight: 600; margin-bottom: 6px;">🏢 Proveedor / Grifo *</label>
+                <input type="text" name="supplier" id="supplier" list="suppliers_list" class="filter-input" placeholder="Ej: Repsol Pisco / Petroperú" maxlength="100" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);" required>
+                <datalist id="suppliers_list">
+                    <?php if (!empty($suppliers)): ?>
+                        <?php foreach ($suppliers as $sup): ?>
+                            <option value="<?= htmlspecialchars($sup) ?>">
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </datalist>
             </div>
 
             <div class="filter-field" style="margin-bottom: 16px;">

@@ -125,10 +125,13 @@ final class FuelController extends Controller
             $incomes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (\Throwable $e) {}
 
+        $catalog = new \App\Models\Catalog();
+
         $this->view('fuel/create', [
             'title' => 'Registrar Vale de Despacho',
             'csrfToken' => $this->csrfToken(),
             'incomes' => $incomes,
+            'areas' => $catalog->getAreas(),
             'error' => $_GET['error'] ?? null,
         ]);
     }

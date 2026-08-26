@@ -61,6 +61,10 @@ $router->get('/ingresos', IncomeController::class, 'index');
 $router->get('/ingresos/nuevo', IncomeController::class, 'create');
 $router->post('/ingresos/guardar', IncomeController::class, 'store');
 
+$router->get('/admin/catalogos', App\Controllers\AdminController::class, 'catalogos');
+$router->post('/admin/catalogos/guardar', App\Controllers\AdminController::class, 'storeCatalog');
+$router->get('/admin/catalogos/eliminar', App\Controllers\AdminController::class, 'deleteCatalog');
+
 $router->get('/reportes/pdf', ReportController::class, 'entregasPdf');
 $router->get('/reportes/excel', ReportController::class, 'entregasCsv');
 

@@ -32,6 +32,7 @@
                     <a href="<?= BASE_URL ?>despachos">Despachos</a>
                     <a href="<?= BASE_URL ?>ingresos">Ingresos</a>
                     <a href="<?= BASE_URL ?>calendario">Calendario</a>
+                    <a href="<?= BASE_URL ?>admin/catalogos">⚙️ Catálogos</a>
                     <span style="font-size: 12px; padding: 3px 8px; border-radius: 12px; font-weight: 700; background: <?= $roleColor ?>; color: #ffffff;">
                         <?= htmlspecialchars($_SESSION['user']['name'] ?? 'Usuario') ?> (<?= strtoupper($userRole) ?>)
                     </span>

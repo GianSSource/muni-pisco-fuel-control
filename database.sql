@@ -24,6 +24,36 @@ DROP TABLE IF EXISTS ingresos_combustible;
 DROP TABLE IF EXISTS saldos_combustible;
 
 -- =========================================================
+-- SYSTEM_CATALOGS (Tipos de Combustible, Áreas y Proveedores)
+-- =========================================================
+CREATE TABLE IF NOT EXISTS system_catalogs (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    category ENUM('fuel_type', 'area', 'supplier') NOT NULL,
+    name VARCHAR(160) NOT NULL,
+    status ENUM('activo', 'inactivo') DEFAULT 'activo',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_catalogs_cat (category, status)
+) ENGINE=InnoDB;
+
+-- Datos iniciales del catálogo
+INSERT IGNORE INTO system_catalogs (id, category, name) VALUES
+(1, 'fuel_type', 'Diesel B5 S-50'),
+(2, 'fuel_type', 'Gasohol Regular'),
+(3, 'fuel_type', 'Gasohol Premium'),
+(4, 'fuel_type', 'GLP (Gas Licuado)'),
+(5, 'area', 'Serenazgo y Seguridad Ciudadana'),
+(6, 'area', 'Limpieza Pública y Recolección'),
+(7, 'area', 'Obras Públicas e Infraestructura'),
+(8, 'area', 'Parques y Jardines'),
+(9, 'area', 'Maquinaria y Equipo Pesado'),
+(10, 'area', 'Fiscalización y Transporte'),
+(11, 'area', 'Gerencia Municipal'),
+(12, 'supplier', 'Petroperú Pisco'),
+(13, 'supplier', 'Repsol Grifo Pisco'),
+(14, 'supplier', 'Primax Estación Municipal'),
+(15, 'supplier', 'Grifo Central Pisco');
+
+-- =========================================================
 -- FUEL_INCOMES (ingresos de combustible)
 -- receipt_number ahora es UNIQUE para poder ser referenciado
 -- =========================================================

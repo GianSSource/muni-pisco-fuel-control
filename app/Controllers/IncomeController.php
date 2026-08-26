@@ -34,9 +34,13 @@ final class IncomeController extends Controller
     {
         $this->requireAdmin();
 
+        $catalog = new \App\Models\Catalog();
+
         $this->view('income/form', [
             'title' => 'Registrar Ingreso de Combustible',
             'csrfToken' => $this->csrfToken(),
+            'fuelTypes' => $catalog->getFuelTypes(),
+            'suppliers' => $catalog->getSuppliers(),
             'success' => $_GET['success'] ?? null,
             'error' => $_GET['error'] ?? null,
         ]);

@@ -68,14 +68,16 @@
             <div>
                 <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Área / Subgerencia Destino *</label>
                 <select name="destination" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); background: var(--input-bg, #fff); color: inherit;">
-                    <option value="Serenazgo y Seguridad Ciudadana">Serenazgo y Seguridad Ciudadana</option>
-                    <option value="Limpieza Pública y Recolección">Limpieza Pública y Recolección de Residuos</option>
-                    <option value="Obras Públicas e Infraestructura">Obras Públicas e Infraestructura</option>
-                    <option value="Parques y Jardines">Parques y Jardines</option>
-                    <option value="Maquinaria y Equipo Pesado">Maquinaria y Equipo Pesado</option>
-                    <option value="Fiscalización y Transporte">Fiscalización y Transporte</option>
-                    <option value="Gerencia Municipal">Gerencia Municipal y Administración</option>
-                    <option value="Servicios Generales">Servicios Generales / Mantenimiento</option>
+                    <?php if (!empty($areas)): ?>
+                        <?php foreach ($areas as $ar): ?>
+                            <option value="<?= htmlspecialchars($ar) ?>"><?= htmlspecialchars($ar) ?></option>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <option value="Serenazgo y Seguridad Ciudadana">Serenazgo y Seguridad Ciudadana</option>
+                        <option value="Limpieza Pública y Recolección">Limpieza Pública y Recolección de Residuos</option>
+                        <option value="Obras Públicas e Infraestructura">Obras Públicas e Infraestructura</option>
+                        <option value="Parques y Jardines">Parques y Jardines</option>
+                    <?php endif; ?>
                 </select>
             </div>
 
