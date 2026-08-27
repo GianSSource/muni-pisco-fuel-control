@@ -51,7 +51,8 @@ final class Fuel
                 try {
                     $stmt = $db->query('SELECT COALESCE(SUM(cantidad), 0) AS total FROM ingresos_combustible');
                     $totalIngresado = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-                } catch (Throwable $t2) {}
+                } catch (Throwable $t2) {
+                }
             }
 
             // 2. Total entregado
@@ -63,7 +64,8 @@ final class Fuel
                 try {
                     $stmt = $db->query('SELECT COALESCE(SUM(cantidad_entregada), 0) AS total FROM recibos');
                     $totalEntregado = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-                } catch (Throwable $t2) {}
+                } catch (Throwable $t2) {
+                }
             }
 
             // 3. Saldo disponible
@@ -75,7 +77,8 @@ final class Fuel
                 try {
                     $stmt = $db->query('SELECT COALESCE(SUM(saldo_actual), 0) AS total FROM saldos_combustible');
                     $saldoDisponible = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-                } catch (Throwable $t2) {}
+                } catch (Throwable $t2) {
+                }
             }
 
             if ($saldoDisponible <= 0 && $totalIngresado > 0) {
@@ -91,7 +94,8 @@ final class Fuel
                 try {
                     $stmt = $db->query('SELECT COALESCE(SUM(cantidad_entregada), 0) AS total FROM recibos WHERE DATE(fecha_hora) = CURRENT_DATE()');
                     $consumoDia = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-                } catch (Throwable $t2) {}
+                } catch (Throwable $t2) {
+                }
             }
 
             // 5. Cantidad de recibos del mes
@@ -103,7 +107,8 @@ final class Fuel
                 try {
                     $stmt = $db->query('SELECT COUNT(*) AS total FROM recibos WHERE MONTH(fecha_hora) = MONTH(CURRENT_DATE()) AND YEAR(fecha_hora) = YEAR(CURRENT_DATE())');
                     $recibosMes = (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-                } catch (Throwable $t2) {}
+                } catch (Throwable $t2) {
+                }
             }
 
             return [
@@ -177,7 +182,8 @@ final class Fuel
                 if (!empty($deliveries)) {
                     return $deliveries;
                 }
-            } catch (Throwable $t2) {}
+            } catch (Throwable $t2) {
+            }
         }
 
         return [];
@@ -197,7 +203,7 @@ final class Fuel
 
         try {
             $db = Database::getConnection();
-            
+
             $where = ['1=1'];
             $params = [];
 
@@ -290,7 +296,7 @@ final class Fuel
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             if (!empty($results)) {
-                $months = ['01'=>'Ene','02'=>'Feb','03'=>'Mar','04'=>'Abr','05'=>'May','06'=>'Jun','07'=>'Jul','08'=>'Ago','09'=>'Sep','10'=>'Oct','11'=>'Nov','12'=>'Dic'];
+                $months = ['01' => 'Ene', '02' => 'Feb', '03' => 'Mar', '04' => 'Abr', '05' => 'May', '06' => 'Jun', '07' => 'Jul', '08' => 'Ago', '09' => 'Sep', '10' => 'Oct', '11' => 'Nov', '12' => 'Dic'];
                 $mapped = [];
                 foreach ($results as $row) {
                     $timestamp = strtotime($row['date']);
@@ -305,7 +311,8 @@ final class Fuel
                 }
                 return $mapped;
             }
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         return [];
     }
@@ -338,9 +345,18 @@ final class Fuel
     public function getMonthlyFuelDispatched(): array
     {
         $monthsMap = [
-            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
-            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+            1 => 'Enero',
+            2 => 'Febrero',
+            3 => 'Marzo',
+            4 => 'Abril',
+            5 => 'Mayo',
+            6 => 'Junio',
+            7 => 'Julio',
+            8 => 'Agosto',
+            9 => 'Septiembre',
+            10 => 'Octubre',
+            11 => 'Noviembre',
+            12 => 'Diciembre'
         ];
 
         try {
@@ -369,7 +385,8 @@ final class Fuel
                 }
                 return $output;
             }
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         return [];
     }
@@ -401,7 +418,8 @@ final class Fuel
                 }
                 return $output;
             }
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         return [];
     }
@@ -434,7 +452,8 @@ final class Fuel
                 }
                 return $output;
             }
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         return [];
     }
@@ -465,17 +484,37 @@ final class Fuel
                 }
                 return $output;
             }
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         return [];
+    }
+
+    public function recalculateStockBalances(): void
+    {
+        try {
+            $db = Database::getConnection();
+            $db->exec("
+                UPDATE fuel_incomes fi
+                SET gallons_remaining = GREATEST(0, fi.gallons - (
+                    SELECT COALESCE(SUM(fd.gallons), 0)
+                    FROM fuel_deliveries fd
+                    WHERE fd.fuel_income_id = fi.id
+                    AND fd.status <> 'Anulado'
+                ))
+            ");
+        } catch (Throwable $e) {
+        }
     }
 
     public function getStockByFuelType(): array
     {
         try {
+            $this->recalculateStockBalances();
+
             $db = Database::getConnection();
             $stmt = $db->query('SELECT 
-                                    COALESCE(fuel_type, supplier, "Diesel B5 S-50") AS fuel_type,
+                                    COALESCE(fuel_type, "Diesel B5 S-50") AS fuel_type,
                                     COALESCE(SUM(gallons_remaining), 0) AS remaining_gallons
                                 FROM fuel_incomes
                                 WHERE gallons_remaining > 0
@@ -492,7 +531,8 @@ final class Fuel
                 }
                 return $output;
             }
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         return [
             ['label' => 'Diesel B5 S-50', 'value' => 5420.50],
@@ -503,37 +543,50 @@ final class Fuel
 
     public function getTankLevels(): array
     {
+        $this->recalculateStockBalances();
+
+        $catalog = new Catalog();
+        $catalogTypes = $catalog->getFuelTypes();
+        
+        $incomeStats = [];
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query('SELECT 
+                                    COALESCE(fuel_type, "Diesel B5 S-50") AS fuel_type_name,
+                                    COALESCE(SUM(gallons), 0) AS total_income,
+                                    COALESCE(SUM(gallons_remaining), 0) AS current_stock
+                                FROM fuel_incomes
+                                GROUP BY fuel_type_name');
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($rows as $r) {
+                $incomeStats[trim($r['fuel_type_name'])] = [
+                    'total_income' => (float) $r['total_income'],
+                    'current_stock' => (float) $r['current_stock'],
+                ];
+            }
+        } catch (Throwable $e) {}
+
         $capacities = [
             'Diesel B5 S-50' => 10000.0,
             'Gasohol Regular' => 5000.0,
             'Gasohol Premium' => 3000.0,
         ];
 
-        $stock = $this->getStockByFuelType();
-        $stockMap = [];
-        foreach ($stock as $item) {
-            $stockMap[$item['label']] = (float) $item['value'];
-        }
-
         $tanks = [];
-        foreach ($capacities as $type => $maxCap) {
-            $current = $stockMap[$type] ?? 0.0;
-            
-            // Buscar coincidencias si el nombre varía levemente
-            if ($current == 0 && !empty($stockMap)) {
-                $typePrefix = strtolower(explode(' ', $type)[0]);
-                foreach ($stockMap as $k => $v) {
-                    if (str_contains(strtolower($k), $typePrefix)) {
-                        $current += $v;
-                    }
-                }
-            }
+        foreach ($catalogTypes as $type) {
+            $stats = $incomeStats[$type] ?? ['total_income' => 0.0, 'current_stock' => 0.0];
+            $current = $stats['current_stock'];
+            // Si hay total ingresado se usa ese volumen como base del estanque; sino se toma la capacidad nominal
+            $maxCap = $stats['total_income'] > 0 ? $stats['total_income'] : ($capacities[$type] ?? 5000.0);
 
-            $percentage = min(100.0, round(($current / $maxCap) * 100, 1));
-            
+            $percentage = $maxCap > 0 ? min(100.0, round(($current / $maxCap) * 100, 1)) : 0.0;
+
             $statusColor = '#10b981';
             $statusText = 'Óptimo';
-            if ($percentage <= 20) {
+            if ($current <= 0) {
+                $statusColor = '#94a3b8';
+                $statusText = 'Sin Stock';
+            } elseif ($percentage <= 20) {
                 $statusColor = '#ef4444';
                 $statusText = 'Crítico';
             } elseif ($percentage <= 45) {
@@ -575,27 +628,29 @@ final class Fuel
 
     public function getDeliveryEvents(): array
     {
-        $deliveries = [];
+        $events = [];
         try {
             $db = Database::getConnection();
-            $sql = 'SELECT 
-                        fd.id,
-                        fd.receipt_number AS title,
-                        DATE(fd.created_at) AS date,
-                        fd.created_at AS date_time,
-                        fd.gallons,
-                        fd.vehicle_plate AS vehicle,
-                        fd.driver_name AS driver,
-                        COALESCE(fd.destination, "Despacho General") AS destination
-                    FROM fuel_deliveries fd
-                    WHERE fd.status <> "Anulado"
-                    ORDER BY fd.created_at DESC';
 
-            $stmt = $db->query($sql);
-            $raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // 1. Obtener Despachos
+            $sqlDeliveries = 'SELECT 
+                                fd.id,
+                                fd.receipt_number AS title,
+                                DATE(fd.created_at) AS date,
+                                fd.created_at AS date_time,
+                                fd.gallons,
+                                fd.vehicle_plate AS vehicle,
+                                fd.driver_name AS driver,
+                                COALESCE(fd.destination, "Despacho General") AS destination
+                            FROM fuel_deliveries fd
+                            WHERE fd.status <> "Anulado"
+                            ORDER BY fd.created_at DESC';
 
-            foreach ($raw as $row) {
-                $deliveries[] = [
+            $stmt1 = $db->query($sqlDeliveries);
+            $rawDeliveries = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($rawDeliveries as $row) {
+                $events[] = [
                     'id' => 'fuel_' . $row['id'],
                     'type' => 'fuel',
                     'title' => 'Despacho ' . $row['title'] . ' (' . $row['vehicle'] . ')',
@@ -609,8 +664,65 @@ final class Fuel
                     'badge_class' => 'badge-fuel'
                 ];
             }
-        } catch (Throwable $e) {}
 
-        return $deliveries;
+            // 2. Obtener Ingresos de Lotes/Stock
+            $sqlIncomes = 'SELECT 
+                            fi.id,
+                            fi.receipt_number AS title,
+                            DATE(fi.created_at) AS date,
+                            fi.created_at AS date_time,
+                            fi.gallons,
+                            COALESCE(fi.fuel_type, "Combustible") AS fuel_type,
+                            COALESCE(fi.supplier, "Proveedor General") AS supplier
+                        FROM fuel_incomes fi
+                        ORDER BY fi.created_at DESC';
+
+            $stmt2 = $db->query($sqlIncomes);
+            $rawIncomes = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($rawIncomes as $row) {
+                $events[] = [
+                    'id' => 'income_' . $row['id'],
+                    'type' => 'income',
+                    'title' => 'Ingreso Lote ' . $row['title'] . ' (' . $row['fuel_type'] . ')',
+                    'date' => $row['date'],
+                    'time' => date('H:i', strtotime($row['date_time'])),
+                    'gallons' => (float) $row['gallons'],
+                    'vehicle' => 'Stock Lote',
+                    'driver' => $row['supplier'],
+                    'destination' => 'Almacén Central',
+                    'badge' => 'Ingreso de Stock',
+                    'badge_class' => 'badge-stock'
+                ];
+            }
+
+        } catch (Throwable $e) {
+        }
+
+        return $events;
+    }
+
+    public function getUniqueVehicles(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("SELECT DISTINCT vehicle_plate FROM fuel_deliveries WHERE vehicle_plate IS NOT NULL AND vehicle_plate <> '' ORDER BY vehicle_plate ASC");
+            $plates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            return $plates ?: [];
+        } catch (Throwable $e) {
+            return [];
+        }
+    }
+
+    public function getUniqueDrivers(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("SELECT DISTINCT driver_name FROM fuel_deliveries WHERE driver_name IS NOT NULL AND driver_name <> '' ORDER BY driver_name ASC");
+            $drivers = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            return $drivers ?: [];
+        } catch (Throwable $e) {
+            return [];
+        }
     }
 }

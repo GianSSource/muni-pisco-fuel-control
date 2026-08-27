@@ -47,6 +47,8 @@
                         placeholder="Buscar por N° Recibo, Placa, Conductor, Destino, Estado..." 
                         value="<?= htmlspecialchars($filters['q']) ?>"
                         autocomplete="off"
+                        maxlength="40"
+                        oninput="this.value = this.value.replace(/[^a-zA-Z0-9\-\s]/g, '')"
                     >
                     <?php if (!empty($filters['q'])): ?>
                         <button type="button" class="clear-search-btn" onclick="clearGlobalInput()">&times;</button>

@@ -29,6 +29,12 @@ final class DashboardController extends Controller
 
         usort($calendarEvents, static fn($a, $b) => strcmp($a['date'], $b['date']));
 
+        $uniquePlates = $fuelModel->getUniqueVehicles();
+        $uniqueDrivers = $fuelModel->getUniqueDrivers();
+
+        $catalog = new \App\Models\Catalog();
+        $catalogAreas = $catalog->getAreas();
+
         $this->view('dashboard/index', [
             'title' => 'Dashboard General',
             'saldoDisponible' => $metrics['saldoDisponible'],
@@ -45,6 +51,9 @@ final class DashboardController extends Controller
             'stockByFuelType' => $stockByFuelType,
             'tankLevels' => $tankLevels,
             'calendarEvents' => $calendarEvents,
+            'uniquePlates' => $uniquePlates,
+            'uniqueDrivers' => $uniqueDrivers,
+            'catalogAreas' => $catalogAreas,
         ]);
     }
 }

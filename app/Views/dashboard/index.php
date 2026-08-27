@@ -34,15 +34,19 @@
         <article class="stat-card balance-card">
             <div class="stat-header">
                 <span class="stat-icon icon-balance">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <!-- Barril de Combustible / Fuel Drum -->
+                        <rect x="4" y="3" width="16" height="18" rx="4" />
+                        <line x1="4" y1="8" x2="20" y2="8" />
+                        <line x1="4" y1="16" x2="20" y2="16" />
+                        <ellipse cx="12" cy="12" rx="3" ry="2" />
                     </svg>
                 </span>
                 <span class="badge badge-success">En Stock</span>
             </div>
             <div class="stat-body">
                 <strong><?= number_format((float) $saldoDisponible, 2) ?> <small>Gal</small></strong>
-                <span>Saldo disponible</span>
+                <span>Combustible total disponible</span>
             </div>
         </article>
 
@@ -108,7 +112,7 @@
             </div>
             <div class="stat-body">
                 <strong><?= (int) $recibosMes ?></strong>
-                <span>Recibos del mes</span>
+                <span>Recibos Despachos del mes</span>
             </div>
         </article>
     </section>
@@ -266,23 +270,37 @@
         </article>
     </section>
 
-    <!-- Widget del Calendario de Entregas Próximas -->
+    <!-- Widget del Calendario de Entregas e Ingresos Próximos -->
     <article class="calendar-widget-card">
-        <div class="card-header-flex">
+        <div class="card-header-flex" style="flex-wrap: wrap; gap: 12px;">
             <div>
-                <h2>Calendario de Entregas</h2>
-                <p class="section-desc">Próximos despachos y entregas de combustible</p>
+                <h2>Agenda de Movimientos</h2>
+                <p class="section-desc">Próximos despachos e ingresos registrados</p>
             </div>
             <a href="<?= BASE_URL ?>calendario" class="link-more">Ver Completo →</a>
         </div>
 
-        <div class="widget-events-list">
-            <?php if (!empty($calendarEvents)): ?>
+        <!-- Pestañas de Selección -->
+        <div style="display: flex; gap: 8px; margin-top: 12px; margin-bottom: 16px; border-bottom: 2px solid var(--border-color, #e2e8f0); padding-bottom: 8px;">
+            <button type="button" id="tabDeliveriesBtn" class="calendar-tab-btn active" onclick="switchCalendarTab('deliveries')"
+                style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 0.85rem; font-weight: 700; cursor: pointer; background: #2563eb; color: #ffffff; transition: all 0.2s;">
+                ⛽ Despachos / Entregas
+            </button>
+            <button type="button" id="tabIncomesBtn" class="calendar-tab-btn" onclick="switchCalendarTab('incomes')"
+                style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 0.85rem; font-weight: 700; cursor: pointer; background: var(--bg-body, #f1f5f9); color: var(--text-muted, #64748b); transition: all 0.2s;">
+                📥 Ingresos de Lotes
+            </button>
+        </div>
+
+        <!-- Contenedor Despachos -->
+        <div id="calendarDeliveriesList" class="widget-events-list">
+            <?php 
+                $deliveriesOnly = array_filter($calendarEvents, fn($ev) => ($ev['type'] ?? '') === 'fuel');
+            ?>
+            <?php if (!empty($deliveriesOnly)): ?>
                 <?php $count = 0; ?>
-                <?php foreach ($calendarEvents as $ev): ?>
-                    <?php if ($count >= 4)
-                        break;
-                    $count++; ?>
+                <?php foreach ($deliveriesOnly as $ev): ?>
+                    <?php if ($count >= 4) break; $count++; ?>
                     <div class="widget-event-item" onclick="location.href='<?= BASE_URL ?>calendario'">
                         <div class="event-date-chip">
                             <span class="d-num"><?= date('d', strtotime($ev['date'])) ?></span>
@@ -292,17 +310,45 @@
                             <strong><?= htmlspecialchars($ev['title']) ?></strong>
                             <div class="event-sub">
                                 <span class="badge <?= $ev['badge_class'] ?>"><?= htmlspecialchars($ev['badge']) ?></span>
-                                <span>⛽ <?= number_format((float)($ev['gallons'] ?? 0), 2) ?> Gal - 👤 <?= htmlspecialchars($ev['driver'] ?? $ev['title'] ?? 'Responsable') ?></span>
+                                <span>⛽ <?= number_format((float) ($ev['gallons'] ?? 0), 2) ?> Gal - 👤 <?= htmlspecialchars($ev['driver'] ?? $ev['title'] ?? 'Responsable') ?></span>
                             </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p class="empty-state">No hay próximas fechas de entrega.</p>
+                <p class="empty-state">No hay fechas de despacho registradas.</p>
             <?php endif; ?>
         </div>
 
-        <div class="widget-footer">
+        <!-- Contenedor Ingresos -->
+        <div id="calendarIncomesList" class="widget-events-list" style="display: none;">
+            <?php 
+                $incomesOnly = array_filter($calendarEvents, fn($ev) => ($ev['type'] ?? '') === 'income');
+            ?>
+            <?php if (!empty($incomesOnly)): ?>
+                <?php $count = 0; ?>
+                <?php foreach ($incomesOnly as $ev): ?>
+                    <?php if ($count >= 4) break; $count++; ?>
+                    <div class="widget-event-item" onclick="location.href='<?= BASE_URL ?>calendario'" style="border-left: 4px solid #16a34a;">
+                        <div class="event-date-chip" style="background: #166534;">
+                            <span class="d-num"><?= date('d', strtotime($ev['date'])) ?></span>
+                            <span class="d-month"><?= date('M', strtotime($ev['date'])) ?></span>
+                        </div>
+                        <div class="event-info">
+                            <strong><?= htmlspecialchars($ev['title']) ?></strong>
+                            <div class="event-sub">
+                                <span class="badge <?= $ev['badge_class'] ?>"><?= htmlspecialchars($ev['badge']) ?></span>
+                                <span>📥 <?= number_format((float) ($ev['gallons'] ?? 0), 2) ?> Gal - 🏪 <?= htmlspecialchars($ev['driver'] ?? 'Proveedor') ?></span>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="empty-state">No hay fechas de ingresos registradas.</p>
+            <?php endif; ?>
+        </div>
+
+        <div class="widget-footer" style="margin-top: 16px;">
             <a href="<?= BASE_URL ?>calendario" class="button secondary full-width">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
@@ -330,7 +376,8 @@
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                         <input type="text" id="dashSearchInput" name="q" placeholder="Buscar vale, placa, conductor..."
-                            class="dash-search-input" maxlength="30">
+                            class="dash-search-input" maxlength="30"
+                            oninput="this.value = this.value.replace(/[^a-zA-Z0-9\-\s]/g, '')">
                     </div>
                 </form>
                 <a href="<?= BASE_URL ?>despachos" class="link-more">Buscador Avanzado →</a>
@@ -381,7 +428,8 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $entrega['id'] ?>" target="_blank" style="padding: 4px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                    <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $entrega['id'] ?>" target="_blank"
+                                        style="padding: 4px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
                                         🖨️ Imprimir
                                     </a>
                                 </td>
@@ -404,25 +452,63 @@
             <p class="section-desc">Filtra por rango de fechas, unidad o responsable y descarga en PDF o Excel</p>
         </div>
 
-        <form method="GET" action="<?= BASE_URL ?>reportes/pdf" target="_blank" class="report-filters-form">
+        <?php
+        $firstDayOfMonth = date('Y-m-01');
+        $todayDate = date('Y-m-d');
+        ?>
+        <form id="exportReportForm" method="GET" action="<?= BASE_URL ?>reportes/pdf" target="_blank"
+            class="report-filters-form" onsubmit="return validarExportacionReporte(event)">
             <div class="filter-group">
                 <label for="desde">Desde (Fecha inicio):</label>
-                <input type="date" id="desde" name="desde">
+                <input type="date" id="desde" name="desde" value="<?= $firstDayOfMonth ?>" required>
             </div>
 
             <div class="filter-group">
                 <label for="hasta">Hasta (Fecha fin):</label>
-                <input type="date" id="hasta" name="hasta">
+                <input type="date" id="hasta" name="hasta" value="<?= $todayDate ?>" required>
+            </div>
+
+            <div class="filter-group">
+                <label for="area">Por Área / Destino:</label>
+                <select id="area" name="area" class="filter-select"
+                    style="padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; background: var(--bg-body, #f8fafc); color: inherit;">
+                    <option value="">Todas las Áreas</option>
+                    <?php if (!empty($catalogAreas)): ?>
+                        <?php foreach ($catalogAreas as $areaItem): ?>
+                            <option value="<?= htmlspecialchars($areaItem) ?>"><?= htmlspecialchars($areaItem) ?></option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
             </div>
 
             <div class="filter-group">
                 <label for="unidad">Por Unidad / Placa:</label>
-                <input type="text" id="unidad" name="unidad" placeholder="Ej: EAB-123 o MUNI-01" maxlength="10">
+                <input type="text" id="unidad" name="unidad" list="plates_list" placeholder="Ej: EAB-123 o MUNI-01"
+                    maxlength="10" pattern="[A-Za-z0-9]+-[A-Za-z0-9]+"
+                    title="Formato permitido: Letras/números y guion (Ej. EAB-123 o MUNI-01)"
+                    oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9-]/g, '')">
+                <datalist id="plates_list">
+                    <?php if (!empty($uniquePlates)): ?>
+                        <?php foreach ($uniquePlates as $plate): ?>
+                            <option value="<?= htmlspecialchars($plate) ?>">
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                </datalist>
             </div>
 
             <div class="filter-group">
                 <label for="responsable">Por Responsable / Conductor:</label>
-                <input type="text" id="responsable" name="responsable" placeholder="Ej: Carlos Mendoza" maxlength="25">
+                <input type="text" id="responsable" name="responsable" list="drivers_list"
+                    placeholder="Ej: Carlos Mendoza" maxlength="25" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                    title="Solo se permiten letras y espacios"
+                    oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
+                <datalist id="drivers_list">
+                    <?php if (!empty($uniqueDrivers)): ?>
+                        <?php foreach ($uniqueDrivers as $driver): ?>
+                            <option value="<?= htmlspecialchars($driver) ?>">
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                </datalist>
             </div>
 
             <div class="report-buttons">
@@ -653,5 +739,65 @@
         initChart(viewKey);
 
         return false;
+    }
+
+    function validarExportacionReporte(e) {
+        const inputDesde = document.getElementById("desde");
+        const inputHasta = document.getElementById("hasta");
+
+        if (!inputDesde || !inputHasta) return true;
+
+        const valDesde = inputDesde.value;
+        const valHasta = inputHasta.value;
+
+        if (!valDesde || !valHasta) {
+            alert("⚠️ Por favor, seleccione un rango de fechas válido para exportar el reporte.");
+            return false;
+        }
+
+        const dateDesde = new Date(valDesde + "T00:00:00");
+        const dateHasta = new Date(valHasta + "T00:00:00");
+
+        if (dateHasta < dateDesde) {
+            alert("⚠️ La Fecha Fin no puede ser anterior a la Fecha Inicio.");
+            inputHasta.focus();
+            return false;
+        }
+
+        const diffTime = Math.abs(dateHasta - dateDesde);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays > 366) {
+            alert("⚠️ El rango máximo de exportación es de 1 año (365 días). Por favor reduzca el período de fechas.");
+            return false;
+        }
+
+        return true;
+    }
+
+    function switchCalendarTab(tabType) {
+        const delList = document.getElementById("calendarDeliveriesList");
+        const incList = document.getElementById("calendarIncomesList");
+        const btnDel = document.getElementById("tabDeliveriesBtn");
+        const btnInc = document.getElementById("tabIncomesBtn");
+
+        if (!delList || !incList || !btnDel || !btnInc) return;
+
+        if (tabType === 'deliveries') {
+            delList.style.display = 'block';
+            incList.style.display = 'none';
+
+            btnDel.style.background = '#2563eb';
+            btnDel.style.color = '#ffffff';
+            btnInc.style.background = 'var(--bg-body, #f1f5f9)';
+            btnInc.style.color = 'var(--text-muted, #64748b)';
+        } else {
+            delList.style.display = 'none';
+            incList.style.display = 'block';
+
+            btnInc.style.background = '#16a34a';
+            btnInc.style.color = '#ffffff';
+            btnDel.style.background = 'var(--bg-body, #f1f5f9)';
+            btnDel.style.color = 'var(--text-muted, #64748b)';
+        }
     }
 </script>

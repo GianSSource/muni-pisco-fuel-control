@@ -603,6 +603,12 @@ tbody tr:hover {
     flex-wrap: wrap;
 }
 
+.badge-stock {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+    font-weight: 700 !important;
+}
+
 .widget-footer {
     margin-top: auto;
 }

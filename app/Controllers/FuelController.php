@@ -32,7 +32,7 @@ final class FuelController extends Controller
         // Obtener todos para llenar listas de autosugerencias/filtros
         $allDeliveries = $fuelModel->searchDeliveries([]);
         $vehicles = array_unique(array_filter(array_column($allDeliveries, 'vehicle_plate')));
-        $drivers  = array_unique(array_filter(array_column($allDeliveries, 'driver_name')));
+        $drivers = array_unique(array_filter(array_column($allDeliveries, 'driver_name')));
         $destinations = array_unique(array_filter(array_column($allDeliveries, 'destination')));
 
         sort($vehicles);
@@ -123,15 +123,21 @@ final class FuelController extends Controller
             $db = \App\Core\Database::getConnection();
             $stmt = $db->query('SELECT id, receipt_number, supplier, fuel_type, gallons_remaining FROM fuel_incomes WHERE gallons_remaining > 0 ORDER BY id DESC');
             $incomes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         $catalog = new \App\Models\Catalog();
+        $fuelModel = new \App\Models\Fuel();
+        $vehicles = $fuelModel->getUniqueVehicles();
+        $drivers = $fuelModel->getUniqueDrivers();
 
         $this->view('fuel/create', [
             'title' => 'Registrar Vale de Despacho',
             'csrfToken' => $this->csrfToken(),
             'incomes' => $incomes,
             'areas' => $catalog->getAreas(),
+            'vehicles' => $vehicles,
+            'drivers' => $drivers,
             'error' => $_GET['error'] ?? null,
         ]);
     }
@@ -223,7 +229,8 @@ final class FuelController extends Controller
                 $stmt->execute(['num' => $receiptNumber]);
                 $delivery = $stmt->fetch(\PDO::FETCH_ASSOC);
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         if (!$delivery) {
             $delivery = [

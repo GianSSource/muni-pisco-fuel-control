@@ -52,7 +52,7 @@
     <section class="search-filter-card" style="background: var(--card-bg, #fff); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0); margin-bottom: 24px;">
         <div style="display: flex; gap: 12px; align-items: center;">
             <div style="position: relative; flex: 1;">
-                <input type="text" id="incomeSearchInput" placeholder="Buscar por N° Recibo, Proveedor, Tipo de Combustible..." style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); font-size: 0.95rem; background: var(--bg-body, #f8fafc); color: inherit;">
+                <input type="text" id="incomeSearchInput" placeholder="Buscar por N° Recibo, Proveedor, Tipo de Combustible..." maxlength="40" oninput="this.value = this.value.replace(/[^a-zA-Z0-9\-\s]/g, '')" style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); font-size: 0.95rem; background: var(--bg-body, #f8fafc); color: inherit;">
             </div>
         </div>
     </section>

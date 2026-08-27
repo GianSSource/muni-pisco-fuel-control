@@ -21,6 +21,9 @@
             <button class="filter-btn" data-filter="fuel">
                 <span class="dot dot-fuel"></span> Despachos de Combustible
             </button>
+            <button class="filter-btn" data-filter="income">
+                <span class="dot" style="background: #16a34a;"></span> Ingresos de Stock
+            </button>
         </div>
 
         <div class="calendar-nav-controls">
@@ -51,7 +54,7 @@
         <!-- Panel Lateral / Agenda de Eventos Próximos -->
         <div class="agenda-card">
             <div class="agenda-header">
-                <h3>Agenda de Entregas</h3>
+                <h3 id="agendaTitle">Agenda de Movimientos</h3>
                 <span class="badge badge-info" id="agendaCount"><?= count($events) ?> registros</span>
             </div>
             <div id="agendaList" class="agenda-list">
@@ -234,7 +237,19 @@
 
     function filterAgenda() {
         const items = document.querySelectorAll('.agenda-item');
+        const titleEl = document.getElementById('agendaTitle');
         let visibleCount = 0;
+
+        if (titleEl) {
+            if (currentFilter === 'fuel') {
+                titleEl.textContent = 'Agenda de Despachos';
+            } else if (currentFilter === 'income') {
+                titleEl.textContent = 'Agenda de Ingresos';
+            } else {
+                titleEl.textContent = 'Agenda de Movimientos';
+            }
+        }
+
         items.forEach(item => {
             if (currentFilter === 'all') {
                 item.style.display = 'flex';
@@ -255,7 +270,8 @@
         const titleEl = document.getElementById('modalTitle');
         const bodyEl = document.getElementById('modalBody');
 
-        titleEl.textContent = '⛽ Despacho de Combustible';
+        const isIncome = ev.type === 'income';
+        titleEl.textContent = isIncome ? '📥 Ingreso de Stock de Combustible' : '⛽ Despacho de Combustible';
 
         let html = `
             <div class="modal-detail-card">
@@ -265,11 +281,11 @@
                 </div>
                 <h4>${ev.title}</h4>
                 <div class="modal-grid">
-                    <div class="modal-field"><span class="lbl">N° Vale:</span> <strong>${ev.title}</strong></div>
-                    <div class="modal-field"><span class="lbl">Vehículo / Placa:</span> <strong>${ev.vehicle}</strong></div>
-                    <div class="modal-field"><span class="lbl">Conductor:</span> <span>${ev.driver}</span></div>
-                    <div class="modal-field"><span class="lbl">Destino / Área:</span> <span>${ev.destination}</span></div>
-                    <div class="modal-field highlight-field"><span class="lbl">Cantidad Despachada:</span> <strong class="qty-val">${ev.gallons} Galones</strong></div>
+                    <div class="modal-field"><span class="lbl">${isIncome ? 'N° Lote/Ingreso:' : 'N° Vale:'}</span> <strong>${ev.title}</strong></div>
+                    <div class="modal-field"><span class="lbl">${isIncome ? 'Tipo Combustible:' : 'Vehículo / Placa:'}</span> <strong>${ev.vehicle}</strong></div>
+                    <div class="modal-field"><span class="lbl">${isIncome ? 'Proveedor / Grifo:' : 'Conductor:'}</span> <span>${ev.driver}</span></div>
+                    <div class="modal-field"><span class="lbl">${isIncome ? 'Almacén / Destino:' : 'Destino / Área:'}</span> <span>${ev.destination}</span></div>
+                    <div class="modal-field highlight-field"><span class="lbl">${isIncome ? 'Cantidad Ingresada:' : 'Cantidad Despachada:'}</span> <strong class="qty-val">${ev.gallons} Galones</strong></div>
                 </div>
             </div>
         `;
