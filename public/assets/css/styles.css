@@ -603,6 +603,12 @@ tbody tr:hover {
     flex-wrap: wrap;
 }
 
+.badge-stock {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+    font-weight: 700 !important;
+}
+
 .widget-footer {
     margin-top: auto;
 }
@@ -1580,4 +1586,161 @@ tbody tr:hover {
 .auth-footer a {
     font-weight: 700;
     margin-left: 4px;
-}
+}
+
+/* =========================================================
+   DARK MODE ENHANCEMENTS FOR HIGH CONTRAST TEXT & ELEMENTS
+   ========================================================= */
+[data-theme="dark"] {
+    --card-bg: #1e293b;
+    --text-color: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --input-bg: #0f172a;
+}
+
+[data-theme="dark"] body {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] label,
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] td,
+[data-theme="dark"] li,
+[data-theme="dark"] strong {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .subtitle,
+[data-theme="dark"] .section-desc,
+[data-theme="dark"] .stat-body span,
+[data-theme="dark"] .event-sub,
+[data-theme="dark"] th {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] th {
+    background: #0f172a !important;
+    border-bottom-color: #334155 !important;
+}
+
+[data-theme="dark"] tbody tr:hover {
+    background-color: #334155 !important;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] option {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .receipt-tag {
+    background: #334155 !important;
+    color: #38bdf8 !important;
+    border-color: #475569 !important;
+}
+
+[data-theme="dark"] .quantity-highlight {
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .widget-event-item {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .widget-event-item:hover {
+    background: #334155 !important;
+    border-color: #3b82f6 !important;
+}
+
+[data-theme="dark"] .calendar-day {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .calendar-day.other-month {
+    background: #0f172a !important;
+    opacity: 0.4;
+}
+
+[data-theme="dark"] .calendar-day.is-today {
+    background: #1e3a8a !important;
+    border-color: #3b82f6 !important;
+}
+
+[data-theme="dark"] #fuelTypeBadgeBox {
+    background: rgba(3, 105, 161, 0.4) !important;
+    border-color: #0284c7 !important;
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] #fuelTypeNameText {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .tanks-level-section {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .tanks-level-section h2 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .tanks-level-section p {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .tanks-level-section [style*="background: var(--bg-body"],
+[data-theme="dark"] .tanks-level-section [style*="background: var(--bg-body, #f8fafc)"] {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .tanks-level-section [style*="background: #e2e8f0"] {
+    background: #334155 !important;
+}
+
+[data-theme="dark"] .tanks-level-section [style*="background: #e0f2fe"] {
+    background: rgba(3, 105, 161, 0.4) !important;
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .chart-view-switcher {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .switcher-btn {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .switcher-btn.active {
+    background: #1e293b !important;
+    color: #38bdf8 !important;
+}
+
+
+

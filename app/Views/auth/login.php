@@ -24,7 +24,7 @@
                 <label for="email">Correo Electrónico</label>
                 <div class="input-with-icon">
                     <svg class="input-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                    <input type="email" id="email" name="email" placeholder="ejemplo@muni.gob.pe" required autocomplete="email">
+                    <input type="email" id="email" name="email" placeholder="ejemplo@muni.gob.pe" required maxlength="60" autocomplete="email">
                 </div>
             </div>
 
@@ -32,7 +32,7 @@
                 <label for="password">Contraseña</label>
                 <div class="input-with-icon">
                     <svg class="input-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+                    <input type="password" id="password" name="password" placeholder="••••••••" required maxlength="50" autocomplete="current-password">
                 </div>
             </div>
 

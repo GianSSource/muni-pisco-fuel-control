@@ -19,12 +19,23 @@
         <a class="brand" href="<?= BASE_URL ?>dashboard"><?= APP_NAME ?></a>
         <div class="topbar-right" style="display: flex; align-items: center; gap: 16px;">
             <?php if ($isLoggedIn): ?>
-                <nav>
+                <?php 
+                    $userRole = strtolower((string)($_SESSION['user']['role'] ?? $_SESSION['user']['rol'] ?? 'operador')); 
+                    $roleColor = match($userRole) {
+                        'admin', 'administrador' => '#ef4444',
+                        'supervisor' => '#8b5cf6',
+                        default => '#3b82f6'
+                    };
+                ?>
+                <nav style="display: flex; align-items: center; gap: 12px;">
                     <a href="<?= BASE_URL ?>dashboard">Panel</a>
                     <a href="<?= BASE_URL ?>despachos">Despachos</a>
+                    <a href="<?= BASE_URL ?>ingresos">Ingresos</a>
                     <a href="<?= BASE_URL ?>calendario">Calendario</a>
-                    <a href="<?= BASE_URL ?>clientes">Clientes</a>
-                    <a href="<?= BASE_URL ?>proyectos">Proyectos</a>
+                    <a href="<?= BASE_URL ?>admin/catalogos">⚙️ Catálogos</a>
+                    <span style="font-size: 12px; padding: 3px 8px; border-radius: 12px; font-weight: 700; background: <?= $roleColor ?>; color: #ffffff;">
+                        <?= htmlspecialchars($_SESSION['user']['name'] ?? 'Usuario') ?> (<?= strtoupper($userRole) ?>)
+                    </span>
                     <a href="<?= BASE_URL ?>logout">Salir</a>
                 </nav>
             <?php endif; ?>

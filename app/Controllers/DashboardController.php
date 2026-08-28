@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Models\Client;
 use App\Models\Fuel;
-use App\Models\Project;
 
 final class DashboardController extends Controller
 {
@@ -16,7 +14,6 @@ final class DashboardController extends Controller
         $this->requireAuth();
 
         $fuelModel = new Fuel();
-        $projectModel = new Project();
 
         $metrics = $fuelModel->getDashboardMetrics();
         $ultimasEntregas = $fuelModel->getLatestDeliveries(6);
@@ -25,12 +22,18 @@ final class DashboardController extends Controller
         $yearlyFuel = $fuelModel->getYearlyFuelDispatched();
         $areaFuel = $fuelModel->getFuelDispatchedByArea();
         $typeFuel = $fuelModel->getFuelDispatchedByType();
+        $stockByFuelType = $fuelModel->getStockByFuelType();
+        $tankLevels = $fuelModel->getTankLevels();
 
-        $fuelEvents = $fuelModel->getDeliveryEvents();
-        $projectEvents = $projectModel->getDeliveryEvents();
-        $calendarEvents = array_merge($fuelEvents, $projectEvents);
+        $calendarEvents = $fuelModel->getDeliveryEvents();
 
         usort($calendarEvents, static fn($a, $b) => strcmp($a['date'], $b['date']));
+
+        $uniquePlates = $fuelModel->getUniqueVehicles();
+        $uniqueDrivers = $fuelModel->getUniqueDrivers();
+
+        $catalog = new \App\Models\Catalog();
+        $catalogAreas = $catalog->getAreas();
 
         $this->view('dashboard/index', [
             'title' => 'Dashboard General',
@@ -45,9 +48,12 @@ final class DashboardController extends Controller
             'yearlyFuel' => $yearlyFuel,
             'areaFuel' => $areaFuel,
             'typeFuel' => $typeFuel,
+            'stockByFuelType' => $stockByFuelType,
+            'tankLevels' => $tankLevels,
             'calendarEvents' => $calendarEvents,
-            'clientsCount' => count((new Client())->all()),
-            'projectsCount' => count((new Project())->all()),
+            'uniquePlates' => $uniquePlates,
+            'uniqueDrivers' => $uniqueDrivers,
+            'catalogAreas' => $catalogAreas,
         ]);
     }
-}
+}
