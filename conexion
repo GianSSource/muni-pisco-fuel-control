@@ -1,0 +1,5 @@
+Correr el servidor con:
+php -S localhost:8000 -t public
+
+Si sale error pon esto:
+ C:\xampp\php\php.exe -S localhost:8000 -t public

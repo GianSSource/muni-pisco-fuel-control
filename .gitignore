@@ -1,0 +1,44 @@
+# ==========================================
+# 1. Configuración Local y Credenciales
+# ==========================================
+.env
+.env.local
+config.local.php
+config/db.php
+
+# ==========================================
+# 2. Base de Datos y Backups (SI / NO)
+# ==========================================
+*.sql
+*.sqlite
+*.db
+*.bak
+
+# ==========================================
+# 3. Logs de Errores y Caché de PHP
+# ==========================================
+*.log
+error_log
+php_errors.log
+/logs/
+/cache/
+/tmp/
+
+# ==========================================
+# 4. Subida de Archivos por Usuarios
+# ==========================================
+/uploads/*
+!/uploads/.gitkeep
+
+# ==========================================
+# 5. Dependencias (Solo si usas Composer)
+# ==========================================
+/vendor/
+
+# ==========================================
+# 6. Archivos del Editor/IDE y Sistema
+# ==========================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
