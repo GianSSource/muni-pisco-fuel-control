@@ -35,7 +35,7 @@
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
-                    <input type="text" id="name" name="name" placeholder="Ej: Juan Pérez" required maxlength="35"
+                    <input type="text" id="name" name="name" placeholder="Ej: Juan Pérez" required maxlength="50"
                         autocomplete="name" oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
                 </div>
             </div>

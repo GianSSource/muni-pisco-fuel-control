@@ -309,7 +309,7 @@
     <section class="search-card" style="margin-bottom: 24px;">
         <div style="display: flex; gap: 12px; align-items: center;">
             <div style="position: relative; flex: 1;">
-                <input type="text" oninput="this.value = this.value.replace(/[^a-zA-Z0-9\-_/ñÑ]/g, '')"
+                <input type="text" oninput="this.value = this.value.replace(/[^a-zA-Z0-9\-_/ñÑáéíóúÁÉÍÓÚ\s.,]/g, '')"
                     id="incomeSearchInput" class="search-input-dark"
                     placeholder="Buscar por N° Recibo, Proveedor, Tipo de Combustible, Fecha..." maxlength="60">
             </div>

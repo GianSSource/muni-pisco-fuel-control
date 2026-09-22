@@ -186,11 +186,11 @@ final class AuthController extends Controller
         // pantalla protegida con requireAdmin().
         $role = 'operador';
 
-        if (mb_strlen($name) > 30 || mb_strlen($email) > 60 || mb_strlen($password) > 50) {
+        if (mb_strlen($name) > 50 || mb_strlen($email) > 60 || mb_strlen($password) > 50) {
             $this->view('auth/register', [
                 'title' => 'Registro',
                 'csrfToken' => $this->csrfToken(),
-                'error' => 'Los campos superan la longitud máxima permitida (Nombre max 30, Email max 60, Clave max 50).'
+                'error' => 'Los campos superan la longitud máxima permitida (Nombre max 50, Email max 60, Clave max 50).'
             ]);
             return;
         }

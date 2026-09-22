@@ -13,11 +13,11 @@ abstract class Controller
         $isPublicPage = str_starts_with($view, 'auth/');
         extract($data, EXTR_SKIP);
 
-        $viewPath = dirname(__DIR__) . '/views/' . $view . '.php';
+        $viewPath = dirname(__DIR__) . '/Views/' . $view . '.php';
 
-        require dirname(__DIR__) . '/views/layouts/header.php';
+        require dirname(__DIR__) . '/Views/layouts/header.php';
         require $viewPath;
-        require dirname(__DIR__) . '/views/layouts/footer.php';
+        require dirname(__DIR__) . '/Views/layouts/footer.php';
     }
 
     protected function redirect(string $path): never

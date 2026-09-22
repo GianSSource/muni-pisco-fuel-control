@@ -4,7 +4,7 @@
             <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0; color: var(--text-color, #1e293b);">
                 Gestión de Usuarios</h1>
             <p style="color: var(--text-muted, #64748b); margin-top: 4px; font-size: 0.95rem;">Crea cuentas y asigna
-                roles (operador, supervisor, administrador)</p>
+                roles (operador, supervisor, admin)</p>
         </div>
         <a href="<?= BASE_URL ?>dashboard"
             style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); color: inherit; text-decoration: none; font-size: 0.9rem; font-weight: 600;">
@@ -83,7 +83,7 @@
                 <select name="role" id="createUserRole" required style="display:none;">
                     <option value="operador" selected>Operador</option>
                     <option value="supervisor">Supervisor</option>
-                    <option value="admin">Administrador</option>
+                    <option value="admin">Admin</option>
                 </select>
             </div>
 
@@ -117,7 +117,7 @@
                     <?php
                         $roleClean = strtolower((string)$u['role']);
                         $roleColor = match ($roleClean) {
-                            'admin', 'administrador' => '#ef4444',
+                            'admin' => '#ef4444',
                             'supervisor' => '#8b5cf6',
                             default => '#3b82f6',
                         };
@@ -146,9 +146,9 @@
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
                                     <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
                                     <select name="role" id="roleSelect_<?= (int)$u['id'] ?>" required style="display:none;">
-                                        <option value="operador" <?= in_array($roleClean, ['operador']) ? 'selected' : '' ?>>Operador</option>
-                                        <option value="supervisor" <?= in_array($roleClean, ['supervisor']) ? 'selected' : '' ?>>Supervisor</option>
-                                        <option value="admin" <?= in_array($roleClean, ['admin', 'administrador']) ? 'selected' : '' ?>>Administrador</option>
+                                        <option value="operador" <?= $roleClean === 'operador' ? 'selected' : '' ?>>Operador</option>
+                                        <option value="supervisor" <?= $roleClean === 'supervisor' ? 'selected' : '' ?>>Supervisor</option>
+                                        <option value="admin" <?= $roleClean === 'admin' ? 'selected' : '' ?>>Admin</option>
                                     </select>
                                     <button type="submit"
                                         style="padding: 6px 12px; border-radius: 6px; background: #0284c7; color: #fff; border: none; font-weight: 600; font-size: 0.82rem; cursor: pointer; white-space: nowrap;">

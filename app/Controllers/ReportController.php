@@ -37,13 +37,14 @@ final class ReportController extends Controller
         // roles del README): requireSupervisor() ya permite admin también.
         $this->requireSupervisor();
 
-        $startDate = $_GET['desde'] ?? null;
-        $endDate = $_GET['hasta'] ?? null;
-        $vehicle = $_GET['unidad'] ?? null;
-        $driver = $_GET['responsable'] ?? null;
+        $startDate = !empty($_GET['desde']) ? trim((string) $_GET['desde']) : null;
+        $endDate = !empty($_GET['hasta']) ? trim((string) $_GET['hasta']) : null;
+        $vehicle = !empty($_GET['unidad']) ? trim((string) $_GET['unidad']) : null;
+        $driver = !empty($_GET['responsable']) ? trim((string) $_GET['responsable']) : null;
+        $area = !empty($_GET['area']) ? trim((string) $_GET['area']) : null;
 
         $fuelModel = new Fuel();
-        $deliveries = $fuelModel->getFilteredDeliveries($startDate, $endDate, $vehicle, $driver);
+        $deliveries = $fuelModel->getFilteredDeliveries($startDate, $endDate, $vehicle, $driver, $area);
 
         $pdf = new PdfReport();
         $pdf->title('REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE');
@@ -52,6 +53,9 @@ final class ReportController extends Controller
         $filterText = 'Filtros: ';
         $filterText .= !empty($startDate) ? "Desde: $startDate " : 'Desde: Inicio ';
         $filterText .= !empty($endDate) ? "Hasta: $endDate " : 'Hasta: Hoy ';
+        if (!empty($area)) {
+            $filterText .= "│ Área: $area ";
+        }
         if (!empty($vehicle)) {
             $filterText .= "│ Unidad: $vehicle ";
         }
@@ -102,13 +106,14 @@ final class ReportController extends Controller
     {
         $this->requireSupervisor();
 
-        $startDate = $_GET['desde'] ?? null;
-        $endDate = $_GET['hasta'] ?? null;
-        $vehicle = $_GET['unidad'] ?? null;
-        $driver = $_GET['responsable'] ?? null;
+        $startDate = !empty($_GET['desde']) ? trim((string) $_GET['desde']) : null;
+        $endDate = !empty($_GET['hasta']) ? trim((string) $_GET['hasta']) : null;
+        $vehicle = !empty($_GET['unidad']) ? trim((string) $_GET['unidad']) : null;
+        $driver = !empty($_GET['responsable']) ? trim((string) $_GET['responsable']) : null;
+        $area = !empty($_GET['area']) ? trim((string) $_GET['area']) : null;
 
         $fuelModel = new Fuel();
-        $deliveries = $fuelModel->getFilteredDeliveries($startDate, $endDate, $vehicle, $driver);
+        $deliveries = $fuelModel->getFilteredDeliveries($startDate, $endDate, $vehicle, $driver, $area);
 
         $filename = 'reporte-entregas-combustible-' . date('Ymd-His') . '.xls';
 
@@ -122,6 +127,9 @@ final class ReportController extends Controller
 
         $filterDesc = !empty($startDate) ? "Desde: $startDate " : 'Desde: Inicio ';
         $filterDesc .= !empty($endDate) ? "Hasta: $endDate " : 'Hasta: Hoy ';
+        if (!empty($area)) {
+            $filterDesc .= " | Área: $area";
+        }
         if (!empty($vehicle)) {
             $filterDesc .= " | Unidad: $vehicle";
         }

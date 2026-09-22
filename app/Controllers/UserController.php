@@ -36,7 +36,7 @@ final class UserController extends Controller
 
         // 1. Validar campos obligatorios y longitud mínima
         if (mb_strlen($name) < 3 || strlen($password) < 8) {
-            $this->redirect('admin/usuarios?error= Complete+los+datos+correctamente.+El+nombre+debe+tener+al+menos+3+caracteres+y+la+clave+8.');
+            $this->redirect('admin/usuarios?error=Complete+los+datos+correctamente.+El+nombre+debe+tener+al+menos+3+caracteres+y+la+clave+8.');
         }
 
         // 2. Validar sintaxis de correo electrónico
@@ -53,7 +53,7 @@ final class UserController extends Controller
         }
 
         // 4. Validar rol dentro de la lista de roles permitidos
-        $allowedRoles = ['operador', 'supervisor', 'administrador', 'admin'];
+        $allowedRoles = ['operador', 'supervisor', 'admin'];
         if (!in_array($role, $allowedRoles, true)) {
             $this->redirect('admin/usuarios?error=El+rol+seleccionado+no+es+valido.');
         }
@@ -84,7 +84,7 @@ final class UserController extends Controller
             $this->redirect('admin/usuarios?error=Usuario+invalido.');
         }
 
-        $allowedRoles = ['operador', 'supervisor', 'administrador', 'admin'];
+        $allowedRoles = ['operador', 'supervisor', 'admin'];
         if (!in_array($role, $allowedRoles, true)) {
             $this->redirect('admin/usuarios?error=El+rol+seleccionado+no+es+valido.');
         }

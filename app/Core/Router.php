@@ -26,7 +26,18 @@ final class Router
     public function dispatch(string $method, string $path): void
     {
        $path = $this->normalize(parse_url($path, PHP_URL_PATH) ?: '/');
-       $route =$this->routes[$method][$path] ?? null;
+
+       // Si el método HTTP no está entre los registrados (GET/POST),
+       // responder 405 Method Not Allowed en lugar de provocar un
+       // "Undefined array key" warning al acceder a $this->routes[$method].
+       if (!isset($this->routes[$method])) {
+           http_response_code(405);
+           header('Allow: ' . implode(', ', array_keys($this->routes)));
+           echo 'Método no permitido.';
+           return;
+       }
+
+       $route = $this->routes[$method][$path] ?? null;
        
        if($route === null){
         http_response_code(404);

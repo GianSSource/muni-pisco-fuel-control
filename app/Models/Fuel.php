@@ -970,13 +970,14 @@ final class Fuel
         return $tanks;
     }
 
-    public function getFilteredDeliveries(?string $startDate = null, ?string $endDate = null, ?string $vehicle = null, ?string $driver = null, ?int $limit = null): array
+    public function getFilteredDeliveries(?string $startDate = null, ?string $endDate = null, ?string $vehicle = null, ?string $driver = null, ?string $destination = null, ?int $limit = null): array
     {
         $filters = [
             'date_from' => $startDate,
             'date_to' => $endDate,
             'vehicle' => $vehicle,
             'driver' => $driver,
+            'destination' => $destination,
         ];
 
         $deliveries = $this->searchDeliveries($filters);

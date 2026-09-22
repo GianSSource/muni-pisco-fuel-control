@@ -481,7 +481,7 @@
             tr.onclick = () => openDetailModal(d);
 
             const gallonsFormatted = parseFloat(d.gallons).toFixed(2);
-            const dateObj = new Date(d.created_at);
+            const dateObj = new Date(String(d.created_at || '').replace(' ', 'T'));
             const dateStr = !isNaN(dateObj) 
                 ? `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`
                 : d.created_at;
@@ -519,7 +519,7 @@
 
     function openDetailModal(d) {
         const body = document.getElementById("dispatchModalBody");
-        const dateObj = new Date(d.created_at);
+        const dateObj = new Date(String(d.created_at || '').replace(' ', 'T'));
         const dateStr = !isNaN(dateObj) ? dateObj.toLocaleString('es-PE') : d.created_at;
 
         const vehicleUnitText = d.vehicle_unit_code && d.vehicle_unit_code !== '-' ? ` (${escapeHtml(d.vehicle_unit_code)})` : '';
