@@ -45,15 +45,12 @@ final class FuelController extends Controller
 
         $deliveries = $fuelModel->searchDeliveries($filters, $limit, $offset);
 
-        // Obtener todos para llenar listas de autosugerencias/filtros
-        $allDeliveries = $fuelModel->searchDeliveries([]);
-        $vehicles = array_unique(array_filter(array_column($allDeliveries, 'vehicle_plate')));
-        $drivers = array_unique(array_filter(array_column($allDeliveries, 'driver_name')));
-        $destinations = array_unique(array_filter(array_column($allDeliveries, 'destination')));
-
-        sort($vehicles);
-        sort($drivers);
-        sort($destinations);
+        // Valores únicos para los filtros: se obtienen con SELECT DISTINCT
+        // directamente en BD (O(n) solo sobre la columna indexada), en vez de
+        // cargar toda la tabla en memoria PHP para luego hacer array_unique.
+        $vehicles     = $fuelModel->getUniqueVehicles();
+        $drivers      = $fuelModel->getUniqueDrivers();
+        $destinations = $fuelModel->getUniqueDestinations();
 
         // Tipos de combustible: se toman del catálogo (system_catalogs),
         // no de una lista fija, para que cualquier tipo agregado en
@@ -65,9 +62,10 @@ final class FuelController extends Controller
         }
         // Por si algún despacho quedó con un fuel_type que ya no está en
         // el catálogo activo, lo agregamos igual para no "esconderlo".
-        $usedFuelTypes = array_unique(array_filter(array_column($allDeliveries, 'fuel_type')));
+        $usedFuelTypes = $fuelModel->getUniqueFuelTypes();
         $fuelTypes = array_values(array_unique(array_merge($fuelTypes, $usedFuelTypes)));
         sort($fuelTypes);
+
 
         // Métricas de los resultados filtrados
         $avgGallons = $count > 0 ? $totalGallons / $count : 0;

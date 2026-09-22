@@ -23,7 +23,7 @@ final class DashboardController extends Controller
         $areaFuel = $fuelModel->getFuelDispatchedByArea();
         $typeFuel = $fuelModel->getFuelDispatchedByType();
         $stockByFuelType = $fuelModel->getStockByFuelType();
-        $tankLevels = $fuelModel->getTankLevels();
+
 
         $calendarEvents = $fuelModel->getDeliveryEvents();
 
@@ -55,7 +55,6 @@ final class DashboardController extends Controller
             'areaFuel' => $areaFuel,
             'typeFuel' => $typeFuel,
             'stockByFuelType' => $stockByFuelType,
-            'tankLevels' => $tankLevels,
             'calendarEvents' => $calendarEvents,
             'uniquePlates' => $uniquePlates,
             'uniqueDrivers' => $uniqueDrivers,

@@ -441,62 +441,7 @@
     </section>
 
 
-    <!-- Nivel de Tanques y Depósitos de Combustible -->
-    <section class="tanks-level-section"
-        style="margin-bottom: 24px; background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0); padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <div>
-                <h2
-                    style="font-size: 1.15rem; font-weight: 700; margin: 0; color: var(--text-color, #1e293b); display: flex; align-items: center; gap: 8px;">
-                    <svg class="ui-icon">
-                        <use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use>
-                    </svg>Nivel de Tanques y Depósitos Generales
-                </h2>
-                <p style="font-size: 0.85rem; color: var(--text-muted, #64748b); margin-top: 4px;">Porcentaje de volumen
-                    actual y capacidad nominal por tipo de unidad/depósito</p>
-            </div>
-            <span
-                style="font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: #38bdf8; color: #000000;">
-                Monitoreo en Tiempo Real
-            </span>
-        </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-            <?php if (!empty($tankLevels)): ?>
-                <?php foreach ($tankLevels as $tank): ?>
-                    <?php $isEmpty = !empty($tank['is_empty']); ?>
-                    <div
-                        style="background: var(--bg-body, #f8fafc); border-radius: 10px; border: 1px solid <?= $isEmpty ? '#dc2626' : 'var(--border-color, #cbd5e1)' ?>; <?= $isEmpty ? 'box-shadow: 0 0 0 1px rgba(220,38,38,0.35);' : '' ?> padding: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span
-                                style="font-size: 0.9rem; font-weight: 700; color: var(--text-color, #0f172a);"><?= $isEmpty ? '<svg class="ui-icon" aria-label="Alerta"><use href="' . BASE_URL . 'assets/icons.svg#icon-alert"></use></svg> ' : '' ?><?= htmlspecialchars($tank['name']) ?></span>
-                            <span
-                                style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: <?= $tank['status_color'] ?>; color: #000000;">
-                                <?= htmlspecialchars($tank['status_text']) ?>
-                            </span>
-                        </div>
-
-                        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px;">
-                            <strong style="font-size: 1.6rem; font-weight: 800; color: <?= $tank['status_color'] ?>;">
-                                <?= $tank['percentage'] ?>%
-                            </strong>
-                            <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #64748b);">
-                                <?= number_format($tank['current'], 1) ?> / <?= number_format($tank['capacity'], 0) ?> Gal
-                            </span>
-                        </div>
-
-                        <!-- Barra de Nivel Líquido -->
-                        <div
-                            style="width: 100%; height: 12px; border-radius: 6px; background: var(--line, #e2e8f0); overflow: hidden; position: relative;">
-                            <div
-                                style="width: <?= $tank['percentage'] ?>%; height: 100%; border-radius: 6px; background: linear-gradient(90deg, <?= $tank['status_color'] ?>, <?= $tank['status_color'] ?>dd); transition: width 0.6s ease;">
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
-    </section>
 
     <!-- Visualizaciones: Gráfico Dinámico Multivista, Gráfico Circular de Stock y Resumen del Calendario -->
     <section class="visuals-grid"

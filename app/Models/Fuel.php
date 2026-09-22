@@ -1116,6 +1116,30 @@ final class Fuel
         }
     }
 
+    public function getUniqueDestinations(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("SELECT DISTINCT destination FROM fuel_deliveries WHERE destination IS NOT NULL AND destination <> '' ORDER BY destination ASC");
+            $destinations = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            return $destinations ?: [];
+        } catch (Throwable $e) {
+            return [];
+        }
+    }
+
+    public function getUniqueFuelTypes(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("SELECT DISTINCT fuel_type FROM fuel_deliveries WHERE fuel_type IS NOT NULL AND fuel_type <> '' ORDER BY fuel_type ASC");
+            $types = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            return $types ?: [];
+        } catch (Throwable $e) {
+            return [];
+        }
+    }
+
     public function getAreaRelations(): array
     {
         $relations = [];
