@@ -980,13 +980,9 @@ final class Fuel
             'destination' => $destination,
         ];
 
-        $deliveries = $this->searchDeliveries($filters);
-
-        if ($limit !== null && $limit > 0) {
-            return array_slice($deliveries, 0, $limit);
-        }
-
-        return $deliveries;
+        // Se pasa el límite directo al SQL en vez de traer toda la BD y
+        // hacer array_slice en memoria PHP.
+        return $this->searchDeliveries($filters, $limit > 0 ? $limit : null);
     }
 
     /**
