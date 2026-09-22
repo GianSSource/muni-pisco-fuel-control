@@ -45,14 +45,15 @@ final class ReportController extends Controller
 
         $fuelModel = new Fuel();
         $deliveries = $fuelModel->getFilteredDeliveries($startDate, $endDate, $vehicle, $driver, $area);
+        $deliveries = array_reverse($deliveries);
 
         $pdf = new PdfReport();
         $pdf->title('REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE');
         $pdf->subtitle('Fecha de impresion: ' . date('d/m/Y H:i'));
 
         $filterText = 'Filtros: ';
-        $filterText .= !empty($startDate) ? "Desde: $startDate " : 'Desde: Inicio ';
-        $filterText .= !empty($endDate) ? "Hasta: $endDate " : 'Hasta: Hoy ';
+        $filterText .= !empty($startDate) ? "Desde: " . date('d/m/Y', strtotime($startDate)) . " " : 'Desde: Inicio ';
+        $filterText .= !empty($endDate) ? "Hasta: " . date('d/m/Y', strtotime($endDate)) . " " : 'Hasta: Hoy ';
         if (!empty($area)) {
             $filterText .= "│ Área: $area ";
         }
@@ -114,7 +115,11 @@ final class ReportController extends Controller
 
         $fuelModel = new Fuel();
         $deliveries = $fuelModel->getFilteredDeliveries($startDate, $endDate, $vehicle, $driver, $area);
+        $deliveries = array_reverse($deliveries);
 
+        // Se exporta como .xls, pero el contenido es XML Spreadsheet 2003
+        // oficial de Microsoft. Esto retiene el estilo visual (colores, negritas)
+        // SIN activar el recuadro de advertencia de formato.
         $filename = 'reporte-entregas-combustible-' . date('Ymd-His') . '.xls';
 
         header('Content-Type: application/vnd.ms-excel; charset=utf-8');
@@ -125,8 +130,8 @@ final class ReportController extends Controller
             $totalGalones += (float) $d['gallons'];
         }
 
-        $filterDesc = !empty($startDate) ? "Desde: $startDate " : 'Desde: Inicio ';
-        $filterDesc .= !empty($endDate) ? "Hasta: $endDate " : 'Hasta: Hoy ';
+        $filterDesc = !empty($startDate) ? "Desde: " . date('d/m/Y', strtotime($startDate)) . " " : 'Desde: Inicio ';
+        $filterDesc .= !empty($endDate) ? "Hasta: " . date('d/m/Y', strtotime($endDate)) . " " : 'Hasta: Hoy ';
         if (!empty($area)) {
             $filterDesc .= " | Área: $area";
         }
@@ -136,74 +141,86 @@ final class ReportController extends Controller
         if (!empty($driver)) {
             $filterDesc .= " | Conductor: $driver";
         }
+        
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<?mso-application progid="Excel.Sheet"?>' . "\n";
+        $xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ';
+        $xml .= 'xmlns:o="urn:schemas-microsoft-com:office:office" ';
+        $xml .= 'xmlns:x="urn:schemas-microsoft-com:office:excel" ';
+        $xml .= 'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" ';
+        $xml .= 'xmlns:html="http://www.w3.org/TR/REC-html40">' . "\n";
+        
+        // Estilos CSS traducidos a XML Spreadsheet
+        $xml .= '<Styles>' . "\n";
+        $xml .= ' <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Bottom"/><Borders/><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/><Interior/><NumberFormat/><Protection/></Style>' . "\n";
+        $xml .= ' <Style ss:ID="Header1"><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="14" ss:Color="#0F172A" ss:Bold="1"/></Style>' . "\n";
+        $xml .= ' <Style ss:ID="Header2"><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="10" ss:Color="#64748B"/></Style>' . "\n";
+        $xml .= ' <Style ss:ID="Th"><Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="10" ss:Color="#0F172A" ss:Bold="1"/><Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/></Style>' . "\n";
+        $xml .= ' <Style ss:ID="Td"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="10" ss:Color="#334155"/></Style>' . "\n";
+        $xml .= ' <Style ss:ID="TdBold"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="10" ss:Color="#334155" ss:Bold="1"/></Style>' . "\n";
+        $xml .= ' <Style ss:ID="TdRight"><Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="10" ss:Color="#334155" ss:Bold="1"/></Style>' . "\n";
+        $xml .= ' <Style ss:ID="TdCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="10" ss:Color="#059669" ss:Bold="1"/></Style>' . "\n";
+        $xml .= ' <Style ss:ID="Total"><Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#93C5FD"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#93C5FD"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#93C5FD"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#93C5FD"/></Borders><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="11" ss:Color="#0284C7" ss:Bold="1"/><Interior ss:Color="#E0F2FE" ss:Pattern="Solid"/></Style>' . "\n";
+        $xml .= '</Styles>' . "\n";
+        
+        $xml .= '<Worksheet ss:Name="Entregas">' . "\n";
+        $xml .= ' <Table>' . "\n";
+        
+        // Anchos de columna
+        $xml .= '  <Column ss:Width="120"/>' . "\n";
+        $xml .= '  <Column ss:Width="120"/>' . "\n";
+        $xml .= '  <Column ss:Width="100"/>' . "\n";
+        $xml .= '  <Column ss:Width="160"/>' . "\n";
+        $xml .= '  <Column ss:Width="150"/>' . "\n";
+        $xml .= '  <Column ss:Width="100"/>' . "\n";
+        $xml .= '  <Column ss:Width="100"/>' . "\n";
+        $xml .= '  <Column ss:Width="160"/>' . "\n";
 
-        echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
-        echo '<head><meta charset="utf-8"><style>';
-        echo 'body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; margin: 20px; }';
-        echo 'table { border-collapse: collapse; width: 100%; margin-top: 15px; }';
-        echo 'th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; border: 1px solid #cbd5e1; padding: 12px 10px; font-size: 13px; text-align: left; }';
-        echo 'td { border: 1px solid #cbd5e1; padding: 10px; color: #334155; font-size: 13px; }';
-        echo '.tr-even { background-color: #f8fafc; }';
-        echo '.receipt-code { font-weight: bold; color: #2563eb; background-color: #eff6ff; padding: 4px 8px; border-radius: 4px; display: inline-block; }';
-        echo '.status-tag { color: #059669; font-weight: bold; background-color: #d1fae5; padding: 4px 10px; border-radius: 12px; display: inline-block; }';
-        echo '.total-row td { background-color: #e0f2fe; color: #0369a1; font-weight: bold; font-size: 15px; padding: 14px 10px; border: 2px solid #93c5fd; }';
-        echo '</style></head><body>';
+        // Títulos
+        $xml .= '  <Row ss:Height="20">' . "\n";
+        $xml .= '   <Cell ss:StyleID="Header1"><Data ss:Type="String">REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE</Data></Cell>' . "\n";
+        $xml .= '  </Row>' . "\n";
+        
+        $xml .= '  <Row ss:Height="15">' . "\n";
+        $xml .= '   <Cell ss:StyleID="Header2"><Data ss:Type="String">Fecha de exportación: ' . date('d/m/Y H:i:s') . ' | ' . htmlspecialchars($filterDesc) . '</Data></Cell>' . "\n";
+        $xml .= '  </Row>' . "\n";
+        $xml .= '  <Row ss:Height="10"></Row>' . "\n";
 
-        echo '<h2 style="color: #0f172a; font-size: 20px; margin-bottom: 4px;">REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE</h2>';
-        echo '<p style="color: #64748b; font-size: 13px; margin-top: 0; margin-bottom: 20px;">Fecha de exportación: <strong>' . date('d/m/Y H:i:s') . '</strong> | ' . htmlspecialchars($filterDesc) . '</p>';
+        // Cabecera de la tabla
+        $xml .= '  <Row>' . "\n";
+        $headers = ['N° RECIBO / VALE', 'FECHA Y HORA', 'VEHÍCULO / PLACA', 'CONDUCTOR / RESPONSABLE', 'DESTINO / ÁREA', 'CANTIDAD (GAL)', 'ESTADO', 'OBSERVACIONES'];
+        foreach($headers as $h) {
+            $xml .= '   <Cell ss:StyleID="Th"><Data ss:Type="String">' . $h . '</Data></Cell>' . "\n";
+        }
+        $xml .= '  </Row>' . "\n";
 
-        echo '<table>';
-        echo '<colgroup>';
-        echo '<col width="160">';
-        echo '<col width="160">';
-        echo '<col width="140">';
-        echo '<col width="220">';
-        echo '<col width="200">';
-        echo '<col width="160">';
-        echo '<col width="140">';
-        echo '<col width="220">';
-        echo '</colgroup>';
-
-        echo '<thead>';
-        echo '<tr>';
-        echo '<th>N° RECIBO / VALE</th>';
-        echo '<th>FECHA Y HORA</th>';
-        echo '<th>VEHÍCULO / PLACA</th>';
-        echo '<th>CONDUCTOR / RESPONSABLE</th>';
-        echo '<th>DESTINO / ÁREA</th>';
-        echo '<th style="text-align: right;">CANTIDAD (GAL)</th>';
-        echo '<th style="text-align: center;">ESTADO</th>';
-        echo '<th>OBSERVACIONES</th>';
-        echo '</tr>';
-        echo '</thead>';
-        echo '<tbody>';
-
-        $i = 0;
+        // Filas de datos
         foreach ($deliveries as $d) {
             $cant = (float) $d['gallons'];
-            $rowClass = ($i++ % 2 === 0) ? '' : 'tr-even';
-
-            echo '<tr class="' . $rowClass . '">';
-            echo '<td><span class="receipt-code">' . htmlspecialchars($d['receipt_number']) . '</span></td>';
-            echo '<td>' . date('d/m/Y H:i', strtotime($d['created_at'])) . '</td>';
-            echo '<td><strong>' . htmlspecialchars(mb_substr($d['vehicle_plate'], 0, 7)) . '</strong></td>';
-            echo '<td>' . htmlspecialchars($d['driver_name']) . '</td>';
-            echo '<td>' . htmlspecialchars($d['destination'] ?? 'General') . '</td>';
-            echo '<td style="text-align: right;"><strong>' . number_format($cant, 2) . ' Gal</strong></td>';
-            echo '<td style="text-align: center;"><span class="status-tag">' . htmlspecialchars($d['status'] ?? 'Completado') . '</span></td>';
-            echo '<td>' . htmlspecialchars($d['notes'] ?? '') . '</td>';
-            echo '</tr>';
+            $xml .= '  <Row>' . "\n";
+            $xml .= '   <Cell ss:StyleID="TdBold"><Data ss:Type="String">' . htmlspecialchars($d['receipt_number']) . '</Data></Cell>' . "\n";
+            $xml .= '   <Cell ss:StyleID="Td"><Data ss:Type="String">' . date('d/m/Y H:i', strtotime($d['created_at'])) . '</Data></Cell>' . "\n";
+            $xml .= '   <Cell ss:StyleID="TdBold"><Data ss:Type="String">' . htmlspecialchars(mb_substr($d['vehicle_plate'], 0, 7)) . '</Data></Cell>' . "\n";
+            $xml .= '   <Cell ss:StyleID="Td"><Data ss:Type="String">' . htmlspecialchars($d['driver_name']) . '</Data></Cell>' . "\n";
+            $xml .= '   <Cell ss:StyleID="Td"><Data ss:Type="String">' . htmlspecialchars($d['destination'] ?? 'General') . '</Data></Cell>' . "\n";
+            $xml .= '   <Cell ss:StyleID="TdRight"><Data ss:Type="Number">' . $cant . '</Data></Cell>' . "\n";
+            $xml .= '   <Cell ss:StyleID="TdCenter"><Data ss:Type="String">' . htmlspecialchars($d['status'] ?? 'Completado') . '</Data></Cell>' . "\n";
+            $xml .= '   <Cell ss:StyleID="Td"><Data ss:Type="String">' . htmlspecialchars($d['notes'] ?? '') . '</Data></Cell>' . "\n";
+            $xml .= '  </Row>' . "\n";
         }
 
-        // Cuadro de Resumen Final Destacado en Grande
-        echo '<tr class="total-row">';
-        echo '<td colspan="4" style="text-align: left; font-size: 15px; letter-spacing: 0.5px;">TOTAL GENERAL DESPACHADO:</td>';
-        echo '<td style="text-align: right; font-size: 16px; font-weight: bold; color: #0284c7;">' . number_format($totalGalones, 2) . ' Galones</td>';
-        echo '<td colspan="3" style="text-align: center; font-size: 15px; font-weight: bold; color: #0369a1;">' . count($deliveries) . ' Entregas Registradas</td>';
-        echo '</tr>';
+        // Fila de resumen total
+        $xml .= '  <Row>' . "\n";
+        $xml .= '   <Cell ss:MergeAcross="4" ss:StyleID="Total"><Data ss:Type="String">TOTAL GENERAL DESPACHADO:</Data></Cell>' . "\n";
+        $xml .= '   <Cell ss:StyleID="Total"><Data ss:Type="Number">' . $totalGalones . '</Data></Cell>' . "\n";
+        $xml .= '   <Cell ss:MergeAcross="1" ss:StyleID="Total"><Data ss:Type="String">' . count($deliveries) . ' Entregas Registradas</Data></Cell>' . "\n";
+        $xml .= '  </Row>' . "\n";
 
-        echo '</tbody></table>';
-        echo '</body></html>';
+        $xml .= ' </Table>' . "\n";
+        $xml .= '</Worksheet>' . "\n";
+        $xml .= '</Workbook>' . "\n";
+
+        echo $xml;
         exit;
     }
 }

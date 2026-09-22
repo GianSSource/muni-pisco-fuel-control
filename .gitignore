@@ -42,3 +42,4 @@ php_errors.log
 .idea/
 .DS_Store
 Thumbs.db
+/config/config.local.php

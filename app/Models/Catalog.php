@@ -82,7 +82,6 @@ final class Catalog
 
     public function getByCategory(string $category): array
     {
-        self::ensureTableExists();
         try {
             $db = Database::getConnection();
             $stmt = $db->prepare("SELECT * FROM system_catalogs WHERE category = :cat AND status = 'activo' ORDER BY name ASC");
@@ -131,7 +130,6 @@ final class Catalog
 
     public function create(string $category, string $name): bool
     {
-        self::ensureTableExists();
         $name = trim($name);
         if ($name === '')
             return false;
@@ -147,7 +145,6 @@ final class Catalog
 
     public function delete(int $id): bool
     {
-        self::ensureTableExists();
         try {
             $db = Database::getConnection();
             $stmt = $db->prepare("UPDATE system_catalogs SET status = 'inactivo' WHERE id = :id");

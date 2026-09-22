@@ -17,8 +17,6 @@ final class IncomeController extends Controller
 
         $incomes = [];
         try {
-            (new \App\Models\Fuel())->recalculateStockBalances();
-
             $db = Database::getConnection();
             $stmt = $db->query('SELECT * FROM fuel_incomes ORDER BY created_at DESC');
             $incomes = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -96,47 +94,6 @@ final class IncomeController extends Controller
         try {
             $db = Database::getConnection();
 
-            // Auto-crear tabla fuel_incomes si no existe (ya sin unit_price:
-            // el proyecto no maneja precio por galón)
-            $db->exec('CREATE TABLE IF NOT EXISTS fuel_incomes (
-                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                user_id INT UNSIGNED NULL,
-                supplier VARCHAR(160) NOT NULL,
-                fuel_type VARCHAR(80) NOT NULL DEFAULT "Diesel B5 S-50",
-                gallons DECIMAL(10,2) NOT NULL DEFAULT 0,
-                gallons_remaining DECIMAL(10,2) NOT NULL DEFAULT 0,
-                receipt_number VARCHAR(80) NOT NULL UNIQUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB');
-
-            // Si la tabla venía de una instalación previa con unit_price, se
-            // elimina la columna (y su CHECK) para que no quede dato muerto.
-            try {
-                $db->exec('ALTER TABLE fuel_incomes DROP CONSTRAINT chk_incomes_price');
-            } catch (Throwable $t) {
-            }
-            try {
-                $db->exec('ALTER TABLE fuel_incomes DROP COLUMN unit_price');
-            } catch (Throwable $t) {
-            }
-
-            // Asegurar columna fuel_type si la tabla fue creada previamente sin ella
-            try {
-                $db->exec('ALTER TABLE fuel_incomes ADD COLUMN fuel_type VARCHAR(80) NOT NULL DEFAULT "Diesel B5 S-50"');
-            } catch (Throwable $t) {
-            }
-
-            // Asegurar columna invoice_number si la tabla fue creada previamente sin ella
-            try {
-                $db->exec('ALTER TABLE fuel_incomes ADD COLUMN invoice_number VARCHAR(40) NULL');
-            } catch (Throwable $t) {
-            }
-
-            // Genera el siguiente número de recibo SECUENCIAL usando un
-            // contador atómico (ver Database::nextSequence) en vez de
-            // "leer el último y sumar 1", que fallaba en el primer
-            // ingreso registrado en el sistema.
             // IMPORTANTE: la tabla del contador se asegura ANTES de abrir
             // la transacción (CREATE TABLE es DDL y en MySQL haría un
             // COMMIT implícito si se ejecutara ya dentro de ella).

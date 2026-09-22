@@ -84,6 +84,18 @@ final class Vehicle
         }
     }
 
+    public function existsByPlateOrCode(string $plate, string $unitCode): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("SELECT 1 FROM vehicles WHERE plate = :plate OR unit_code = :unit_code LIMIT 1");
+            $stmt->execute(['plate' => $plate, 'unit_code' => $unitCode]);
+            return (bool) $stmt->fetchColumn();
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
     public function create(string $unitCode, string $plate, ?int $areaId, ?int $vehicleTypeId = null): bool
     {
         self::ensureTableExists();

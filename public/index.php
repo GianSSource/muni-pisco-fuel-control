@@ -13,6 +13,9 @@ use App\Core\Router;
 
 require dirname(__DIR__) . '/config/config.php';
 
+// Configurar zona horaria de Perú
+date_default_timezone_set('America/Lima');
+
 // Cookie de sesión endurecida: HttpOnly evita que JS lea la cookie (XSS no
 // puede robar la sesión), SameSite=Lax mitiga CSRF básico, Secure solo se
 // activa si la petición ya llega por HTTPS (para no romper el entorno de
@@ -41,6 +44,9 @@ spl_autoload_register(static function (string $class): void {
 
     if (is_file($path)) {
         require $path;
+    } else {
+        error_log("Autoloader: Class file not found for '$class' at '$path'");
+        throw new \Exception("Clase '$class' no encontrada. Verifique el namespace y el nombre del archivo en: $path");
     }
 });
 error_reporting(E_ALL);

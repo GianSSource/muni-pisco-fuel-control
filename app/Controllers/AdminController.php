@@ -68,6 +68,10 @@ final class AdminController extends Controller
             $this->redirect('admin/catalogos?error=Solo+se+permiten+letras,+numeros+y+guiones+(sin+espacios+ni+otros+simbolos)');
         }
 
+        if ($this->vehicle->existsByPlateOrCode($plate, $unitCode)) {
+            $this->redirect('admin/catalogos?error=La+placa+o+el+codigo+de+unidad+ya+se+encuentran+registrados');
+        }
+
         if ($this->vehicle->create($unitCode, $plate, $areaId, $vehicleTypeId)) {
             $this->redirect('admin/catalogos?success=Vehiculo+registrado+correctamente');
         } else {
@@ -103,6 +107,10 @@ final class AdminController extends Controller
         $allowedCategories = ['fuel_type', 'area', 'supplier', 'vehicle_type'];
         if (!in_array($category, $allowedCategories, true) || $name === '') {
             $this->redirect('admin/catalogos?error=Ingrese+un+nombre+valido+y+seleccione+una+categoria');
+        }
+
+        if ($this->catalog->existsInCategory($category, $name)) {
+            $this->redirect('admin/catalogos?error=Este+elemento+ya+existe+en+esa+categoria');
         }
 
         if ($this->catalog->create($category, $name)) {

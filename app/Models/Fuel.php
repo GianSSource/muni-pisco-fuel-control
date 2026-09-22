@@ -793,7 +793,8 @@ final class Fuel
                 FROM fuel_deliveries fd
                 LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
                 WHERE fd.status <> "Anulado"
-                GROUP BY fuel_type_name';
+                GROUP BY fuel_type_name
+                ORDER BY total_gallons DESC';
 
             $stmt = $db->query($sql);
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
