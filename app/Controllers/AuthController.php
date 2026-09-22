@@ -164,67 +164,28 @@ final class AuthController extends Controller
         $this->redirect('dashboard');
     }
     
-    public function showRegister():void
+    public function showRegister(): void
     {
-        if (!empty($_SESSION['user'])) {
-            $this->redirect('dashboard');
-        }
-
-        $this->view('auth/register', ['title' => 'Registro','csrfToken' => $this->csrfToken()]);
+        // Bug 17: El registro público está deshabilitado por seguridad.
+        // Las cuentas de usuario solo pueden ser creadas por un administrador
+        // desde el panel de administración (/admin/usuarios).
+        http_response_code(403);
+        $this->view('auth/login', [
+            'title'     => 'Acceso',
+            'csrfToken' => $this->csrfToken(),
+            'error'     => 'El registro público está deshabilitado. Contacta al administrador del sistema para solicitar una cuenta.',
+        ]);
     }
     public function register(): void
     {
-        $this->verifyCsrf();
-        $name = trim((string) ($_POST['name'] ?? ''));
-        $name = preg_replace('/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/u', '', $name);
-        $email = trim((string) ($_POST['email'] ?? ''));
-        $password = (string) ($_POST['password'] ?? '');
-        // El registro público siempre crea cuentas 'operador'.
-        // El rol enviado por el formulario se ignora a propósito: permitir que
-        // el propio usuario elija 'admin' u 'supervisor' aquí es una escalada
-        // de privilegios. Subir de rol a un usuario debe hacerse desde una
-        // pantalla protegida con requireAdmin().
-        $role = 'operador';
-
-        if (mb_strlen($name) > 50 || mb_strlen($email) > 60 || mb_strlen($password) > 50) {
-            $this->view('auth/register', [
-                'title' => 'Registro',
-                'csrfToken' => $this->csrfToken(),
-                'error' => 'Los campos superan la longitud máxima permitida (Nombre max 50, Email max 60, Clave max 50).'
-            ]);
-            return;
-        }
-
-        if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 8) {
-            $this->view('auth/register', [
-                'title' => 'Registro',
-                'csrfToken' => $this->csrfToken(),
-                'error' => 'Complete los datos correctamente. La clave debe tener al menos 8 caracteres.'
-            ]);
-            return;
-        }
-
-        if ((new User())->findByEmail($email) !== null) {
-            $this->view('auth/register', [
-                'title' => 'Registro',
-                'csrfToken' => $this->csrfToken(),
-                'error' => 'Ese correo ya está registrado. Intenta iniciar sesión.'
-            ]);
-            return;
-        }
-
-        $created = (new User())->create($name, $email, $password, $role);
-
-        if (!$created) {
-            $this->view('auth/register', [
-                'title' => 'Registro',
-                'csrfToken' => $this->csrfToken(),
-                'error' => 'No se pudo crear la cuenta. Intenta nuevamente.'
-            ]);
-            return;
-        }
-
-        $this->redirect('login');
+        // Bug 17: Registro público bloqueado. Si alguien llega por POST
+        // directamente (sin pasar por el formulario), también se bloquea.
+        http_response_code(403);
+        $this->view('auth/login', [
+            'title'     => 'Acceso',
+            'csrfToken' => $this->csrfToken(),
+            'error'     => 'El registro público está deshabilitado. Contacta al administrador del sistema.',
+        ]);
     }
     public function logout(): never
     {

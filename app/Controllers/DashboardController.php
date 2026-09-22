@@ -25,7 +25,10 @@ final class DashboardController extends Controller
         $stockByFuelType = $fuelModel->getStockByFuelType();
 
 
-        $calendarEvents = $fuelModel->getDeliveryEvents();
+        // Se limita a los últimos 90 días y 200 eventos para evitar que el
+        // Dashboard cargue todo el historial completo de la BD a medida que
+        // el sistema crece (Bug 20).
+        $calendarEvents = $fuelModel->getDeliveryEvents(90, 200);
 
         usort($calendarEvents, static fn($a, $b) => strcmp($b['date_time'] ?? $b['date'], $a['date_time'] ?? $a['date']));
 

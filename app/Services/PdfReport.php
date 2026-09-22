@@ -300,16 +300,28 @@ final class PdfReport
 
     private function sanitize(string $text): string
     {
-        if (mb_check_encoding($text, 'UTF-8')) {
-            $converted = @iconv('UTF-8', 'Windows-1252//TRANSLIT//IGNORE', $text);
-            if ($converted === false) {
-                $converted = @mb_convert_encoding($text, 'Windows-1252', 'UTF-8');
-            }
-        } else {
-            $converted = $text;
-        }
+        // Mapa explícito de caracteres UTF-8 frecuentes en español que iconv
+        // a veces pierde o transliterada de forma incorrecta al pasar a
+        // Windows-1252. Se aplica ANTES de la conversión para garantizar que
+        // ñ, tildes y diéresis siempre lleguen correctamente al PDF (Bug 24).
+        $map = [
+            'á' => "\xe1", 'é' => "\xe9", 'í' => "\xed", 'ó' => "\xf3", 'ú' => "\xfa",
+            'Á' => "\xc1", 'É' => "\xc9", 'Í' => "\xcd", 'Ó' => "\xd3", 'Ú' => "\xda",
+            'ñ' => "\xf1", 'Ñ' => "\xd1",
+            'ü' => "\xfc", 'Ü' => "\xdc",
+            'ä' => "\xe4", 'ë' => "\xeb", 'ï' => "\xef", 'ö' => "\xf6",
+            '¿' => "\xbf", '¡' => "\xa1",
+            '–' => '-',  '—' => '-', '"' => '"', '"' => '"', "'" => "'",
+        ];
 
-        $clean = ($converted !== false) ? $converted : $text;
+        // Reemplazar caracteres conocidos primero
+        $text = strtr($text, $map);
+
+        // Para cualquier carácter UTF-8 restante no cubierto por el mapa,
+        // intentar iconv y si falla, simplificar a ASCII básico.
+        $converted = @iconv('UTF-8', 'Windows-1252//TRANSLIT//IGNORE', $text);
+        $clean = ($converted !== false && $converted !== '') ? $converted : $text;
+
         return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $clean);
     }
 
