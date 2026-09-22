@@ -26,8 +26,14 @@ final class AuthController extends Controller
         $this->view('auth/login', ['title' => 'Acceso', 'csrfToken' => $this->csrfToken()]);
     }
 
+    private static bool $attemptsTableEnsured = false;
+
     private function ensureAttemptsTable(\PDO $db): void
     {
+        if (self::$attemptsTableEnsured) {
+            return;
+        }
+
         try {
             $db->exec('CREATE TABLE IF NOT EXISTS login_attempts (
                 identifier VARCHAR(191) NOT NULL PRIMARY KEY,
@@ -35,6 +41,7 @@ final class AuthController extends Controller
                 locked_until DATETIME NULL,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB');
+            self::$attemptsTableEnsured = true;
         } catch (\Throwable $e) {
         }
     }

@@ -10,11 +10,17 @@ use Throwable;
 
 final class Catalog
 {
+    private static bool $tableEnsured = false;
+
     /**
      * Asegura que la tabla de catálogos exista y contenga datos por defecto
      */
     public static function ensureTableExists(): void
     {
+        if (self::$tableEnsured) {
+            return;
+        }
+
         try {
             $db = Database::getConnection();
             $db->exec("CREATE TABLE IF NOT EXISTS system_catalogs (
@@ -76,6 +82,7 @@ final class Catalog
                         ('vehicle_type', 'Automóvil');");
                 }
             }
+            self::$tableEnsured = true;
         } catch (Throwable $e) {
         }
     }

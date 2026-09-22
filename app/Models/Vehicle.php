@@ -10,8 +10,14 @@ use Throwable;
 
 final class Vehicle
 {
+    private static bool $tableEnsured = false;
+
     public static function ensureTableExists(): void
     {
+        if (self::$tableEnsured) {
+            return;
+        }
+
         try {
             $db = Database::getConnection();
             $db->exec("CREATE TABLE IF NOT EXISTS vehicles (
@@ -30,13 +36,13 @@ final class Vehicle
                 $db->exec("ALTER TABLE vehicles ADD COLUMN vehicle_type_id INT UNSIGNED NULL AFTER area_id");
             } catch (Throwable $e) {}
 
-            // Por si la tabla ya existía con tamaños viejos (unit_code 40 / plate 20)
             try {
                 $db->exec("ALTER TABLE vehicles MODIFY unit_code VARCHAR(10) NOT NULL");
             } catch (Throwable $e) {}
             try {
                 $db->exec("ALTER TABLE vehicles MODIFY plate VARCHAR(7) NOT NULL");
             } catch (Throwable $e) {}
+            self::$tableEnsured = true;
         } catch (Throwable $e) {}
     }
 

@@ -15,34 +15,6 @@ final class Fuel
         try {
             $db = Database::getConnection();
 
-            // Auto-crear tablas base por resiliencia si la BD fuera nueva
-            $db->exec('CREATE TABLE IF NOT EXISTS fuel_incomes (
-                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                user_id INT UNSIGNED NULL,
-                supplier VARCHAR(160) NOT NULL,
-                gallons DECIMAL(10,2) NOT NULL DEFAULT 0,
-                gallons_remaining DECIMAL(10,2) NOT NULL DEFAULT 0,
-                receipt_number VARCHAR(80) NOT NULL UNIQUE,
-                notes VARCHAR(255) NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB');
-
-            $db->exec('CREATE TABLE IF NOT EXISTS fuel_deliveries (
-                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                fuel_income_id INT UNSIGNED NULL,
-                fuel_type VARCHAR(80) NULL,
-                user_id INT UNSIGNED NULL,
-                receipt_number VARCHAR(80) NOT NULL UNIQUE,
-                vehicle_plate VARCHAR(40) NOT NULL,
-                driver_name VARCHAR(120) NOT NULL,
-                gallons DECIMAL(10,2) NOT NULL DEFAULT 0,
-                destination VARCHAR(160) NULL,
-                notes VARCHAR(255) NULL,
-                status ENUM("Pendiente","Completado","Anulado") NOT NULL DEFAULT "Completado",
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB');
 
             // 1. Total de combustible ingresado
             $totalIngresado = 0.0;
