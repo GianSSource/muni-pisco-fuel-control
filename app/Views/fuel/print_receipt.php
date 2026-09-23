@@ -98,6 +98,8 @@
             text-align: center;
             border-radius: 6px;
             margin-bottom: 30px;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
         .quantity-box span {
@@ -118,6 +120,10 @@
             justify-content: space-between;
             margin-top: 50px;
             padding: 0 20px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            page-break-before: avoid;
+            break-before: avoid;
         }
 
         .signature-block {
@@ -141,6 +147,8 @@
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             overflow: hidden;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
         .lot-breakdown .lot-title {
