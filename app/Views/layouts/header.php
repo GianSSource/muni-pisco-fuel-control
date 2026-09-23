@@ -204,7 +204,10 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
                 </nav>
                 <div class="sidebar-footer">
                     <button id="themeToggleBtn" class="sidebar-utility" type="button"><svg class="theme-icon icon-sun ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-sun"></use></svg><svg class="theme-icon icon-moon ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-moon"></use></svg><span>Cambiar tema</span></button>
-                    <a href="<?= BASE_URL ?>logout" class="sidebar-utility sidebar-logout"><span>↪</span><span>Cerrar sesión</span></a>
+                    <form id="logoutForm" action="<?= BASE_URL ?>logout" method="post" style="display: none;">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken ?? $_SESSION['csrf_token'] ?? '') ?>">
+                    </form>
+                    <a href="#" onclick="event.preventDefault(); document.getElementById('logoutForm').submit();" class="sidebar-utility sidebar-logout"><span>↪</span><span>Cerrar sesión</span></a>
                 </div>
             </aside>
             <div class="sidebar-overlay" id="sidebarOverlay"></div>

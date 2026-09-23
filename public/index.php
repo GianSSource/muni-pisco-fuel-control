@@ -67,7 +67,7 @@ $router->post('/login', AuthController::class, 'login');
 $router->get('/registro', AuthController::class, 'showRegister');
 $router->post('/registro', AuthController::class, 'register');
 
-$router->get('/logout', AuthController::class, 'logout');
+$router->post('/logout', AuthController::class, 'logout');
 
 $router->get('/dashboard', DashboardController::class, 'index');
 

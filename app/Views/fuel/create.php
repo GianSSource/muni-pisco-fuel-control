@@ -173,7 +173,7 @@
 
             <div style="min-width: 0;">
                 <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Cantidad de
-                    Galones (Máx. 99,999.99)</label>
+                    Galones (Máx. 15,000.00)</label>
                 <input type="text" name="gallons" id="gallons" class="form-control-styled" required
                     placeholder="Ej: 30,000" maxlength="12"
                     oninput="limitarGalones(this); verificarCamposIncompletos();"
@@ -244,10 +244,20 @@
 
         // 2. Separa enteros y decimales para restringir límites
         let parts = val.split('.');
-        parts[0] = parts[0].slice(0, 5); // Máximo 5 enteros (hasta 99,999)
+        
+        if (parseFloat(parts[0]) > 15000) {
+            parts[0] = '15000';
+            parts[1] = undefined; // reset decimals if going over limit by typing
+        }
 
         if (parts[1] !== undefined) {
             parts[1] = parts[1].slice(0, 2); // Máximo 2 decimales
+            
+            // Check full value after decimal truncation
+            if (parseFloat(parts[0] + '.' + parts[1]) > 15000) {
+                parts[0] = '15000';
+                parts[1] = '00';
+            }
             input.value = parts[0] + '.' + parts[1];
         } else {
             input.value = parts[0];

@@ -23,7 +23,12 @@ final class AuthController extends Controller
             $this->redirect('dashboard');
         }
 
-        $this->view('auth/login', ['title' => 'Acceso', 'csrfToken' => $this->csrfToken()]);
+        $error = null;
+        if (($_GET['motivo'] ?? '') === 'inactividad') {
+            $error = 'Su sesión fue cerrada por inactividad (60 minutos sin actividad). Por favor, vuelva a ingresar.';
+        }
+
+        $this->view('auth/login', ['title' => 'Acceso', 'csrfToken' => $this->csrfToken(), 'error' => $error]);
     }
 
     private static bool $attemptsTableEnsured = false;
@@ -196,6 +201,7 @@ final class AuthController extends Controller
     }
     public function logout(): never
     {
+        $this->verifyCsrf();
         $_SESSION = [];
 
         if (ini_get('session.use_cookies')) {

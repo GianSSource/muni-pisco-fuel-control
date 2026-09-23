@@ -79,7 +79,8 @@ final class User
             if ($user) {
                 return $user;
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
             // Fallback
         }
 

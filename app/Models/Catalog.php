@@ -35,7 +35,8 @@ final class Catalog
             // Por si la tabla ya existía con el ENUM anterior (sin 'vehicle_type')
             try {
                 $db->exec("ALTER TABLE system_catalogs MODIFY category ENUM('fuel_type', 'area', 'supplier', 'vehicle_type') NOT NULL");
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
+            error_log($e->getMessage());
             }
 
             // Verificar si tiene registros, de lo contrario sembrar iniciales
@@ -83,7 +84,8 @@ final class Catalog
                 }
             }
             self::$tableEnsured = true;
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
         }
     }
 

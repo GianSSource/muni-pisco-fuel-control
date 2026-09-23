@@ -34,16 +34,20 @@ final class Vehicle
             // Por si la tabla ya existía sin la columna (instalaciones previas)
             try {
                 $db->exec("ALTER TABLE vehicles ADD COLUMN vehicle_type_id INT UNSIGNED NULL AFTER area_id");
-            } catch (Throwable $e) {}
+            } catch (\Throwable $e) {
+            error_log($e->getMessage());}
 
             try {
                 $db->exec("ALTER TABLE vehicles MODIFY unit_code VARCHAR(10) NOT NULL");
-            } catch (Throwable $e) {}
+            } catch (\Throwable $e) {
+            error_log($e->getMessage());}
             try {
                 $db->exec("ALTER TABLE vehicles MODIFY plate VARCHAR(7) NOT NULL");
-            } catch (Throwable $e) {}
+            } catch (\Throwable $e) {
+            error_log($e->getMessage());}
             self::$tableEnsured = true;
-        } catch (Throwable $e) {}
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());}
     }
 
     /**

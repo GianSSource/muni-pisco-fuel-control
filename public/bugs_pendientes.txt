@@ -1,0 +1,39 @@
+====================================================================
+BUGS PENDIENTES POR CORREGIR — SISTEMA DE CONTROL DE COMBUSTIBLE
+Municipalidad Provincial de Pisco
+Generado: 22/09/2026
+====================================================================
+
+--- ESTADO DE BUGS YA RESUELTOS PREVIAMENTE ---
+[RESUELTO] BUG-17: Registro publico de usuarios sin control (bloqueado con 403 Forbidden).
+[RESUELTO] BUG-14: DDL (CREATE TABLE) recurrente en getDashboardMetrics() de Fuel.php.
+[RESUELTO] BUG-15: DDL (CREATE TABLE) recurrente en cada login de AuthController.php.
+[RESUELTO] BUG-20: Limite de eventos historicos para Dashboard (90 dias/200 filas) y Calendario (120 dias/300 filas).
+[RESUELTO] BUG-24: Perdida de caracteres especiales/tildes en la generacion de reportes PDF.
+[RESUELTO] BUG-19: DDL masivo en cada creacion de usuario
+[RESUELTO] BUG-26: Cierre de sesion (Logout) mediante peticion GET en vez de POST+CSRF
+[RESUELTO] BUG-16: Sin validacion de limite maximo de galones en backend al despachar (Limite implementado: 15,000 galones)
+[DESCARTADO] BUG-21: Capacidades maximas de tanques hardcoded (sección de monitoreo de tanques ya no existe en el dashboard)
+[RESUELTO] BUG-22: Excepciones silenciosas en bloques catch — se agrego error_log($e->getMessage()) en 28 bloques de 4 modelos
+[RESUELTO] BUG-23: Sesiones sin expiracion por inactividad — implementado timeout de 60 minutos en Controller::requireAuth()
+
+====================================================================
+LISTA DE BUGS PENDIENTES POR CORREGIR (ORDENADOS POR PRIORIDAD)
+====================================================================
+
+- Archivo: app/Controllers/FuelController.php (linea 140)
+- Descripcion: El parametro $_GET['view'] se evalua sin una comprobacion previa
+  de valores permitidos (diario, mensual, anual, etc.). Si se manda un valor invalido,
+  simplemente cae al default sin responder un 400 Bad Request explicito.
+
+7. BUG-25: Router sin soporte para parametros dinamicos en URLs
+- Archivo: app/Core/Router.php
+- Descripcion: El enrutador solo maneja rutas estaticas exactas (ej. /despachos).
+  Las consultas individuales se resuelven mediante query string (?id=123)
+  en vez de rutas amigables tipo /despachos/{id}.
+
+
+
+====================================================================
+Fin del reporte de bugs pendientes.
+====================================================================

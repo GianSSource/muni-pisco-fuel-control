@@ -137,7 +137,16 @@ final class FuelController extends Controller
 
         header('Content-Type: application/json; charset=utf-8');
 
+        $allowedViews = ['diario', 'semanal', 'mensual', 'anual'];
         $view = trim((string) ($_GET['view'] ?? 'diario'));
+        if (!in_array($view, $allowedViews, true)) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => "Parametro 'view' inválido. Valores permitidos: " . implode(', ', $allowedViews)
+            ], JSON_UNESCAPED_UNICODE);
+            return;
+        }
         $stats = (new Fuel())->getFuelStats($view);
 
         $totalGallons = 0;
@@ -219,8 +228,8 @@ final class FuelController extends Controller
         $destination = trim((string) ($_POST['destination'] ?? ''));
         $notes = trim((string) ($_POST['notes'] ?? ''));
 
-        if ($fuelType === '' || $vehicleId <= 0 || $driver === '' || $gallons <= 0 || $destination === '') {
-            $this->redirect('despachos/nuevo?error=Complete+todos+los+campos+obligatorios');
+        if ($fuelType === '' || $vehicleId <= 0 || $driver === '' || $gallons <= 0 || $gallons > 15000 || $destination === '') {
+            $this->redirect('despachos/nuevo?error=Datos+invalidos+o+limite+de+15000+galones+excedido');
         }
 
         $vehicle = (new \App\Models\Vehicle())->findById($vehicleId);

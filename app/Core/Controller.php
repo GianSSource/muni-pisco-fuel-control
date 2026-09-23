@@ -26,11 +26,42 @@ abstract class Controller
         exit;
     }
 
+    // Tiempo máximo de inactividad permitido (en segundos). Tras este tiempo
+    // sin interacción, la sesión se cierra automáticamente para proteger
+    // estaciones de trabajo desatendidas.
+    private const SESSION_TIMEOUT = 3600; // 60 minutos
+
     protected function requireAuth(): void
     {
         if (empty($_SESSION['user'])) {
             $this->redirect('login');
         }
+
+        // Control de inactividad: si el usuario lleva más de SESSION_TIMEOUT
+        // segundos sin realizar ninguna petición, se cierra la sesión.
+        $now = time();
+        $lastActivity = $_SESSION['last_activity'] ?? $now;
+
+        if (($now - $lastActivity) > self::SESSION_TIMEOUT) {
+            // Limpiar sesión de forma segura
+            $_SESSION = [];
+            if (ini_get('session.use_cookies')) {
+                $cookie = session_get_cookie_params();
+                setcookie(
+                    session_name(), '',
+                    time() - 42000,
+                    $cookie['path'] ?? '/',
+                    $cookie['domain'] ?? '',
+                    (bool) ($cookie['secure'] ?? false),
+                    (bool) ($cookie['httponly'] ?? true)
+                );
+            }
+            session_destroy();
+            $this->redirect('login?motivo=inactividad');
+        }
+
+        // Renovar el timestamp en cada petición autenticada exitosa
+        $_SESSION['last_activity'] = $now;
     }
 
     protected function getUserRole(): string

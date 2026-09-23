@@ -25,7 +25,8 @@ final class Fuel
                 try {
                     $stmt = $db->query('SELECT COALESCE(SUM(cantidad), 0) AS total FROM ingresos_combustible');
                     $totalIngresado = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-                } catch (Throwable $t2) {
+                } catch (\Throwable $t2) {
+            error_log($t2->getMessage());
                 }
             }
 
@@ -38,7 +39,8 @@ final class Fuel
                 try {
                     $stmt = $db->query('SELECT COALESCE(SUM(cantidad_entregada), 0) AS total FROM recibos');
                     $totalEntregado = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-                } catch (Throwable $t2) {
+                } catch (\Throwable $t2) {
+            error_log($t2->getMessage());
                 }
             }
 
@@ -51,7 +53,8 @@ final class Fuel
                 try {
                     $stmt = $db->query('SELECT COALESCE(SUM(saldo_actual), 0) AS total FROM saldos_combustible');
                     $saldoDisponible = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-                } catch (Throwable $t2) {
+                } catch (\Throwable $t2) {
+            error_log($t2->getMessage());
                 }
             }
 
@@ -68,7 +71,8 @@ final class Fuel
                 try {
                     $stmt = $db->query('SELECT COALESCE(SUM(cantidad_entregada), 0) AS total FROM recibos WHERE DATE(fecha_hora) = CURRENT_DATE()');
                     $consumoDia = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-                } catch (Throwable $t2) {
+                } catch (\Throwable $t2) {
+            error_log($t2->getMessage());
                 }
             }
 
@@ -81,7 +85,8 @@ final class Fuel
                 try {
                     $stmt = $db->query('SELECT COUNT(*) AS total FROM recibos WHERE MONTH(fecha_hora) = MONTH(CURRENT_DATE()) AND YEAR(fecha_hora) = YEAR(CURRENT_DATE())');
                     $recibosMes = (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-                } catch (Throwable $t2) {
+                } catch (\Throwable $t2) {
+            error_log($t2->getMessage());
                 }
             }
 
@@ -94,7 +99,8 @@ final class Fuel
                 $ingresoMesActual = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
                 $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_incomes WHERE MONTH(created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) AND YEAR(created_at) = YEAR(CURRENT_DATE() - INTERVAL 1 MONTH)');
                 $ingresoMesAnterior = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-            } catch (Throwable $t) {
+            } catch (\Throwable $t) {
+            error_log($t->getMessage());
             }
 
             $entregaMesActual = 0.0;
@@ -104,21 +110,24 @@ final class Fuel
                 $entregaMesActual = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
                 $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_deliveries WHERE status <> "Anulado" AND MONTH(created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) AND YEAR(created_at) = YEAR(CURRENT_DATE() - INTERVAL 1 MONTH)');
                 $entregaMesAnterior = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-            } catch (Throwable $t) {
+            } catch (\Throwable $t) {
+            error_log($t->getMessage());
             }
 
             $consumoAyer = 0.0;
             try {
                 $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_deliveries WHERE status <> "Anulado" AND DATE(created_at) = CURRENT_DATE() - INTERVAL 1 DAY');
                 $consumoAyer = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-            } catch (Throwable $t) {
+            } catch (\Throwable $t) {
+            error_log($t->getMessage());
             }
 
             $recibosMesAnterior = 0;
             try {
                 $stmt = $db->query('SELECT COUNT(*) AS total FROM fuel_deliveries WHERE MONTH(created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) AND YEAR(created_at) = YEAR(CURRENT_DATE() - INTERVAL 1 MONTH)');
                 $recibosMesAnterior = (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-            } catch (Throwable $t) {
+            } catch (\Throwable $t) {
+            error_log($t->getMessage());
             }
 
             // Saldo disponible al cierre del mes anterior, para poder comparar el
@@ -132,7 +141,8 @@ final class Fuel
                 $entregaHastaMesAnterior = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
 
                 $saldoInicioMes = max(0.0, $ingresoHastaMesAnterior - $entregaHastaMesAnterior);
-            } catch (Throwable $t) {
+            } catch (\Throwable $t) {
+            error_log($t->getMessage());
             }
 
             return [
@@ -246,7 +256,8 @@ final class Fuel
                 if (!empty($deliveries)) {
                     return $deliveries;
                 }
-            } catch (Throwable $t2) {
+            } catch (\Throwable $t2) {
+            error_log($t2->getMessage());
             }
         }
 
@@ -567,7 +578,8 @@ final class Fuel
             }
 
             return $mapped;
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
         }
 
         return [];
@@ -641,7 +653,8 @@ final class Fuel
                 }
                 return $output;
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
         }
 
         return [];
@@ -674,7 +687,8 @@ final class Fuel
                 }
                 return $output;
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
         }
 
         return [];
@@ -748,7 +762,8 @@ final class Fuel
 
                 return $output;
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
         }
 
         return [];
@@ -782,7 +797,8 @@ final class Fuel
                 }
                 return $output;
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
         }
 
         return [];
@@ -832,7 +848,8 @@ final class Fuel
                     AND fd.status <> 'Anulado'
                 ))
             ");
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
         }
     }
 
@@ -862,7 +879,8 @@ final class Fuel
                 }
                 return $output;
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
         }
 
         // No se muestran datos simulados: el dashboard debe reflejar únicamente
@@ -893,7 +911,8 @@ final class Fuel
                     'current_stock' => (float) $r['current_stock'],
                 ];
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
         }
 
         $capacities = [
@@ -1055,7 +1074,8 @@ final class Fuel
                 ];
             }
 
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
         }
 
         return $events;
@@ -1137,7 +1157,8 @@ final class Fuel
                     $relations[$area]['drivers'][] = $driver;
                 }
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
         }
 
         return $relations;
