@@ -134,6 +134,16 @@
         return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     let currentDate = new Date();
     let currentFilter = 'all';
 
@@ -146,12 +156,12 @@
         renderCalendar();
 
         document.getElementById('prevMonthBtn').addEventListener('click', () => {
-            currentDate.setMonth(currentDate.getMonth() - 1);
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
             renderCalendar();
         });
 
         document.getElementById('nextMonthBtn').addEventListener('click', () => {
-            currentDate.setMonth(currentDate.getMonth() + 1);
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
             renderCalendar();
         });
 
@@ -325,14 +335,14 @@
             <div class="modal-detail-card">
                 <div class="modal-badge-row">
                     <span class="badge ${ev.badge_class}">${ev.badge}</span>
-                    <span class="modal-date-tag">Fecha: <strong>${ev.date}</strong> ${ev.time ? ev.time : ''}</span>
+                    <span class="modal-date-tag">Fecha: <strong>${escapeHtml(ev.date)}</strong> ${ev.time ? escapeHtml(ev.time) : ''}</span>
                 </div>
-                <h4>${ev.title}</h4>
+                <h4>${escapeHtml(ev.title)}</h4>
                 <div class="modal-grid">
-                    <div class="modal-field"><span class="lbl">${isIncome ? 'N° Lote/Ingreso:' : 'N° Vale:'}</span> <strong>${receiptNum}</strong></div>
-                    <div class="modal-field"><span class="lbl">${isIncome ? 'Tipo Combustible:' : 'Vehículo / Placa:'}</span> <strong>${fuelType}</strong></div>
-                    <div class="modal-field"><span class="lbl">${isIncome ? 'Proveedor / Grifo:' : 'Conductor:'}</span> <span>${ev.driver}</span></div>
-                    <div class="modal-field"><span class="lbl">${isIncome ? 'Almacén / Destino:' : 'Destino / Área:'}</span> <span>${ev.destination}</span></div>
+                    <div class="modal-field"><span class="lbl">${isIncome ? 'N° Lote/Ingreso:' : 'N° Vale:'}</span> <strong>${escapeHtml(receiptNum)}</strong></div>
+                    <div class="modal-field"><span class="lbl">${isIncome ? 'Tipo Combustible:' : 'Vehículo / Placa:'}</span> <strong>${escapeHtml(fuelType)}</strong></div>
+                    <div class="modal-field"><span class="lbl">${isIncome ? 'Proveedor / Grifo:' : 'Conductor:'}</span> <span>${escapeHtml(ev.driver)}</span></div>
+                    <div class="modal-field"><span class="lbl">${isIncome ? 'Almacén / Destino:' : 'Destino / Área:'}</span> <span>${escapeHtml(ev.destination)}</span></div>
                     <div class="modal-field highlight-field"><span class="lbl">${isIncome ? 'Cantidad Ingresada:' : 'Cantidad Despachada:'}</span> <strong class="qty-val">${fmtGal(ev.gallons)} Galones</strong></div>
                 </div>
             </div>
@@ -355,10 +365,10 @@
                 <div class="day-modal-item" onclick="showEventDetails(${JSON.stringify(ev).replace(/"/g, '&quot;')})">
                     <div class="day-modal-header">
                         <span class="badge ${ev.badge_class}">${ev.badge}</span>
-                        <strong>${ev.title}</strong>
+                        <strong>${escapeHtml(ev.title)}</strong>
                     </div>
                     <div class="day-modal-sub">
-                        <span class="icon-with-text">${uiIcon('fuel')}${fmtGal(ev.gallons)} Gal - ${uiIcon('user')}${ev.driver}</span>
+                        <span class="icon-with-text">${uiIcon('fuel')}${fmtGal(ev.gallons)} Gal - ${uiIcon('user')}${escapeHtml(ev.driver)}</span>
                     </div>
                 </div>
             `;

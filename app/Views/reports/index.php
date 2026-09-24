@@ -155,22 +155,52 @@
             const labelColor = isPlaceholder ? 'var(--text-muted, #94a3b8)' : 'var(--text-color, #0f172a)';
 
             trigger.innerHTML = `
-                <div class="custom-select-selected-content">
+                <div class="custom-select-selected-content" style="flex:1; min-width:0;">
                     <span class="custom-select-label-text" style="font-weight:600; font-size:0.9rem; color:${labelColor};">${labelText}</span>
                 </div>
+                ${!isPlaceholder ? `
+                <span class="custom-select-clear-btn" title="Deseleccionar" style="flex-shrink:0; margin-left:6px; cursor:pointer; color:var(--text-muted, #94a3b8); line-height:1;" data-clear="1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </span>` : ''}
+                <span class="custom-select-chevron" style="flex-shrink:0; margin-left:4px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </span>
             `;
+
+            const clearBtn = trigger.querySelector('[data-clear="1"]');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    selectEl.selectedIndex = 0;
+                    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    container.classList.remove('open');
+                });
+            }
 
             menu.innerHTML = '';
             options.forEach((opt, idx) => {
                 const isSelected = idx === selectEl.selectedIndex;
+                const isPlaceholder = opt.value === '';
                 const item = document.createElement('div');
                 item.className = `custom-select-item ${isSelected ? 'selected' : ''}`;
-                item.innerHTML = `
-                    <div class="item-left" style="flex:1; min-width:0;">
-                        <span class="item-title" style="font-size:0.88rem; font-weight:600; color:var(--text-color, #0f172a);">${opt.text}</span>
-                    </div>
-                    ${isSelected ? `<span class="item-check">${uiIcon('check')}</span>` : ''}
-                `;
+                
+                if (isPlaceholder) {
+                    item.classList.add('custom-select-clear-item');
+                    item.innerHTML = `
+                        <div class="item-left" style="flex:1; min-width:0;">
+                            <span class="item-title" style="font-size:0.88rem; font-weight:600; color:var(--text-muted, #94a3b8);">${opt.text}</span>
+                        </div>
+                        ${isSelected ? `<span class="item-check">${uiIcon('check')}</span>` : ''}
+                    `;
+                } else {
+                    item.innerHTML = `
+                        <div class="item-left" style="flex:1; min-width:0;">
+                            <span class="item-title" style="font-size:0.88rem; font-weight:600; color:var(--text-color, #0f172a);">${opt.text}</span>
+                        </div>
+                        ${isSelected ? `<span class="item-check">${uiIcon('check')}</span>` : ''}
+                    `;
+                }
+                
                 item.addEventListener('click', (e) => {
                     e.stopPropagation();
                     selectEl.selectedIndex = idx;
@@ -203,7 +233,7 @@
     }
 
     // ── Custom Dropdown con buscador para Placa y Conductor en Exportación ──
-    function setupSearchableExportDropdown(selectId, placeholder) {
+    function setupSearchableExportDropdown(selectId, placeholder, allLabel) {
         const selectEl = document.getElementById(selectId);
         if (!selectEl) return;
 
@@ -247,6 +277,26 @@
             menu.appendChild(listContainer);
 
             const currentOptions = Array.from(selectEl.options);
+
+            // Opción «todos» siempre visible al inicio del listado
+            const clearItem = document.createElement('div');
+            clearItem.className = 'custom-select-item custom-select-clear-item';
+            clearItem.setAttribute('data-text', '');
+            const clearLabel = allLabel || 'Todos';
+            clearItem.innerHTML = `
+                <div class="item-left" style="flex:1; min-width:0;">
+                    <span class="item-title" style="font-size:0.88rem; font-weight:600; color:var(--text-muted, #94a3b8);">${clearLabel}</span>
+                </div>
+                ${selectEl.selectedIndex === 0 ? `<span class="item-check">${uiIcon('check')}</span>` : ''}
+            `;
+            clearItem.addEventListener('click', e => {
+                e.stopPropagation();
+                selectEl.selectedIndex = 0;
+                selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                container.classList.remove('open');
+            });
+            listContainer.appendChild(clearItem);
+
             currentOptions.forEach((opt, idx) => {
                 if (opt.value === '' && idx === 0) return;
                 const isSelected = idx === selectEl.selectedIndex;
@@ -274,6 +324,8 @@
             const listContainer = menu.querySelector('.custom-select-list-container');
             if (!listContainer) return;
             listContainer.querySelectorAll('.custom-select-item').forEach(item => {
+                // El item de deselección siempre visible
+                if (item.classList.contains('custom-select-clear-item')) return;
                 const text = item.getAttribute('data-text') || '';
                 item.style.display = (clean === '' || text.includes(clean)) ? 'flex' : 'none';
             });
@@ -283,16 +335,30 @@
             const selectedOpt = selectEl.options[selectEl.selectedIndex];
             if (!selectedOpt) return;
             const isPlaceholder = selectedOpt.value === '';
-            const labelText = isPlaceholder ? placeholder.replace('Buscar ', 'Todos los ').replace('Buscar', 'Todos') : selectedOpt.text;
+            const labelText = isPlaceholder ? (allLabel || placeholder.replace('Buscar ', 'Todos los ').replace('Buscar', 'Todos')) : selectedOpt.text;
             const labelColor = isPlaceholder ? 'var(--text-muted, #94a3b8)' : 'var(--text-color, #0f172a)';
             trigger.innerHTML = `
                 <div class="custom-select-selected-content" style="flex:1; min-width:0;">
                     <span class="custom-select-label-text" style="font-weight:600; font-size:0.9rem; color:${labelColor};">${labelText}</span>
                 </div>
-                <span class="custom-select-chevron" style="flex-shrink:0; margin-left:8px;">
+                ${!isPlaceholder ? `
+                <span class="custom-select-clear-btn" title="Deseleccionar" style="flex-shrink:0; margin-left:6px; cursor:pointer; color:var(--text-muted, #94a3b8); line-height:1;" data-clear="1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </span>` : ''}
+                <span class="custom-select-chevron" style="flex-shrink:0; margin-left:4px;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                 </span>
             `;
+            // Botón × deselecciona sin abrir el menú
+            const clearBtn = trigger.querySelector('[data-clear="1"]');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    selectEl.selectedIndex = 0;
+                    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    container.classList.remove('open');
+                });
+            }
         }
 
         trigger.addEventListener('click', e => {
@@ -324,7 +390,7 @@
     // Inicializar dropdowns al cargar la página
     document.addEventListener("DOMContentLoaded", () => {
         setupAreaCustomDropdown('area');
-        setupSearchableExportDropdown('unidad', 'Buscar placa...');
-        setupSearchableExportDropdown('responsable', 'Buscar conductor...');
+        setupSearchableExportDropdown('unidad', 'Buscar placa...', 'Todas las placas');
+        setupSearchableExportDropdown('responsable', 'Buscar conductor...', 'Todos los conductores');
     });
 </script>

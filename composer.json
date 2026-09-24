@@ -1,4 +1,6 @@
 {
     "name": "gian/muni-pisco-fuel-control",
-    "require": {}
+    "require": {
+        "phpoffice/phpspreadsheet": "^5.10"
+    }
 }

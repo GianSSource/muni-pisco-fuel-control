@@ -30,13 +30,13 @@ final class FuelController extends Controller
         ];
 
         $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
-        $limit = isset($_GET['limit']) && in_array((int)$_GET['limit'], [10, 25, 50]) ? (int) $_GET['limit'] : 10;
+        $limit = isset($_GET['limit']) && in_array((int) $_GET['limit'], [10, 25, 50]) ? (int) $_GET['limit'] : 10;
         $offset = ($page - 1) * $limit;
 
         $stats = $fuelModel->getDeliveriesStats($filters);
         $totalGallons = $stats['total_gallons'];
         $count = $stats['count'];
-        
+
         $totalPages = $count > 0 ? (int) ceil($count / $limit) : 1;
         if ($page > $totalPages) {
             $page = $totalPages;
@@ -48,8 +48,8 @@ final class FuelController extends Controller
         // Valores únicos para los filtros: se obtienen con SELECT DISTINCT
         // directamente en BD (O(n) solo sobre la columna indexada), en vez de
         // cargar toda la tabla en memoria PHP para luego hacer array_unique.
-        $vehicles     = $fuelModel->getUniqueVehicles();
-        $drivers      = $fuelModel->getUniqueDrivers();
+        $vehicles = $fuelModel->getUniqueVehicles();
+        $drivers = $fuelModel->getUniqueDrivers();
         $destinations = $fuelModel->getUniqueDestinations();
 
         // Tipos de combustible: se toman del catálogo (system_catalogs),
@@ -107,18 +107,18 @@ final class FuelController extends Controller
         ];
 
         $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
-        $limit = isset($_GET['limit']) && in_array((int)$_GET['limit'], [10, 25, 50]) ? (int) $_GET['limit'] : 10;
+        $limit = isset($_GET['limit']) && in_array((int) $_GET['limit'], [10, 25, 50]) ? (int) $_GET['limit'] : 10;
         $offset = ($page - 1) * $limit;
 
         $fuelModel = new Fuel();
         $stats = $fuelModel->getDeliveriesStats($filters);
-        
+
         $totalPages = $stats['count'] > 0 ? (int) ceil($stats['count'] / $limit) : 1;
         if ($page > $totalPages) {
             $page = $totalPages;
             $offset = ($page - 1) * $limit;
         }
-        
+
         $deliveries = $fuelModel->searchDeliveries($filters, $limit, $offset);
 
         echo json_encode([
@@ -182,17 +182,17 @@ final class FuelController extends Controller
                 $type = $inc['fuel_type'];
                 if (!isset($fuelGroups[$type])) {
                     $fuelGroups[$type] = [
-                        'fuel_type'   => $type,
+                        'fuel_type' => $type,
                         'total_stock' => 0.0,
-                        'lots'        => [],
+                        'lots' => [],
                     ];
                 }
                 $fuelGroups[$type]['total_stock'] += (float) $inc['gallons_remaining'];
                 $fuelGroups[$type]['lots'][] = [
-                    'id'             => (int) $inc['id'],
+                    'id' => (int) $inc['id'],
                     'receipt_number' => $inc['receipt_number'],
-                    'supplier'       => $inc['supplier'],
-                    'stock'          => (float) $inc['gallons_remaining'],
+                    'supplier' => $inc['supplier'],
+                    'stock' => (float) $inc['gallons_remaining'],
                 ];
             }
             $fuelGroups = array_values($fuelGroups);
@@ -286,16 +286,16 @@ final class FuelController extends Controller
                      :driver, :gallons, :destination, :notes, "Completado", NOW())'
             );
             $stmt->execute([
-                'income_id'      => $mainIncomeId,
-                'fuel_type'      => $fuelType,
-                'user_id'        => $userId,
-                'vehicle_id'     => $vehicleId,
+                'income_id' => $mainIncomeId,
+                'fuel_type' => $fuelType,
+                'user_id' => $userId,
+                'vehicle_id' => $vehicleId,
                 'receipt_number' => $receiptNum,
-                'plate'          => $plate,
-                'driver'         => $driver,
-                'gallons'        => $gallons,
-                'destination'    => $destination,
-                'notes'          => $notes !== '' ? $notes : null,
+                'plate' => $plate,
+                'driver' => $driver,
+                'gallons' => $gallons,
+                'destination' => $destination,
+                'notes' => $notes !== '' ? $notes : null,
             ]);
             $newDeliveryId = (int) $db->lastInsertId();
 
@@ -310,8 +310,8 @@ final class FuelController extends Controller
             foreach ($plan as $lot) {
                 $allocStmt->execute([
                     'delivery_id' => $newDeliveryId,
-                    'income_id'   => $lot['income_id'],
-                    'take'        => $lot['take'],
+                    'income_id' => $lot['income_id'],
+                    'take' => $lot['take'],
                 ]);
             }
 
@@ -360,10 +360,10 @@ final class FuelController extends Controller
             $db->beginTransaction();
 
             $db->prepare('DELETE FROM fuel_delivery_lot_allocations WHERE delivery_id = :id')
-               ->execute(['id' => $deliveryId]);
+                ->execute(['id' => $deliveryId]);
 
             $db->prepare('UPDATE fuel_deliveries SET status = "Anulado" WHERE id = :id')
-               ->execute(['id' => $deliveryId]);
+                ->execute(['id' => $deliveryId]);
 
             $db->commit();
             $this->redirect('despachos?msg=Vale+anulado+correctamente');

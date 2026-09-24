@@ -8,6 +8,11 @@ use App\Core\Controller;
 use App\Models\Catalog;
 use App\Models\Fuel;
 use App\Services\PdfReport;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 final class ReportController extends Controller
 {
@@ -116,19 +121,9 @@ final class ReportController extends Controller
         $fuelModel = new Fuel();
         $deliveries = $fuelModel->getFilteredDeliveries($startDate, $endDate, $vehicle, $driver, $area);
         $deliveries = array_reverse($deliveries);
-
-        // Se exporta como .xls, pero el contenido es XML Spreadsheet 2003
-        // oficial de Microsoft. Esto retiene el estilo visual (colores, negritas)
-        // SIN activar el recuadro de advertencia de formato.
-        $filename = 'reporte-entregas-combustible-' . date('Ymd-His') . '.xls';
-
-        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-
-        $totalGalones = 0;
-        foreach ($deliveries as $d) {
-            $totalGalones += (float) $d['gallons'];
-        }
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Entregas');
 
         $filterDesc = !empty($startDate) ? "Desde: " . date('d/m/Y', strtotime($startDate)) . " " : 'Desde: Inicio ';
         $filterDesc .= !empty($endDate) ? "Hasta: " . date('d/m/Y', strtotime($endDate)) . " " : 'Hasta: Hoy ';
@@ -142,85 +137,83 @@ final class ReportController extends Controller
             $filterDesc .= " | Conductor: $driver";
         }
         
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-        $xml .= '<?mso-application progid="Excel.Sheet"?>' . "\n";
-        $xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ';
-        $xml .= 'xmlns:o="urn:schemas-microsoft-com:office:office" ';
-        $xml .= 'xmlns:x="urn:schemas-microsoft-com:office:excel" ';
-        $xml .= 'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" ';
-        $xml .= 'xmlns:html="http://www.w3.org/TR/REC-html40">' . "\n";
+        $sheet->setCellValue('A1', 'REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE');
+        $sheet->mergeCells('A1:H1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0F172A'));
         
-        // Estilos CSS traducidos a XML Spreadsheet
-        $xml .= '<Styles>' . "\n";
-        $xml .= ' <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Bottom"/><Borders/><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/><Interior/><NumberFormat/><Protection/></Style>' . "\n";
-        $xml .= ' <Style ss:ID="Header1"><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="14" ss:Color="#0F172A" ss:Bold="1"/></Style>' . "\n";
-        $xml .= ' <Style ss:ID="Header2"><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="10" ss:Color="#64748B"/></Style>' . "\n";
-        $xml .= ' <Style ss:ID="Th"><Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="10" ss:Color="#0F172A" ss:Bold="1"/><Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/></Style>' . "\n";
-        $xml .= ' <Style ss:ID="Td"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="10" ss:Color="#334155"/></Style>' . "\n";
-        $xml .= ' <Style ss:ID="TdBold"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="10" ss:Color="#334155" ss:Bold="1"/></Style>' . "\n";
-        $xml .= ' <Style ss:ID="TdRight"><Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="10" ss:Color="#334155" ss:Bold="1"/></Style>' . "\n";
-        $xml .= ' <Style ss:ID="TdCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/></Borders><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="10" ss:Color="#059669" ss:Bold="1"/></Style>' . "\n";
-        $xml .= ' <Style ss:ID="Total"><Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#93C5FD"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#93C5FD"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#93C5FD"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#93C5FD"/></Borders><Font ss:FontName="Arial" x:Family="Swiss" ss:Size="11" ss:Color="#0284C7" ss:Bold="1"/><Interior ss:Color="#E0F2FE" ss:Pattern="Solid"/></Style>' . "\n";
-        $xml .= '</Styles>' . "\n";
-        
-        $xml .= '<Worksheet ss:Name="Entregas">' . "\n";
-        $xml .= ' <Table>' . "\n";
-        
-        // Anchos de columna
-        $xml .= '  <Column ss:Width="120"/>' . "\n";
-        $xml .= '  <Column ss:Width="120"/>' . "\n";
-        $xml .= '  <Column ss:Width="100"/>' . "\n";
-        $xml .= '  <Column ss:Width="160"/>' . "\n";
-        $xml .= '  <Column ss:Width="150"/>' . "\n";
-        $xml .= '  <Column ss:Width="100"/>' . "\n";
-        $xml .= '  <Column ss:Width="100"/>' . "\n";
-        $xml .= '  <Column ss:Width="160"/>' . "\n";
+        $sheet->setCellValue('A2', 'Fecha de exportación: ' . date('d/m/Y H:i:s') . ' | ' . $filterDesc);
+        $sheet->mergeCells('A2:H2');
+        $sheet->getStyle('A2')->getFont()->setSize(10)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF64748B'));
 
-        // Títulos
-        $xml .= '  <Row ss:Height="20">' . "\n";
-        $xml .= '   <Cell ss:StyleID="Header1"><Data ss:Type="String">REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE</Data></Cell>' . "\n";
-        $xml .= '  </Row>' . "\n";
-        
-        $xml .= '  <Row ss:Height="15">' . "\n";
-        $xml .= '   <Cell ss:StyleID="Header2"><Data ss:Type="String">Fecha de exportación: ' . date('d/m/Y H:i:s') . ' | ' . htmlspecialchars($filterDesc) . '</Data></Cell>' . "\n";
-        $xml .= '  </Row>' . "\n";
-        $xml .= '  <Row ss:Height="10"></Row>' . "\n";
-
-        // Cabecera de la tabla
-        $xml .= '  <Row>' . "\n";
         $headers = ['N° RECIBO / VALE', 'FECHA Y HORA', 'VEHÍCULO / PLACA', 'CONDUCTOR / RESPONSABLE', 'DESTINO / ÁREA', 'CANTIDAD (GAL)', 'ESTADO', 'OBSERVACIONES'];
-        foreach($headers as $h) {
-            $xml .= '   <Cell ss:StyleID="Th"><Data ss:Type="String">' . $h . '</Data></Cell>' . "\n";
+        $col = 'A';
+        foreach ($headers as $h) {
+            $sheet->setCellValue($col . '4', $h);
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+            $col++;
         }
-        $xml .= '  </Row>' . "\n";
 
-        // Filas de datos
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FF0F172A']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFF1F5F9']],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFCBD5E1']]],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+        ];
+        $sheet->getStyle('A4:H4')->applyFromArray($headerStyle);
+
+        $row = 5;
+        $totalGalones = 0;
         foreach ($deliveries as $d) {
             $cant = (float) $d['gallons'];
-            $xml .= '  <Row>' . "\n";
-            $xml .= '   <Cell ss:StyleID="TdBold"><Data ss:Type="String">' . htmlspecialchars($d['receipt_number']) . '</Data></Cell>' . "\n";
-            $xml .= '   <Cell ss:StyleID="Td"><Data ss:Type="String">' . date('d/m/Y H:i', strtotime($d['created_at'])) . '</Data></Cell>' . "\n";
-            $xml .= '   <Cell ss:StyleID="TdBold"><Data ss:Type="String">' . htmlspecialchars(mb_substr($d['vehicle_plate'], 0, 7)) . '</Data></Cell>' . "\n";
-            $xml .= '   <Cell ss:StyleID="Td"><Data ss:Type="String">' . htmlspecialchars($d['driver_name']) . '</Data></Cell>' . "\n";
-            $xml .= '   <Cell ss:StyleID="Td"><Data ss:Type="String">' . htmlspecialchars($d['destination'] ?? 'General') . '</Data></Cell>' . "\n";
-            $xml .= '   <Cell ss:StyleID="TdRight"><Data ss:Type="Number">' . $cant . '</Data></Cell>' . "\n";
-            $xml .= '   <Cell ss:StyleID="TdCenter"><Data ss:Type="String">' . htmlspecialchars($d['status'] ?? 'Completado') . '</Data></Cell>' . "\n";
-            $xml .= '   <Cell ss:StyleID="Td"><Data ss:Type="String">' . htmlspecialchars($d['notes'] ?? '') . '</Data></Cell>' . "\n";
-            $xml .= '  </Row>' . "\n";
+            $totalGalones += $cant;
+
+            $sheet->setCellValue('A' . $row, $d['receipt_number']);
+            $sheet->setCellValue('B' . $row, date('d/m/Y H:i', strtotime($d['created_at'])));
+            $sheet->setCellValue('C' . $row, mb_substr($d['vehicle_plate'], 0, 7));
+            $sheet->setCellValue('D' . $row, $d['driver_name']);
+            $sheet->setCellValue('E' . $row, $d['destination'] ?? 'General');
+            $sheet->setCellValue('F' . $row, $cant);
+            $sheet->setCellValue('G' . $row, $d['status'] ?? 'Completado');
+            $sheet->setCellValue('H' . $row, $d['notes'] ?? '');
+            
+            $row++;
+        }
+        
+        if ($row > 5) {
+            $dataStyle = [
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFCBD5E1']]]
+            ];
+            $sheet->getStyle('A5:H' . ($row - 1))->applyFromArray($dataStyle);
+            $sheet->getStyle('A5:A' . ($row - 1))->getFont()->setBold(true);
+            $sheet->getStyle('C5:C' . ($row - 1))->getFont()->setBold(true);
+            $sheet->getStyle('G5:G' . ($row - 1))->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF059669'));
+            $sheet->getStyle('F5:F' . ($row - 1))->getNumberFormat()->setFormatCode('#,##0.00');
         }
 
-        // Fila de resumen total
-        $xml .= '  <Row>' . "\n";
-        $xml .= '   <Cell ss:MergeAcross="4" ss:StyleID="Total"><Data ss:Type="String">TOTAL GENERAL DESPACHADO:</Data></Cell>' . "\n";
-        $xml .= '   <Cell ss:StyleID="Total"><Data ss:Type="Number">' . $totalGalones . '</Data></Cell>' . "\n";
-        $xml .= '   <Cell ss:MergeAcross="1" ss:StyleID="Total"><Data ss:Type="String">' . count($deliveries) . ' Entregas Registradas</Data></Cell>' . "\n";
-        $xml .= '  </Row>' . "\n";
+        $sheet->setCellValue('A' . $row, 'TOTAL GENERAL DESPACHADO:');
+        $sheet->mergeCells('A' . $row . ':E' . $row);
+        $sheet->setCellValue('F' . $row, $totalGalones);
+        $sheet->setCellValue('G' . $row, count($deliveries) . ' Entregas Registradas');
+        $sheet->mergeCells('G' . $row . ':H' . $row);
 
-        $xml .= ' </Table>' . "\n";
-        $xml .= '</Worksheet>' . "\n";
-        $xml .= '</Workbook>' . "\n";
+        $totalStyle = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FF0284C7']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE0F2FE']],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF93C5FD']]],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]
+        ];
+        $sheet->getStyle('A' . $row . ':H' . $row)->applyFromArray($totalStyle);
+        $sheet->getStyle('F' . $row)->getNumberFormat()->setFormatCode('#,##0.00');
+        $sheet->getStyle('G' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-        echo $xml;
+        $filename = 'reporte-entregas-combustible-' . date('Ymd-His') . '.xlsx';
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
         exit;
     }
 }

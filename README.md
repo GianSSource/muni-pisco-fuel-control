@@ -149,3 +149,18 @@ database.sql     Esquema completo + triggers + datos iniciales
   vía trigger) y luego marca el vale como `Anulado`.
 - Un `fuel_income_id` que no existe ya no crea stock automáticamente — la
   operación se rechaza para no perder trazabilidad de origen.
+
+## Mejoras Futuras / Optimizaciones
+
+A medida que el sistema crezca (por encima de los 50,000 o 100,000 registros de despachos), las búsquedas por texto usando comodines (`LIKE %texto%`) pueden empezar a ralentizarse debido a que provocan un *Full Table Scan* en MySQL. 
+
+Para resolver esto en el futuro, se recomienda reemplazar las condiciones `OR` tipo `LIKE` en `FuelModel::searchDeliveries()` por un índice **FULLTEXT** en la base de datos:
+
+1. **Crear el índice en MySQL:**
+   ```sql
+   ALTER TABLE fuel_deliveries ADD FULLTEXT(receipt_number, vehicle_plate, driver_name, destination, notes);
+   ```
+2. **Actualizar el controlador/modelo:**
+   Reemplazar las condiciones `LIKE` por `MATCH(receipt_number, vehicle_plate, driver_name, destination, notes) AGAINST(:busqueda)`.
+
+Esto reducirá los tiempos de búsqueda de varios segundos a tan solo milisegundos, con un impacto casi nulo en el peso de la base de datos.

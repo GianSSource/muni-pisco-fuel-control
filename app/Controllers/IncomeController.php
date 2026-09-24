@@ -63,8 +63,8 @@ final class IncomeController extends Controller
             exit;
         }
 
-        if ($quantity > 500000) {
-            header('Location: ' . BASE_URL . 'ingresos/nuevo?error=La+cantidad+no+puede+superar+los+500,000+galones');
+        if ($quantity > 10000) {
+            header('Location: ' . BASE_URL . 'ingresos/nuevo?error=La+cantidad+no+puede+superar+los+10,000+galones');
             exit;
         }
 

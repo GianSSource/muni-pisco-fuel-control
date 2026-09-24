@@ -11,6 +11,9 @@ use App\Controllers\ReportController;
 use App\Controllers\UserController;
 use App\Core\Router;
 
+if (file_exists(dirname(__DIR__) . '/vendor/autoload.php')) {
+    require dirname(__DIR__) . '/vendor/autoload.php';
+}
 require dirname(__DIR__) . '/config/config.php';
 
 // Configurar zona horaria de Perú

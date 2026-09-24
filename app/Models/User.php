@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 declare(strict_types=1);
 
@@ -20,7 +20,7 @@ final class User
         try {
             $db = Database::getConnection();
 
-            // Auto-creación de la tabla 'users' si no existiera en la base de datos activa
+            // Auto-creaciÃ³n de la tabla 'users' si no existiera en la base de datos activa
             $db->exec('CREATE TABLE IF NOT EXISTS users (
                 id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(120) NOT NULL,
@@ -39,7 +39,7 @@ final class User
                 'role' => $role,
             ]);
         } catch (Throwable $e1) {
-            // Intentar inserción en users sin columna role si fallara por esquema antiguo
+            // Intentar inserciÃ³n en users sin columna role si fallara por esquema antiguo
             try {
                 $db = Database::getConnection();
                 $sql = 'INSERT INTO users (name, email, password_hash) VALUES (:name, :email, :password_hash)';

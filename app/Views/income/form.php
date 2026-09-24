@@ -119,17 +119,17 @@
             <div style="min-width: 0;">
                 <label for="quantity"
                     style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px; color: var(--text-color, #1e293b);">Cantidad
-                    de Galones (Máx. 500,000.00)</label>
-                <input type="text" name="quantity" id="quantity" class="form-control-styled" placeholder="Ej: 30,000.00"
+                    de Galones (Máx. 10,000.00)</label>
+                <input type="text" name="quantity" id="quantity" class="form-control-styled" placeholder="Ej: 5,000.00"
                     maxlength="12" oninput="
                         let val = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');
                         let parts = val.split('.');
-                        if (parseFloat(parts[0]) > 500000) {
-                            parts[0] = '500000';
+                        if (parseFloat(parts[0]) > 10000) {
+                            parts[0] = '10000';
                             if (parts[1] !== undefined) parts[1] = '00';
                         } else {
-                            parts[0] = parts[0].slice(0, 6);
-                            if (parseFloat(parts[0]) === 500000 && parts[1] !== undefined) {
+                            parts[0] = parts[0].slice(0, 5);
+                            if (parseFloat(parts[0]) === 10000 && parts[1] !== undefined) {
                                 parts[1] = '00';
                             }
                         }
@@ -143,7 +143,7 @@
                         let val = this.value.replace(/,/g, '');
                         if (val !== '' && !isNaN(val)) {
                             let num = parseFloat(val);
-                            if (num > 500000) num = 500000;
+                            if (num > 10000) num = 10000;
                             this.value = num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                         }
                         verificarCamposIncompletos();
@@ -271,7 +271,7 @@
             let cleaned = q.value.replace(/,/g, '');
             let parsed = parseFloat(cleaned);
             if (!isNaN(parsed)) {
-                if (parsed > 500000) parsed = 500000;
+                if (parsed > 10000) parsed = 10000;
                 q.value = parsed.toFixed(2);
             }
         }
