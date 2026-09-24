@@ -22,6 +22,10 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
     </script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
     <style>
         /* Estilos para los botones de navegación de la barra superior */
         .topbar nav a {
@@ -301,6 +305,22 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
                     });
                 }
             });
+
+            // Inicializar Flatpickr globalmente en todos los inputs tipo "date"
+            if (typeof flatpickr !== 'undefined') {
+                // Inyectar un placeholder por defecto antes de que Flatpickr convierta a texto
+                document.querySelectorAll('input[type="date"]').forEach(el => {
+                    if (!el.getAttribute('placeholder')) {
+                        el.setAttribute('placeholder', 'dd/mm/aaaa');
+                    }
+                });
+
+                flatpickr('input[type="date"]', {
+                    locale: "es",
+                    dateFormat: "Y-m-d",
+                    disableMobile: "true" // Fuerza el uso de Flatpickr en móviles en lugar del nativo
+                });
+            }
         });
     </script>
     <main>

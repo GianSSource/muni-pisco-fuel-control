@@ -246,6 +246,20 @@
         gap: 5px;
         flex-wrap: wrap;
     }
+
+    /* Corrección exacta para inputs de fecha generados por Flatpickr para igualar a custom-select */
+    .filter-field .filter-input,
+    .filter-field .flatpickr-wrapper,
+    .filter-field .flatpickr-input {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 42px !important;
+        box-sizing: border-box !important;
+        font-size: 13px !important;
+        padding: 10px 12px !important;
+        margin: 0 !important;
+    }
 </style>
 
 <div class="search-page-wrapper">
@@ -305,13 +319,93 @@
         </div>
     </section>
 
-    <!-- Tarjeta del Buscador -->
-    <section class="search-card" style="margin-bottom: 24px;">
-        <div style="display: flex; gap: 12px; align-items: center;">
-            <div style="position: relative; flex: 1;">
-                <input type="text" oninput="this.value = this.value.replace(/[^a-zA-Z0-9\-_/ñÑáéíóúÁÉÍÓÚ\s.,]/g, '')"
-                    id="incomeSearchInput" class="search-input-dark"
-                    placeholder="Buscar por N° Recibo, Proveedor, Tipo de Combustible, Fecha..." maxlength="60">
+    <!-- Formulario / Panel de Búsqueda y Filtros Multicriterio -->
+    <section class="search-filter-card" style="margin-bottom: 24px; background: var(--card-bg, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 16px;">
+        <!-- Barra de Búsqueda Principal General -->
+        <div class="main-search-bar" style="display: flex; gap: 12px; align-items: center;">
+            <div class="search-input-group" style="position: relative; flex: 1; display: flex; align-items: center; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; background: var(--input-bg, #ffffff); transition: border-color 0.2s;">
+                <svg class="search-icon" style="position: absolute; left: 14px; color: var(--text-muted, #64748b); pointer-events: none;" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input 
+                    type="text" 
+                    id="incomeSearchInput" 
+                    class="search-input-dark" 
+                    style="border: none; background: transparent; flex: 1; padding: 12px 10px 12px 42px; outline: none; color: var(--text-color, #0f172a);"
+                    placeholder="Buscar por N° Recibo, Proveedor, Tipo de Combustible, Fecha..." 
+                    autocomplete="off"
+                    maxlength="60"
+                    oninput="this.value = this.value.replace(/[^a-zA-Z0-9\-_/ñÑáéíóúÁÉÍÓÚ\s.,]/g, '')"
+                >
+                <button type="button" class="clear-search-btn" id="clearGlobalBtn" style="display:none; position: absolute; right: 10px; background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+            </div>
+
+            <button type="button" id="toggleFiltersBtn" class="button secondary icon-btn" style="background: var(--card-bg, #ffffff); color: var(--text-color, #0f172a); border: 1px solid var(--border-color, #cbd5e1); padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                Filtros Avanzados
+            </button>
+        </div>
+
+        <!-- Panel Plegable de Filtros por Características Específicas -->
+        <div id="advancedFiltersPanel" class="advanced-filters-panel" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color, #e2e8f0);">
+            <div class="filters-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                <!-- Proveedor -->
+                <div class="filter-field">
+                    <label for="filterSupplier" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Proveedor / Grifo</label>
+                    <select id="filterSupplier" class="filter-select" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                        <option value="">-- Todos --</option>
+                        <?php 
+                        $suppliers = [];
+                        if (!empty($incomes)) {
+                            $suppliers = array_unique(array_map(function($i){ return $i['supplier']; }, $incomes));
+                            sort($suppliers);
+                        }
+                        foreach ($suppliers as $s): ?>
+                            <option value="<?= htmlspecialchars($s) ?>"><?= htmlspecialchars($s) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Tipo de Combustible -->
+                <div class="filter-field">
+                    <label for="filterFuelType" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Tipo Combustible</label>
+                    <select id="filterFuelType" class="filter-select" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                        <option value="">-- Todos --</option>
+                        <?php 
+                        $fuels = [];
+                        if (!empty($incomes)) {
+                            $fuels = array_unique(array_map(function($i){ return $i['fuel_type'] ?? 'Diesel B5 S-50'; }, $incomes));
+                            sort($fuels);
+                        }
+                        foreach ($fuels as $f): ?>
+                            <option value="<?= htmlspecialchars($f) ?>"><?= htmlspecialchars($f) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                
+                <!-- Estado -->
+                <div class="filter-field">
+                    <label for="filterStatus" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Estado del Lote</label>
+                    <select id="filterStatus" class="filter-select" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                        <option value="">-- Todos --</option>
+                        <option value="Disponible">Disponible (con stock)</option>
+                        <option value="Agotado">Agotado (sin stock)</option>
+                    </select>
+                </div>
+
+                <!-- Fecha Desde -->
+                <div class="filter-field">
+                    <label for="filterDateFrom" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Fecha Desde</label>
+                    <input type="date" id="filterDateFrom" class="filter-input" style="width: 100%; height: 38px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; padding: 0 12px;">
+                </div>
+
+                <!-- Fecha Hasta -->
+                <div class="filter-field">
+                    <label for="filterDateTo" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Fecha Hasta</label>
+                    <input type="date" id="filterDateTo" class="filter-input" style="width: 100%; height: 38px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; padding: 0 12px;">
+                </div>
+            </div>
+
+            <div class="filters-actions" style="margin-top: 16px; text-align: right;">
+                <button type="button" class="button secondary small-btn" id="clearAllFiltersBtn" style="padding: 6px 12px; border-radius: 6px; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer;">Limpiar Todos los Filtros</button>
             </div>
         </div>
     </section>
@@ -354,8 +448,17 @@
                             <?php
                             $rem = (float) ($inc['gallons_remaining'] ?? 0);
                             $isAvailable = $rem > 0;
+                            // Precomputar valores crudos para facilitar el filtro JS
+                            $rawDate = date('Y-m-d', strtotime($inc['created_at']));
+                            $rawSupplier = strtolower(trim($inc['supplier']));
+                            $rawFuel = strtolower(trim($inc['fuel_type'] ?? 'Diesel B5 S-50'));
+                            $rawStatus = $isAvailable ? 'disponible' : 'agotado';
                             ?>
-                            <tr class="income-row">
+                            <tr class="income-row" 
+                                data-date="<?= $rawDate ?>" 
+                                data-supplier="<?= htmlspecialchars($rawSupplier) ?>"
+                                data-fuel="<?= htmlspecialchars($rawFuel) ?>"
+                                data-status="<?= $rawStatus ?>">
                                 <td>
                                     <span class="receipt-tag">
                                         <?= htmlspecialchars($inc['receipt_number']) ?>
@@ -468,8 +571,64 @@
         allIncomeRows = Array.from(document.querySelectorAll("#incomeTableBody tr.income-row"));
 
         const searchInput = document.getElementById("incomeSearchInput");
+        const clearGlobalBtn = document.getElementById("clearGlobalBtn");
+        const toggleFiltersBtn = document.getElementById("toggleFiltersBtn");
+        const advancedFiltersPanel = document.getElementById("advancedFiltersPanel");
+        const clearAllFiltersBtn = document.getElementById("clearAllFiltersBtn");
+        const filterSelectsInputs = document.querySelectorAll(".filter-select, .filter-input");
+
+        // Convertir todos los <select class="filter-select"> en custom dropdowns visuales
+        document.querySelectorAll('.filter-select').forEach(select => {
+            initFilterCustomDropdown(select);
+        });
+
+        // Toggle panel
+        if (toggleFiltersBtn) {
+            toggleFiltersBtn.addEventListener("click", () => {
+                const isHidden = advancedFiltersPanel.style.display === "none";
+                advancedFiltersPanel.style.display = isHidden ? "block" : "none";
+            });
+        }
+
+        // Search text input
         if (searchInput) {
             searchInput.addEventListener("input", () => {
+                clearGlobalBtn.style.display = searchInput.value.length > 0 ? "block" : "none";
+                currentPage = 1;
+                renderIncomeTable();
+            });
+        }
+
+        // Clear search text
+        if (clearGlobalBtn) {
+            clearGlobalBtn.addEventListener("click", () => {
+                searchInput.value = "";
+                clearGlobalBtn.style.display = "none";
+                currentPage = 1;
+                renderIncomeTable();
+            });
+        }
+
+        // Advanced filter changes
+        filterSelectsInputs.forEach(el => {
+            el.addEventListener("change", () => {
+                currentPage = 1;
+                renderIncomeTable();
+            });
+            if (el.tagName === "INPUT" && el.type === "date") {
+                el.addEventListener("input", () => {
+                    currentPage = 1;
+                    renderIncomeTable();
+                });
+            }
+        });
+
+        // Clear all filters
+        if (clearAllFiltersBtn) {
+            clearAllFiltersBtn.addEventListener("click", () => {
+                searchInput.value = "";
+                clearGlobalBtn.style.display = "none";
+                filterSelectsInputs.forEach(el => el.value = "");
                 currentPage = 1;
                 renderIncomeTable();
             });
@@ -479,11 +638,28 @@
     });
 
     function getFilteredIncomeRows() {
-        const term = document.getElementById("incomeSearchInput")
-            ? document.getElementById("incomeSearchInput").value.toLowerCase().trim()
-            : "";
-        if (!term) return allIncomeRows;
-        return allIncomeRows.filter(row => row.innerText.toLowerCase().includes(term));
+        const term = document.getElementById("incomeSearchInput").value.toLowerCase().trim();
+        const fSupplier = document.getElementById("filterSupplier").value.toLowerCase();
+        const fFuel = document.getElementById("filterFuelType").value.toLowerCase();
+        const fStatus = document.getElementById("filterStatus").value.toLowerCase();
+        const fDateFrom = document.getElementById("filterDateFrom").value;
+        const fDateTo = document.getElementById("filterDateTo").value;
+
+        return allIncomeRows.filter(row => {
+            // 1. Text filter
+            if (term && !row.innerText.toLowerCase().includes(term)) return false;
+
+            // 2. Advanced filters
+            if (fSupplier && row.dataset.supplier !== fSupplier) return false;
+            if (fFuel && row.dataset.fuel !== fFuel) return false;
+            if (fStatus && row.dataset.status !== fStatus) return false;
+
+            const rowDate = row.dataset.date;
+            if (fDateFrom && rowDate < fDateFrom) return false;
+            if (fDateTo && rowDate > fDateTo) return false;
+
+            return true;
+        });
     }
 
     function renderIncomeTable() {
@@ -561,5 +737,158 @@
 
     function closeObsModal(e) {
         document.getElementById("obsInfoModal").classList.remove("active");
+    }
+
+    /**
+     * Convierte un <select class="filter-select"> en un dropdown visual (.custom-select-container).
+     */
+    function initFilterCustomDropdown(selectEl) {
+        if (!selectEl || selectEl.dataset.customDropdown === 'true') return;
+        selectEl.dataset.customDropdown = 'true';
+
+        selectEl.style.display = 'none';
+
+        const container = document.createElement('div');
+        container.className = 'custom-select-container';
+        selectEl.parentNode.insertBefore(container, selectEl);
+        container.appendChild(selectEl);
+
+        const trigger = document.createElement('div');
+        trigger.className = 'custom-select-trigger';
+        trigger.tabIndex = 0;
+        trigger.setAttribute('role', 'combobox');
+        trigger.setAttribute('aria-haspopup', 'listbox');
+        trigger.setAttribute('aria-expanded', 'false');
+
+        const menu = document.createElement('div');
+        menu.className = 'custom-select-menu';
+        menu.setAttribute('role', 'listbox');
+
+        container.appendChild(trigger);
+        container.appendChild(menu);
+
+        function getPlaceholderText() {
+            const first = selectEl.options[0];
+            return (first && first.value === '') ? first.text : '-- Seleccionar --';
+        }
+
+        function renderTrigger() {
+            const selected = selectEl.options[selectEl.selectedIndex];
+            const isPlaceholder = !selected || selected.value === '';
+            const labelText   = isPlaceholder ? getPlaceholderText() : selected.text;
+            const labelColor  = isPlaceholder
+                ? 'var(--text-muted, #94a3b8)'
+                : 'var(--text-color, #0f172a)';
+
+            trigger.innerHTML = `
+                <div class="custom-select-selected-content" style="flex:1;min-width:0;">
+                    <span class="custom-select-label-text" style="color:${labelColor};">${escapeHtml(labelText)}</span>
+                </div>
+                ${!isPlaceholder ? `
+                <span class="custom-select-clear-btn" title="Limpiar" data-clear="1"
+                    style="flex-shrink:0;margin-right:4px;cursor:pointer;color:var(--text-muted,#94a3b8);display:flex;align-items:center;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </span>` : ''}
+                <span class="custom-select-chevron">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                </span>
+            `;
+
+            const clearBtn = trigger.querySelector('[data-clear="1"]');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    selectEl.selectedIndex = 0;
+                    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    container.classList.remove('open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                    renderTrigger();
+                    renderMenu();
+                });
+            }
+        }
+
+        function renderMenu() {
+            menu.innerHTML = '';
+            Array.from(selectEl.options).forEach((opt, idx) => {
+                const isSelected  = idx === selectEl.selectedIndex;
+                const isPlaceholder = opt.value === '';
+
+                const item = document.createElement('div');
+                item.className = 'custom-select-item' + (isSelected ? ' selected' : '');
+                item.setAttribute('role', 'option');
+                item.setAttribute('aria-selected', String(isSelected));
+
+                const textColor = isPlaceholder
+                    ? 'var(--text-muted, #94a3b8)'
+                    : (isSelected ? 'var(--primary, #2563eb)' : 'var(--text-color, #0f172a)');
+
+                item.innerHTML = `
+                    <span class="item-title" style="font-size:0.88rem;font-weight:600;color:${textColor};">
+                        ${escapeHtml(opt.text)}
+                    </span>
+                    ${isSelected && !isPlaceholder
+                        ? `<span class="item-check"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"></path></svg></span>`
+                        : ''}
+                `;
+
+                item.addEventListener('click', e => {
+                    e.stopPropagation();
+                    selectEl.selectedIndex = idx;
+                    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    container.classList.remove('open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                    renderTrigger();
+                    renderMenu();
+                });
+
+                menu.appendChild(item);
+            });
+        }
+
+        trigger.addEventListener('click', e => {
+            e.stopPropagation();
+            const isOpen = container.classList.toggle('open');
+            trigger.setAttribute('aria-expanded', String(isOpen));
+            if (isOpen) renderMenu();
+        });
+
+        trigger.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); trigger.click(); }
+            if (e.key === 'Escape') {
+                container.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        document.addEventListener('click', e => {
+            if (!container.contains(e.target)) {
+                container.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        selectEl.addEventListener('change', () => {
+            renderTrigger();
+            renderMenu();
+        });
+
+        renderTrigger();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 </script>

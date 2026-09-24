@@ -354,7 +354,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         const globalInput = document.getElementById("globalSearchInput");
-        
+
         // Búsqueda en tiempo real instantánea cliente/servidor al escribir
         let timer = null;
         globalInput.addEventListener("input", () => {
@@ -372,7 +372,178 @@
                 performLiveSearch();
             });
         });
+
+        // Escuchar cambios en inputs de número (galones) al perder el foco
+        document.querySelectorAll(".filter-input[type='number']").forEach(el => {
+            el.addEventListener("input", () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    currentPage = 1;
+                    performLiveSearch();
+                }, 400);
+            });
+        });
+
+        // Convertir todos los <select class="filter-select"> en custom dropdowns
+        document.querySelectorAll('.filter-select').forEach(select => {
+            initFilterCustomDropdown(select);
+        });
     });
+
+    /**
+     * Convierte un <select class="filter-select"> en un dropdown visual
+     * con el mismo estilo que el resto del sistema (.custom-select-container).
+     * El <select> nativo queda oculto y sincronizado para que performLiveSearch() funcione.
+     */
+    function initFilterCustomDropdown(selectEl) {
+        if (!selectEl || selectEl.dataset.customDropdown === 'true') return;
+        selectEl.dataset.customDropdown = 'true';
+
+        // Ocultar el select nativo pero mantenerlo en el DOM para el formulario
+        selectEl.style.display = 'none';
+
+        // Contenedor
+        const container = document.createElement('div');
+        container.className = 'custom-select-container';
+        selectEl.parentNode.insertBefore(container, selectEl);
+        container.appendChild(selectEl);
+
+        // Trigger (cabecera visible del dropdown)
+        const trigger = document.createElement('div');
+        trigger.className = 'custom-select-trigger';
+        trigger.tabIndex = 0;
+        trigger.setAttribute('role', 'combobox');
+        trigger.setAttribute('aria-haspopup', 'listbox');
+        trigger.setAttribute('aria-expanded', 'false');
+
+        // Menú desplegable
+        const menu = document.createElement('div');
+        menu.className = 'custom-select-menu';
+        menu.setAttribute('role', 'listbox');
+
+        container.appendChild(trigger);
+        container.appendChild(menu);
+
+        function getPlaceholderText() {
+            const first = selectEl.options[0];
+            return (first && first.value === '') ? first.text : '-- Seleccionar --';
+        }
+
+        function renderTrigger() {
+            const selected = selectEl.options[selectEl.selectedIndex];
+            const isPlaceholder = !selected || selected.value === '';
+            const labelText   = isPlaceholder ? getPlaceholderText() : selected.text;
+            const labelColor  = isPlaceholder
+                ? 'var(--text-muted, #94a3b8)'
+                : 'var(--text-color, #0f172a)';
+
+            trigger.innerHTML = `
+                <div class="custom-select-selected-content" style="flex:1;min-width:0;">
+                    <span class="custom-select-label-text" style="color:${labelColor};">${escapeHtml(labelText)}</span>
+                </div>
+                ${!isPlaceholder ? `
+                <span class="custom-select-clear-btn" title="Limpiar" data-clear="1"
+                    style="flex-shrink:0;margin-right:4px;cursor:pointer;color:var(--text-muted,#94a3b8);display:flex;align-items:center;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </span>` : ''}
+                <span class="custom-select-chevron">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                </span>
+            `;
+
+            // Botón × limpia el filtro
+            const clearBtn = trigger.querySelector('[data-clear="1"]');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    selectEl.selectedIndex = 0;
+                    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    container.classList.remove('open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                    renderTrigger();
+                    renderMenu();
+                });
+            }
+        }
+
+        function renderMenu() {
+            menu.innerHTML = '';
+            Array.from(selectEl.options).forEach((opt, idx) => {
+                const isSelected  = idx === selectEl.selectedIndex;
+                const isPlaceholder = opt.value === '';
+
+                const item = document.createElement('div');
+                item.className = 'custom-select-item' + (isSelected ? ' selected' : '');
+                item.setAttribute('role', 'option');
+                item.setAttribute('aria-selected', String(isSelected));
+
+                const textColor = isPlaceholder
+                    ? 'var(--text-muted, #94a3b8)'
+                    : (isSelected ? 'var(--primary, #2563eb)' : 'var(--text-color, #0f172a)');
+
+                item.innerHTML = `
+                    <span class="item-title" style="font-size:0.88rem;font-weight:600;color:${textColor};">
+                        ${escapeHtml(opt.text)}
+                    </span>
+                    ${isSelected && !isPlaceholder
+                        ? `<span class="item-check">${uiIcon('check')}</span>`
+                        : ''}
+                `;
+
+                item.addEventListener('click', e => {
+                    e.stopPropagation();
+                    selectEl.selectedIndex = idx;
+                    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    container.classList.remove('open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                    renderTrigger();
+                    renderMenu();
+                });
+
+                menu.appendChild(item);
+            });
+        }
+
+        // Abrir / cerrar al hacer clic en el trigger
+        trigger.addEventListener('click', e => {
+            e.stopPropagation();
+            const isOpen = container.classList.toggle('open');
+            trigger.setAttribute('aria-expanded', String(isOpen));
+            if (isOpen) renderMenu();
+        });
+
+        // Navegación por teclado
+        trigger.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); trigger.click(); }
+            if (e.key === 'Escape') {
+                container.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Cerrar al hacer clic fuera
+        document.addEventListener('click', e => {
+            if (!container.contains(e.target)) {
+                container.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Sincronizar trigger si el select cambia desde fuera
+        selectEl.addEventListener('change', () => {
+            renderTrigger();
+            renderMenu();
+        });
+
+        // Inicializar
+        renderTrigger();
+    }
 
     function toggleAdvancedFilters() {
         const panel = document.getElementById("advancedFiltersPanel");
