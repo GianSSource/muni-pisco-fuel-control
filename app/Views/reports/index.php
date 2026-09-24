@@ -79,7 +79,7 @@
                         <line x1="8" y1="13" x2="16" y2="13"></line>
                         <line x1="8" y1="17" x2="16" y2="17"></line>
                     </svg>
-                    Exportación a CSV para Excel
+                    Exportación para Excel
                 </button>
             </div>
         </form>
@@ -183,7 +183,7 @@
                 const isPlaceholder = opt.value === '';
                 const item = document.createElement('div');
                 item.className = `custom-select-item ${isSelected ? 'selected' : ''}`;
-                
+
                 if (isPlaceholder) {
                     item.classList.add('custom-select-clear-item');
                     item.innerHTML = `
@@ -200,7 +200,7 @@
                         ${isSelected ? `<span class="item-check">${uiIcon('check')}</span>` : ''}
                     `;
                 }
-                
+
                 item.addEventListener('click', (e) => {
                     e.stopPropagation();
                     selectEl.selectedIndex = idx;
