@@ -628,7 +628,14 @@
             clearAllFiltersBtn.addEventListener("click", () => {
                 searchInput.value = "";
                 clearGlobalBtn.style.display = "none";
-                filterSelectsInputs.forEach(el => el.value = "");
+                filterSelectsInputs.forEach(el => {
+                    el.value = "";
+                    // Disparar 'change' para que los custom dropdowns actualicen su UI visual
+                    if (el.tagName === "SELECT") {
+                        el.selectedIndex = 0;
+                        el.dispatchEvent(new Event("change", { bubbles: true }));
+                    }
+                });
                 currentPage = 1;
                 renderIncomeTable();
             });
