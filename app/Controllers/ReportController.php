@@ -216,4 +216,75 @@ final class ReportController extends Controller
         $writer->save('php://output');
         exit;
     }
+
+    public function entregasCsvRaw(): void
+    {
+        $this->requireSupervisor();
+
+        $startDate = !empty($_GET['desde']) ? trim((string) $_GET['desde']) : null;
+        $endDate = !empty($_GET['hasta']) ? trim((string) $_GET['hasta']) : null;
+        $vehicle = !empty($_GET['unidad']) ? trim((string) $_GET['unidad']) : null;
+        $driver = !empty($_GET['responsable']) ? trim((string) $_GET['responsable']) : null;
+        $area = !empty($_GET['area']) ? trim((string) $_GET['area']) : null;
+
+        $fuelModel = new Fuel();
+        $deliveries = $fuelModel->getFilteredDeliveries($startDate, $endDate, $vehicle, $driver, $area);
+        $deliveries = array_reverse($deliveries);
+
+        $filterDesc = !empty($startDate) ? "Desde: " . date('d/m/Y', strtotime($startDate)) . " " : 'Desde: Inicio ';
+        $filterDesc .= !empty($endDate) ? "Hasta: " . date('d/m/Y', strtotime($endDate)) . " " : 'Hasta: Hoy ';
+        if (!empty($area)) {
+            $filterDesc .= " | Área: $area";
+        }
+        if (!empty($vehicle)) {
+            $filterDesc .= " | Unidad: $vehicle";
+        }
+        if (!empty($driver)) {
+            $filterDesc .= " | Conductor: $driver";
+        }
+
+        $filename = 'reporte-entregas-combustible-' . date('Ymd-His') . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        // Para que Excel lea correctamente los caracteres especiales (UTF-8 BOM)
+        echo "\xEF\xBB\xBF";
+
+        $output = fopen('php://output', 'w');
+        
+        // Escribir título y filtros
+        fputcsv($output, ['REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE'], ';');
+        fputcsv($output, ['Fecha de exportación: ' . date('d/m/Y H:i:s') . ' | ' . $filterDesc], ';');
+        fputcsv($output, [], ';'); // Fila vacía
+
+        // Cabeceras
+        $headers = ['N° RECIBO / VALE', 'FECHA Y HORA', 'VEHÍCULO / PLACA', 'CONDUCTOR / RESPONSABLE', 'DESTINO / ÁREA', 'CANTIDAD (GAL)', 'ESTADO', 'OBSERVACIONES'];
+        fputcsv($output, $headers, ';');
+
+        $totalGalones = 0;
+        foreach ($deliveries as $d) {
+            $cant = (float) $d['gallons'];
+            $totalGalones += $cant;
+
+            $row = [
+                $d['receipt_number'],
+                date('d/m/Y H:i', strtotime($d['created_at'])),
+                mb_substr($d['vehicle_plate'], 0, 7),
+                $d['driver_name'],
+                $d['destination'] ?? 'General',
+                number_format($cant, 2, '.', ''),
+                $d['status'] ?? 'Completado',
+                $d['notes'] ?? ''
+            ];
+            
+            fputcsv($output, $row, ';');
+        }
+
+        fputcsv($output, [], ';'); // Fila vacía
+        fputcsv($output, ['TOTAL GENERAL DESPACHADO:', '', '', '', '', number_format($totalGalones, 2, '.', ''), count($deliveries) . ' Entregas Registradas'], ';');
+
+        fclose($output);
+        exit;
+    }
 }

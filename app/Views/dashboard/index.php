@@ -967,7 +967,7 @@
                     };
                     });
                 })(),
-                label: { show: !horizontal, position: 'top', color: theme.text, fontSize: 10, fontWeight: 600, formatter: ({ value }) => formatGallons(value, 1) },
+                label: { show: !horizontal, position: 'top', color: theme.text, fontSize: 10, fontWeight: 600, formatter: ({ value }) => formatGallons(value, 2) },
                 emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
             }]
         }, { notMerge: true, lazyUpdate: true });

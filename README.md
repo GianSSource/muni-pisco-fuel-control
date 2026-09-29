@@ -59,7 +59,27 @@ const DB_USER = 'root';
 const DB_PASS = '';
 ```
 
-### 3. Servidor web
+### 3. Instalar Dependencias (Composer)
+
+El sistema utiliza librerías externas (como `PhpSpreadsheet` para exportar a Excel y `Dompdf` para reportes PDF). Para que todo funcione correctamente y se genere la carpeta `vendor`, debes instalar Composer:
+
+**Paso 1:** Descarga el instalador de Composer para Windows desde el sitio web oficial:
+[Composer-Setup.exe](https://getcomposer.org/Composer-Setup.exe)
+
+**Paso 2:** Ejecuta el instalador descargado (`Composer-Setup.exe`). Durante la instalación:
+- Mantén seleccionada la opción "Developer mode" (opcional).
+- Selecciona la ruta donde está instalado el ejecutable de PHP (`php.exe`), que usualmente se encuentra en `C:\xampp\php\php.exe` o similar, dependiendo de qué utilices (XAMPP/Laragon).
+- Termina la instalación dando clic en "Next" dejando las demás opciones por defecto.
+
+**Paso 3:** Una vez instalado Composer, abre una consola de comandos (CMD o PowerShell) en la carpeta raíz de este proyecto (donde está el archivo `composer.json`) y ejecuta:
+
+```bash
+composer install
+```
+
+Este comando descargará todas las librerías necesarias para el sistema.
+
+### 4. Servidor web
 
 **Con XAMPP/Laragon:** copia esta carpeta a `htdocs`/`www` y apunta el
 document root a la subcarpeta `public/`.
@@ -73,7 +93,7 @@ php -S localhost:8000
 
 Luego abre `http://localhost:8000`.
 
-### 4. Primer usuario administrador
+### 5. Primer usuario administrador
 
 El registro público (`/registro`) **siempre crea cuentas con rol
 `operador`**, a propósito — así nadie puede autoasignarse permisos de
@@ -96,7 +116,7 @@ con ella y **cámbiala cuanto antes**. Una vez dentro con ese primer admin,
 ya puedes crear el resto de usuarios (y elegir su rol libremente) desde
 **Usuarios** en el menú, sin volver a tocar SQL.
 
-### 5. Registrar vehículos
+### 6. Registrar vehículos
 
 Antes de poder emitir un vale de despacho, entra a **Catálogos → Registrar
 Vehículo/Unidad** y da de alta al menos un vehículo (código de unidad,
