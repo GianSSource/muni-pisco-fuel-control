@@ -31,7 +31,7 @@ final class ReportController extends Controller
             'title' => 'Reportes',
             'uniquePlates' => $fuelModel->getUniqueVehicles(),
             'uniqueDrivers' => $fuelModel->getUniqueDrivers(),
-            'catalogAreas' => (new Catalog())->getAreas(),
+            'catalogAreas' => $fuelModel->getUniqueDestinations(),
         ]);
     }
 
