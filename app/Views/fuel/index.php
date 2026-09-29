@@ -203,8 +203,7 @@
                 </div>
 
                 <div class="filter-actions-row">
-                    <a href="<?= BASE_URL ?>despachos" class="button secondary small-btn">Limpiar Todos los Filtros</a>
-                    <button type="submit" class="button primary small-btn">Aplicar Filtros</button>
+                    <button type="button" class="button secondary small-btn" onclick="clearAllFilters()">Limpiar Todos los Filtros</button>
                 </div>
             </div>
         </form>
@@ -552,6 +551,25 @@
 
     function clearGlobalInput() {
         document.getElementById("globalSearchInput").value = "";
+        currentPage = 1;
+        performLiveSearch();
+    }
+
+    function clearAllFilters() {
+        // Limpiar barra de búsqueda global
+        document.getElementById("globalSearchInput").value = "";
+
+        // Limpiar todos los selects y disparar 'change' para actualizar custom dropdowns
+        document.querySelectorAll(".filter-select").forEach(el => {
+            el.selectedIndex = 0;
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+
+        // Limpiar todos los inputs de filtro (fechas, galones, etc.)
+        document.querySelectorAll(".filter-input").forEach(el => {
+            el.value = "";
+        });
+
         currentPage = 1;
         performLiveSearch();
     }
