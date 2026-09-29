@@ -58,10 +58,12 @@
 
 html {
     scrollbar-gutter: stable;
+    overflow-y: scroll; /* Evita el layout shift (kickback) al aparecer/desaparecer el scrollbar */
 }
 
 body {
     margin: 0;
+    min-height: 100vh; /* Garantiza scrollbar siempre visible → evita layout shift */
     background: var(--bg);
     color: var(--ink);
     font-family: var(--font-body);

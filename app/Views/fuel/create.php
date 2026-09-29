@@ -175,7 +175,7 @@
                 <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Cantidad de
                     Galones (Máx. 15,000.00)</label>
                 <input type="text" name="gallons" id="gallons" class="form-control-styled" required
-                    placeholder="Ej: 30,000" maxlength="12"
+                    placeholder="Ej: 15,000" maxlength="12"
                     oninput="limitarGalones(this); verificarCamposIncompletos();"
                     onblur="formatearSalidaGalones(this); verificarCamposIncompletos();"
                     onfocus="limpiarFormatoGalones(this)">

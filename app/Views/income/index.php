@@ -440,6 +440,7 @@
                         <th>Stock Remanente</th>
                         <th>Observaciones</th>
                         <th>Estado</th>
+                        <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody id="incomeTableBody">
@@ -454,7 +455,7 @@
                             $rawFuel = strtolower(trim($inc['fuel_type'] ?? 'Diesel B5 S-50'));
                             $rawStatus = $isAvailable ? 'disponible' : 'agotado';
                             ?>
-                            <tr class="income-row" 
+                            <tr class="income-row" style="cursor: pointer;" onclick="openIncomeModal(<?= htmlspecialchars(json_encode($inc)) ?>)"
                                 data-date="<?= $rawDate ?>" 
                                 data-supplier="<?= htmlspecialchars($rawSupplier) ?>"
                                 data-fuel="<?= htmlspecialchars($rawFuel) ?>"
@@ -509,17 +510,20 @@
                                         <?= $isAvailable ? 'Disponible' : 'Agotado' ?>
                                     </span>
                                 </td>
+                                <td>
+                                    <button type="button" class="button secondary small-btn" onclick="event.stopPropagation(); openIncomeModal(<?= htmlspecialchars(json_encode($inc)) ?>)">Ver Detalle</button>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr id="noIncomesRow">
-                            <td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted, #64748b);">
+                            <td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted, #64748b);">
                                 No hay ingresos registrados en el sistema.
                             </td>
                         </tr>
                     <?php endif; ?>
                     <tr id="noResultsRow" style="display: none;">
-                        <td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted, #64748b);">
+                        <td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted, #64748b);">
                             <span class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-search"></use></svg>No se encontraron ingresos que coincidan con la búsqueda.</span>
                         </td>
                     </tr>
@@ -542,6 +546,22 @@
             </div>
         </div>
     </section>
+</div>
+
+<!-- Modal Detalle del Ingreso -->
+<div id="incomeModal" class="modal-overlay" onclick="closeIncomeModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3 class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use></svg>Detalle del Ingreso de Combustible</h3>
+            <button class="modal-close-btn" onclick="closeIncomeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="incomeModalBody">
+            <!-- Inyectado por JavaScript -->
+        </div>
+        <div class="modal-footer">
+            <button class="button secondary" onclick="closeIncomeModal()">Cerrar</button>
+        </div>
+    </div>
 </div>
 
 <!-- Modal Emergente Exclusivo para Observación Completa (INFO) en Ingresos -->
@@ -629,11 +649,15 @@
                 searchInput.value = "";
                 clearGlobalBtn.style.display = "none";
                 filterSelectsInputs.forEach(el => {
-                    el.value = "";
-                    // Disparar 'change' para que los custom dropdowns actualicen su UI visual
                     if (el.tagName === "SELECT") {
+                        // Resetear select y notificar al custom dropdown visual
                         el.selectedIndex = 0;
                         el.dispatchEvent(new Event("change", { bubbles: true }));
+                    } else if (el._flatpickr) {
+                        // Usar API de Flatpickr para fechas (evita el reflow/kickback)
+                        el._flatpickr.clear();
+                    } else {
+                        el.value = "";
                     }
                 });
                 currentPage = 1;
@@ -887,6 +911,70 @@
         });
 
         renderTrigger();
+    }
+
+    function openIncomeModal(inc) {
+        const body = document.getElementById("incomeModalBody");
+        const dateObj = new Date(String(inc.created_at || '').replace(' ', 'T'));
+        const dateStr = !isNaN(dateObj) ? dateObj.toLocaleString('es-PE') : inc.created_at;
+
+        const invoiceText = inc.invoice_number && inc.invoice_number.trim() !== '' ? inc.invoice_number : 'No registrada';
+        const notesText = inc.notes && inc.notes.trim() !== '' && inc.notes !== '-' ? inc.notes : 'Sin observaciones';
+        
+        const rem = parseFloat(inc.gallons_remaining || 0);
+        const isAvailable = rem > 0;
+        const statusText = isAvailable ? 'Disponible' : 'Agotado';
+        const statusColor = isAvailable ? '#10b981' : '#ef4444';
+
+        body.innerHTML = `
+            <div class="modal-detail-card">
+                <div class="modal-badge-row">
+                    <span class="modal-date-tag icon-with-text">${uiIcon('calendar')}Fecha y Hora: <strong>${escapeHtml(dateStr)}</strong></span>
+                </div>
+                
+                <h4 style="margin-top: 10px; font-size: 1.15rem; color: var(--primary);">N° Recibo / Lote: ${escapeHtml(inc.receipt_number)}</h4>
+
+                <div class="modal-grid">
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${uiIcon('truck')}Proveedor / Grifo:</span>
+                        <strong>${escapeHtml(inc.supplier)}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${uiIcon('fuel')}Tipo de Combustible:</span>
+                        <strong style="color: var(--primary);">${escapeHtml(inc.fuel_type || 'Diesel B5 S-50')}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${uiIcon('note')}N° de Factura:</span>
+                        <strong>${escapeHtml(invoiceText)}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${uiIcon('info')}Estado:</span>
+                        <strong style="color: ${statusColor};">${statusText}</strong>
+                    </div>
+                    
+                    <div class="modal-field" style="grid-column: span 2; background: var(--bg-body); padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--border-color, var(--line)); margin-top: 4px; overflow-wrap: break-word; word-break: break-word; hyphens: auto;">
+                        <span class="lbl icon-with-text">${uiIcon('note')}Observaciones:</span>
+                        <span style="color: var(--ink); font-style: italic; font-weight: 500; font-size: 0.92em; margin-top: 4px; display: block; word-break: break-word; white-space: pre-wrap;">${escapeHtml(notesText)}</span>
+                    </div>
+
+                    <div class="modal-field highlight-field" style="background: rgba(37, 99, 235, 0.05);">
+                        <span class="lbl icon-with-text">${uiIcon('fuel')}Cantidad Inicial:</span>
+                        <strong class="qty-val">${parseFloat(inc.gallons).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Galones</strong>
+                    </div>
+                    
+                    <div class="modal-field highlight-field" style="background: rgba(16, 185, 129, 0.05);">
+                        <span class="lbl icon-with-text">${uiIcon('fuel')}Stock Remanente:</span>
+                        <strong class="qty-val" style="color: ${statusColor};">${rem.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Galones</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById("incomeModal").classList.add("active");
+    }
+
+    function closeIncomeModal(e) {
+        document.getElementById("incomeModal").classList.remove("active");
     }
 
     function escapeHtml(text) {

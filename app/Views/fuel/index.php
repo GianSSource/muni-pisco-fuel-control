@@ -565,9 +565,14 @@
             el.dispatchEvent(new Event("change", { bubbles: true }));
         });
 
-        // Limpiar todos los inputs de filtro (fechas, galones, etc.)
+        // Limpiar inputs: usar API de Flatpickr para fechas (evita el reflow/kickback)
+        // y asignación directa para el resto (números, texto)
         document.querySelectorAll(".filter-input").forEach(el => {
-            el.value = "";
+            if (el._flatpickr) {
+                el._flatpickr.clear(); // Limpia sin causar reflow visual
+            } else {
+                el.value = "";
+            }
         });
 
         currentPage = 1;
