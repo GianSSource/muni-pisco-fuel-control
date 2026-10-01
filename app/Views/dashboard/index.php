@@ -771,10 +771,11 @@
                                 </td>
                                 <td>
                                     <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $entrega['id'] ?>" target="_blank"
-                                        style="padding: 4px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                        title="Imprimir vale"
+                                        style="padding: 5px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
                                         <svg class="ui-icon">
                                             <use href="<?= BASE_URL ?>assets/icons.svg#icon-print"></use>
-                                        </svg> Imprimir
+                                        </svg>
                                     </a>
                                 </td>
                             </tr>
