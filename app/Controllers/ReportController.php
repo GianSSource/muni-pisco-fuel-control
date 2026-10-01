@@ -35,6 +35,34 @@ final class ReportController extends Controller
         ]);
     }
 
+    public function apiCount(): void
+    {
+        $this->requireSupervisor();
+
+        $startDate = !empty($_GET['desde']) ? trim((string) $_GET['desde']) : null;
+        $endDate = !empty($_GET['hasta']) ? trim((string) $_GET['hasta']) : null;
+        $vehicle = !empty($_GET['unidad']) ? trim((string) $_GET['unidad']) : null;
+        $driver = !empty($_GET['responsable']) ? trim((string) $_GET['responsable']) : null;
+        $area = !empty($_GET['area']) ? trim((string) $_GET['area']) : null;
+
+        $fuelModel = new Fuel();
+        $stats = $fuelModel->getDeliveriesStats([
+            'date_from' => $startDate,
+            'date_to' => $endDate,
+            'vehicle' => $vehicle,
+            'driver' => $driver,
+            'destination' => $area,
+        ]);
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'status' => 'success',
+            'count' => $stats['count'] ?? 0,
+            'total_gallons' => $stats['total_gallons'] ?? 0
+        ]);
+        exit;
+    }
+
     public function entregasPdf(): void
     {
         // Los reportes son información agregada/exportable de toda la

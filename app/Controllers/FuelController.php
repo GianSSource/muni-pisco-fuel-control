@@ -414,6 +414,21 @@ final class FuelController extends Controller
                 );
                 $allocStmt->execute(['delivery_id' => $delivery['id']]);
                 $lotAllocations = $allocStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                if (empty($lotAllocations) && !empty($delivery['fuel_income_id'])) {
+                    $singleLotStmt = $db->prepare(
+                        'SELECT :gallons AS gallons_taken, receipt_number AS lot_receipt, supplier
+                           FROM fuel_incomes WHERE id = :id LIMIT 1'
+                    );
+                    $singleLotStmt->execute([
+                        'gallons' => $delivery['gallons'] ?? 0,
+                        'id' => $delivery['fuel_income_id']
+                    ]);
+                    $singleLot = $singleLotStmt->fetch(\PDO::FETCH_ASSOC);
+                    if ($singleLot) {
+                        $lotAllocations = [$singleLot];
+                    }
+                }
             }
         } catch (\Throwable $e) {
             error_log('Error al buscar vale de despacho: ' . $e->getMessage());

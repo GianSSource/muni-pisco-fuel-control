@@ -1,423 +1,732 @@
+<?php
+declare(strict_types=1);
+
+$totalGallons = (float) ($delivery['gallons'] ?? 0);
+
+if (!function_exists('numberToWordsEs')) {
+    function numberToWordsEs(int $num): string {
+        $units = ['', 'un', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez',
+                  'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve'];
+        $tens = ['', '', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+        $hundreds = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+
+        if ($num === 0) return 'cero';
+        if ($num === 100) return 'cien';
+
+        $res = '';
+
+        if ($num >= 1000) {
+            $k = intdiv($num, 1000);
+            $num %= 1000;
+            $res .= ($k === 1 ? 'mil ' : numberToWordsEs($k) . ' mil ');
+        }
+
+        if ($num >= 100) {
+            $h = intdiv($num, 100);
+            $num %= 100;
+            $res .= $hundreds[$h] . ' ';
+        }
+
+        if ($num >= 20) {
+            $t = intdiv($num, 10);
+            $u = $num % 10;
+            if ($t === 2 && $u > 0) {
+                $special20 = ['veintiuno', 'veintidós', 'veintitrés', 'veinticuatro', 'veinticinco', 'veintiséis', 'veintisiete', 'veintiocho', 'veintinueve'];
+                $res .= $special20[$u - 1] . ' ';
+            } else {
+                $res .= $tens[$t] . ($u > 0 ? ' y ' . $units[$u] : '') . ' ';
+            }
+        } elseif ($num > 0) {
+            $res .= $units[$num] . ' ';
+        }
+
+        return trim($res);
+    }
+}
+
+if (!function_exists('gallonsToTextEs')) {
+    function gallonsToTextEs(float $gallons): string {
+        $integerPart = (int) floor($gallons);
+        $cents = (int) round(($gallons - $integerPart) * 100);
+        $words = numberToWordsEs($integerPart);
+        $unitWord = ($integerPart === 1) ? 'galón' : 'galones';
+        return ucfirst($words) . ' ' . $unitWord . ' con ' . sprintf('%02d', $cents) . '/100';
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vale de Despacho <?= htmlspecialchars($delivery['receipt_number'] ?? '') ?></title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, Helvetica, sans-serif;
-        }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vale <?= htmlspecialchars($delivery['receipt_number'] ?? 'Despacho') ?></title>
+<style>
+:root {
+  --ink: #18212d;
+  --muted: #5a6676;
+  --line: #dce1e8;
+  --soft: #f5f7fa;
+  --brand: #14375e;
+  --brand-2: #1f5a96;
+  --brand-soft: #e8eff8;
+}
 
-        body {
-            background-color: #f8fafc;
-            color: #0f172a;
-            padding: 20px;
-        }
+* { box-sizing: border-box; }
 
-        .receipt-container {
-            max-width: 650px;
-            margin: 0 auto;
-            background: #ffffff;
-            border: 2px solid #0f172a;
-            padding: 30px;
-            border-radius: 8px;
-        }
+body {
+  margin: 0;
+  background: #e6ebf1;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
 
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #0f172a;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
+.bar {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 18px 16px;
+}
 
-        .header h1 {
-            font-size: 18px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #0f172a;
-        }
+.bar button, .bar a {
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--brand);
+  background: #fff;
+  color: var(--brand);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .15s;
+}
 
-        .header h2 {
-            font-size: 13px;
-            font-weight: normal;
-            color: #475569;
-            margin-top: 4px;
-        }
+.bar button:hover, .bar a:hover {
+  background: var(--brand-soft);
+}
 
-        .badge-title {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 6px 14px;
-            background: #0f172a;
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 4px;
-            letter-spacing: 1px;
-        }
+.bar button.main {
+  background: var(--brand);
+  color: #fff;
+}
 
-        .details-grid {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 25px;
-        }
+.bar button.main:hover {
+  background: #0f2b4b;
+}
 
-        .details-grid th,
-        .details-grid td {
-            border: 1px solid #cbd5e1;
-            padding: 10px 12px;
-            font-size: 13px;
-            text-align: left;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            white-space: normal;
-        }
+.bar button:focus-visible, .bar a:focus-visible {
+  outline: 3px solid #7fa8d8;
+  outline-offset: 2px;
+}
 
-        .details-grid th {
-            background-color: #f1f5f9;
-            color: #334155;
-            font-weight: bold;
-            width: 35%;
-        }
+.bar svg {
+  width: 16px;
+  height: 16px;
+}
 
-        .details-grid td {
-            font-weight: 600;
-            color: #0f172a;
-            max-width: 0;
-        }
+.vale {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto 32px;
+  background: #fff;
+  border-radius: 4px;
+  padding: 0 0 28px;
+  box-shadow: 0 1px 2px rgba(20,40,70,.12), 0 10px 30px rgba(20,40,70,.08);
+  overflow: hidden;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
 
-        .quantity-box {
-            background: #eff6ff;
-            border: 2px dashed #2563eb;
-            padding: 14px;
-            text-align: center;
-            border-radius: 6px;
-            margin-bottom: 30px;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
+.top {
+  height: 8px;
+  background: linear-gradient(90deg, var(--brand), var(--brand-2));
+}
 
-        .quantity-box span {
-            display: block;
-            font-size: 12px;
-            color: #1e40af;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
+.in {
+  padding: 0 44px;
+}
 
-        .quantity-box strong {
-            font-size: 24px;
-            color: #1d4ed8;
-        }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0 20px;
+  border-bottom: 1px solid var(--line);
+}
 
-        .signatures {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 50px;
-            padding: 0 20px;
-            page-break-inside: avoid;
-            break-inside: avoid;
-            page-break-before: avoid;
-            break-before: avoid;
-        }
+.org {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
 
-        .signature-block {
-            width: 45%;
-            text-align: center;
-        }
+.crest {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: .04em;
+  flex: none;
+}
 
-        .signature-line {
-            border-top: 1px solid #0f172a;
-            margin-bottom: 6px;
-        }
+header h1 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--ink);
+}
 
-        .signature-block p {
-            font-size: 12px;
-            color: #334155;
-            font-weight: bold;
-        }
+header .area {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
 
-        .lot-breakdown {
-            margin: 0 0 25px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            overflow: hidden;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
+.num {
+  text-align: right;
+  flex: none;
+}
 
-        .lot-breakdown .lot-title {
-            background: #f1f5f9;
-            color: #334155;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            padding: 8px 12px;
-            border-bottom: 1px solid #cbd5e1;
-        }
+.num .t {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .02em;
+}
 
-        .lot-breakdown table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+.num strong {
+  display: block;
+  font-size: 24px;
+  color: var(--brand);
+  line-height: 1.15;
+  margin: 2px 0;
+}
 
-        .lot-breakdown td {
-            font-size: 12.5px;
-            color: #0f172a;
-            padding: 7px 12px;
-            border-top: 1px solid #e2e8f0;
-        }
+.num time {
+  font-size: 12.5px;
+  color: var(--muted);
+}
 
-        .lot-breakdown tr:first-child td {
-            border-top: none;
-        }
+.doc-title {
+  margin: 20px 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
 
-        .lot-breakdown td.lot-code {
-            font-weight: 700;
-            white-space: nowrap;
-        }
+section {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 
-        .lot-breakdown td.lot-supplier {
-            color: #475569;
-        }
+h2 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-        .lot-breakdown td.lot-gallons {
-            text-align: right;
-            font-weight: 700;
-            color: #1d4ed8;
-            white-space: nowrap;
-        }
+h2::before {
+  content: "";
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--brand-2);
+}
 
-        .lot-breakdown.single td {
-            font-size: 12px;
-            color: #64748b;
-            padding: 6px 12px;
-        }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+}
 
-        .no-print {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+dt {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
 
-        .btn-print {
-            background: #2563eb;
-            color: #ffffff;
-            border: none;
-            padding: 10px 24px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
+dd {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
 
-        .btn-back {
-            background: #64748b;
-            color: #ffffff;
-            border: none;
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            text-decoration: none;
-            margin-left: 10px;
-        }
+dd.none {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--muted);
+}
 
-        @media print {
-            body {
-                background: #ffffff;
-                padding: 0;
-            }
+.qty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--brand-soft);
+  border-left: 6px solid var(--brand);
+  border-radius: 0 6px 6px 0;
+  padding: 14px 20px;
+  margin-top: 12px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
 
-            .no-print {
-                display: none !important;
-            }
+.qty small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
 
-            .lot-breakdown {
-                display: none !important;
-            }
+.qty .words {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--brand);
+}
 
-            .receipt-container {
-                border: 1px solid #000;
-                box-shadow: none;
-                width: 100%;
-                max-width: 100%;
-            }
+.qty .n {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--brand);
+  line-height: 1;
+  white-space: nowrap;
+}
 
-            .details-grid {
-                table-layout: fixed;
-                width: 100%;
-            }
+.qty .n span {
+  font-size: 16px;
+  font-weight: 600;
+}
 
-            .details-grid th,
-            .details-grid td {
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                white-space: normal;
-            }
-        }
-    </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+.tag {
+  display: inline-block;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  border: 1px solid #c5d6ea;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0 0 7px;
+}
+
+td {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+th:last-child, td:last-child {
+  text-align: right;
+}
+
+.cant {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.meter {
+  width: 90px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+  flex: none;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.meter i {
+  display: block;
+  height: 100%;
+  background: var(--brand-2);
+}
+
+.pct {
+  width: 34px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: right;
+}
+
+.cant b {
+  min-width: 68px;
+  text-align: right;
+}
+
+tfoot td {
+  border-top: 2px solid var(--ink);
+  font-weight: 700;
+  padding-top: 10px;
+}
+
+.firmas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  padding: 42px 0 0;
+  border: 0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.firma {
+  border-top: 1px solid var(--ink);
+  padding-top: 8px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.firma b {
+  display: block;
+}
+
+.firma span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.aviso {
+  margin: 18px 44px 0;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Modo impresión y PDF */
+.bn {
+  --ink: #000;
+  --muted: #333;
+  --line: #888;
+  --brand: #000;
+  --brand-2: #000;
+  --brand-soft: #fff;
+}
+
+.bn .vale {
+  box-shadow: none;
+  width: 720px;
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: 0;
+}
+
+.bn .top { background: #000; }
+.bn .crest { background: #fff; color: #000; border: 2px solid #000; }
+.bn .tag { background: #fff; border: 1px solid #000; color: #000; }
+.bn .qty { background: #fff; border: 1.5px solid #000; border-left: 6px solid #000; }
+.bn .meter { background: #fff; border: 1px solid #000; height: 8px; }
+.bn .meter i, .bn h2::before, .bn .top { background: #000; }
+
+.bar button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+@media (max-width: 620px) {
+  .in { padding: 0 20px; }
+  .aviso { margin: 16px 20px 0; flex-direction: column; gap: 4px; }
+  header { flex-direction: column; align-items: flex-start; }
+  .num { text-align: left; }
+  .grid { grid-template-columns: 1fr 1fr; }
+  .qty { flex-direction: column; align-items: flex-start; }
+  .firmas { gap: 24px; }
+  .meter { display: none; }
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
+  :root {
+    --ink: #000;
+    --muted: #333;
+    --line: #888;
+    --brand: #000;
+    --brand-2: #000;
+    --brand-soft: #fff;
+  }
+  body { background: #fff; margin: 0; padding: 0; }
+  .bar { display: none !important; }
+  .vale {
+    box-shadow: none;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .top { background: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .crest { background: #fff; color: #000; border: 2px solid #000; }
+  .tag { background: #fff; border: 1px solid #000; color: #000; }
+  .qty { background: #fff; border: 1.5px solid #000; border-left: 6px solid #000; }
+  .meter { background: #fff; border: 1px solid #000; height: 8px; }
+  .meter i { background: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  h2::before { background: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
 </head>
-
 <body>
 
-    <div class="no-print" style="display: flex; justify-content: center; gap: 15px; margin-bottom: 20px;">
-        <button onclick="window.print()" class="btn-print" style="background: #2563eb;"><svg viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="2">
-                <path
-                    d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
-            </svg>
-            Imprimir
-        </button>
-        <button onclick="downloadPDF()" class="btn-print" style="background: #dc2626;">
-            Guardar PDF
-        </button>
-        <a href="<?= BASE_URL ?>despachos" class="btn-back" style="margin-left: 0;">← Volver</a>
-    </div>
+<div class="bar">
+  <button class="main" id="btn-print" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>
+    Imprimir
+  </button>
+  <button id="btn-pdf" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+    <span id="pdf-lbl">Guardar PDF</span>
+  </button>
+  <a href="<?= BASE_URL ?>despachos" onclick="if (history.length > 1) { history.back(); return false; }">
+    ← Volver
+  </a>
+</div>
 
-    <div class="receipt-container">
-        <div class="header">
-            <h1>MUNICIPALIDAD PROVINCIAL DE PISCO</h1>
-            <h2>SUBGERENCIA DE LOGÍSTICA Y MAQUINARIA MUNICIPAL</h2>
-            <div class="badge-title">VALE DE DESPACHO DE COMBUSTIBLE</div>
+<article class="vale">
+  <div class="top"></div>
+  <div class="in">
+
+    <header>
+      <div class="org">
+        <div class="crest" aria-hidden="true">MPP</div>
+        <div>
+          <h1>Municipalidad Provincial de Pisco</h1>
+          <p class="area">Subgerencia de Logística y Maquinaria Municipal</p>
         </div>
+      </div>
+      <div class="num">
+        <span class="t">N.° de vale</span>
+        <strong><?= htmlspecialchars($delivery['receipt_number'] ?? 'VAL-000000') ?></strong>
+        <time datetime="<?= htmlspecialchars($delivery['created_at'] ?? '') ?>">
+          <?= date('d/m/Y, H:i:s', strtotime($delivery['created_at'] ?? 'now')) ?>
+        </time>
+      </div>
+    </header>
 
-        <table class="details-grid">
-            <tr>
-                <th>N° CORRELATIVO</th>
-                <td style="color: #2563eb; font-size: 15px; font-weight: 800;">
-                    <?= htmlspecialchars($delivery['receipt_number'] ?? 'VAL-2026-0000') ?></td>
-            </tr>
-            <tr>
-                <th>FECHA Y HORA</th>
-                <td><?= date('d/m/Y H:i:s', strtotime($delivery['created_at'] ?? 'now')) ?></td>
-            </tr>
-            <tr>
-                <th>PLACA / VEHÍCULO</th>
-                <td style="text-transform: uppercase; font-size: 14px;">
-                    <?= htmlspecialchars($delivery['vehicle_plate'] ?? 'N/A') ?></td>
-            </tr>
-            <tr>
-                <th>CÓDIGO DE UNIDAD</th>
-                <td><?= htmlspecialchars($delivery['vehicle_unit_code'] ?? 'N/A') ?></td>
-            </tr>
-            <tr>
-                <th>TIPO DE VEHÍCULO</th>
-                <td><?= htmlspecialchars($delivery['vehicle_type_name'] ?? 'Sin tipo') ?></td>
-            </tr>
-            <tr>
-                <th>CONDUCTOR / RESPONSABLE</th>
-                <td><?= htmlspecialchars($delivery['driver_name'] ?? 'N/A') ?></td>
-            </tr>
-            <tr>
-                <th>TIPO DE COMBUSTIBLE</th>
-                <td><?= htmlspecialchars($delivery['fuel_type'] ?? 'Diesel B5 S-50') ?></td>
-            </tr>
-            <tr>
-                <th>DESTINO / ÁREA</th>
-                <td><?= htmlspecialchars($delivery['destination'] ?? 'Despacho General') ?></td>
-            </tr>
-            <tr>
-                <th>OBSERVACIONES</th>
-                <td
-                    style="color: #475569; font-style: italic; font-weight: normal; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">
-                    <?= !empty($delivery['notes']) ? htmlspecialchars($delivery['notes']) : 'Sin observaciones' ?></td>
-            </tr>
-        </table>
+    <p class="doc-title">Vale de despacho de combustible</p>
 
-        <div class="quantity-box">
-            <span>CANTIDAD AUTORIZADA DE COMBUSTIBLE</span>
-            <strong><?= number_format((float) ($delivery['gallons'] ?? 0), 2) ?> GALONES</strong>
+    <section>
+      <h2>Vehículo</h2>
+      <dl class="grid">
+        <div>
+          <dt>Placa</dt>
+          <dd><?= htmlspecialchars($delivery['vehicle_plate'] ?? '-') ?></dd>
         </div>
-
-        <?php if (!empty($lotAllocations) && count($lotAllocations) > 1): ?>
-            <div class="lot-breakdown">
-                <div class="lot-title">Combustible tomado de</div>
-                <table>
-                    <?php foreach ($lotAllocations as $alloc): ?>
-                        <tr>
-                            <td class="lot-code">Lote <?= htmlspecialchars($alloc['lot_receipt']) ?></td>
-                            <td class="lot-supplier"><?= htmlspecialchars($alloc['supplier']) ?></td>
-                            <td class="lot-gallons"><?= number_format((float) $alloc['gallons_taken'], 2) ?> Gal
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </table>
-            </div>
-        <?php elseif (!empty($lotAllocations)): ?>
-            <div class="lot-breakdown single">
-                <table>
-                    <tr>
-                        <td class="lot-code">Lote <?= htmlspecialchars($lotAllocations[0]['lot_receipt']) ?></td>
-                        <td class="lot-supplier"><?= htmlspecialchars($lotAllocations[0]['supplier'] ?? '') ?></td>
-                    </tr>
-                </table>
-            </div>
-        <?php endif; ?>
-
-        <div class="signatures">
-            <div class="signature-block">
-                <div class="signature-line"></div>
-                <p>FIRMA DEL CONDUCTOR</p>
-                <span style="font-size: 11px; color: #64748b;">Recibí Conforme</span>
-            </div>
-            <div class="signature-block">
-                <div class="signature-line"></div>
-                <p>DESPACHADOR DE COMBUSTIBLE</p>
-                <span style="font-size: 11px; color: #64748b;">Entregado y Registrado</span>
-            </div>
+        <div>
+          <dt>Código de unidad</dt>
+          <dd><?= htmlspecialchars($delivery['vehicle_unit_code'] ?? '-') ?></dd>
         </div>
-    </div>
+        <div>
+          <dt>Tipo de vehículo</dt>
+          <dd><?= htmlspecialchars($delivery['vehicle_type_name'] ?? 'Sin tipo') ?></dd>
+        </div>
+      </dl>
+    </section>
 
-    <script>
-        // Disparar impresión automática al abrir la vista si se solicita
-        <?php if (!empty($_GET['auto'])): ?>
-            window.onload = function () {
-                window.print();
-            };
-        <?php endif; ?>
+    <section>
+      <h2>Responsable y destino</h2>
+      <dl class="grid">
+        <div>
+          <dt>Conductor</dt>
+          <dd><?= htmlspecialchars($delivery['driver_name'] ?? '-') ?></dd>
+        </div>
+        <div>
+          <dt>Destino / área</dt>
+          <dd><?= htmlspecialchars($delivery['destination'] ?? 'Despacho General') ?></dd>
+        </div>
+        <div>
+          <dt>Observaciones</dt>
+          <?php if (!empty($delivery['notes'])): ?>
+            <dd><?= htmlspecialchars($delivery['notes']) ?></dd>
+          <?php else: ?>
+            <dd class="none">Sin observaciones</dd>
+          <?php endif; ?>
+        </div>
+      </dl>
+    </section>
 
-        function downloadPDF() {
-            const element = document.querySelector('.receipt-container');
+    <section>
+      <h2>Combustible autorizado</h2>
+      <span class="tag"><?= htmlspecialchars($delivery['fuel_type'] ?? 'Diesel B5 S-50') ?></span>
+      <div class="qty">
+        <div>
+          <small>Cantidad autorizada</small>
+          <span class="words"><?= gallonsToTextEs($totalGallons) ?></span>
+        </div>
+        <div class="n"><?= number_format($totalGallons, 2) ?> <span>galones</span></div>
+      </div>
+    </section>
 
-            // Ocultar el bloque de lotes solo para el documento oficial (PDF):
-            // sigue visible en pantalla para uso interno, pero no debe salir
-            // en el vale que se entrega/archiva.
-            const lotBlocks = document.querySelectorAll('.lot-breakdown');
-            lotBlocks.forEach(el => el.style.display = 'none');
+    <section>
+      <h2>Lotes de donde se tomó</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Lote</th>
+            <th>Proveedor</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (!empty($lotAllocations)): ?>
+            <?php foreach ($lotAllocations as $alloc): ?>
+              <?php 
+                $taken = (float) ($alloc['gallons_taken'] ?? 0);
+                $pct = $totalGallons > 0 ? ($taken / $totalGallons) * 100 : 0;
+              ?>
+              <tr>
+                <td><b><?= htmlspecialchars($alloc['lot_receipt'] ?? 'Lote') ?></b></td>
+                <td><?= htmlspecialchars($alloc['supplier'] ?? '-') ?></td>
+                <td>
+                  <div class="cant">
+                    <span class="meter"><i style="width: <?= min(100, max(2, round($pct))) ?>%"></i></span>
+                    <span class="pct"><?= round($pct) ?>%</span>
+                    <b><?= number_format($taken, 2) ?> gal</b>
+                  </div>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <tr>
+              <td><b>Lote Único</b></td>
+              <td>Proveedor Municipal</td>
+              <td>
+                <div class="cant">
+                  <span class="meter"><i style="width: 100%"></i></span>
+                  <span class="pct">100%</span>
+                  <b><?= number_format($totalGallons, 2) ?> gal</b>
+                </div>
+              </td>
+            </tr>
+          <?php endif; ?>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2">Total despachado</td>
+            <td><div class="cant"><b><?= number_format($totalGallons, 2) ?> gal</b></div></td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
 
-            // Alto dinámico: el "papel" del PDF mide exactamente lo que mide el
-            // recibo (en pulgadas, 96px = 1in), + margen. Así el contenido nunca
-            // se corta entre páginas, sin importar cuántos lotes se listen.
-            const widthIn = 8.5;
-            const heightIn = (element.offsetHeight / 96) + 1;
+    <section class="firmas">
+      <div class="firma">
+        <b>Conductor</b>
+        <span>Recibí conforme</span>
+      </div>
+      <div class="firma">
+        <b>Despachador de combustible</b>
+        <span>Entregado y registrado</span>
+      </div>
+    </section>
 
-            const opt = {
-                margin: 0.4,
-                filename: 'Vale_<?= htmlspecialchars($delivery['receipt_number'] ?? 'Despacho') ?>.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: [widthIn, heightIn], orientation: 'portrait' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-            };
+  </div>
 
-            html2pdf().set(opt).from(element).save().then(() => {
-                // Restaurar la visibilidad en pantalla una vez generado el PDF.
-                lotBlocks.forEach(el => el.style.display = '');
-            });
-        }
-    </script>
+  <div class="aviso">
+    <span>Documento generado por el sistema de control de combustible.</span>
+    <span>Vale válido solo con ambas firmas.</span>
+  </div>
+</article>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+  const NUM = '<?= htmlspecialchars($delivery['receipt_number'] ?? 'Despacho') ?>';
+  const lbl = document.getElementById('pdf-lbl');
+  const btnPdf = document.getElementById('btn-pdf');
+
+  document.getElementById('btn-print').addEventListener('click', () => window.print());
+
+  btnPdf.addEventListener('click', async () => {
+    if (typeof html2pdf === 'undefined') {
+      alert('No se pudo cargar el generador de PDF. Revisa tu conexión e inténtalo de nuevo.');
+      return;
+    }
+
+    const element = document.querySelector('.vale');
+    btnPdf.disabled = true; 
+    lbl.textContent = 'Generando…';
+
+    // Desplazar al tope para asegurar que no haya desfase por scroll
+    window.scrollTo(0, 0);
+
+    const prevShadow = element.style.boxShadow;
+    element.style.boxShadow = 'none';
+
+    try {
+      const opt = {
+        margin: [8, 8, 8, 8],
+        filename: 'Vale_' + NUM + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      await html2pdf().set(opt).from(element).save();
+    } catch (err) {
+      console.error('Error al generar PDF:', err);
+      window.print();
+    } finally {
+      element.style.boxShadow = prevShadow;
+      btnPdf.disabled = false; 
+      lbl.textContent = 'Guardar PDF';
+    }
+  });
+
+  <?php if (!empty($_GET['auto'])): ?>
+    window.addEventListener('DOMContentLoaded', () => {
+      window.print();
+    });
+  <?php endif; ?>
+</script>
 </body>
-
 </html>
