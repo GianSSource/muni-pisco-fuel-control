@@ -3901,9 +3901,12 @@ button {
     }
 
     .app-shell.sidebar-collapsed .sidebar-profile-menu {
-        left: 0;
+        position: fixed;
+        bottom: 68px;
+        left: 6px;
         right: auto;
-        width: 190px;
+        width: 200px;
+        z-index: 51;
     }
 
     .app-shell.sidebar-collapsed .sidebar-footer {
