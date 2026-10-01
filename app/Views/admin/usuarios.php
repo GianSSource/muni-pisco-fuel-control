@@ -13,20 +13,71 @@
     </div>
 
     <?php if (!empty($success)): ?>
-        <div class="catalog-alert catalog-alert-success" style="margin-bottom: 20px;">
-            <span class="icon-with-text"><svg class="ui-icon">
-                    <use href="<?= BASE_URL ?>assets/icons.svg#icon-check"></use>
-                </svg><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></span>
-        </div>
+    <div id="toast-usr" class="usr-toast usr-toast--success" role="alert">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></span>
+        <button onclick="document.getElementById('toast-usr').remove()" class="usr-toast__close" aria-label="Cerrar">&times;</button>
+    </div>
+    <?php elseif (!empty($error)): ?>
+    <div id="toast-usr" class="usr-toast usr-toast--error" role="alert">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></span>
+        <button onclick="document.getElementById('toast-usr').remove()" class="usr-toast__close" aria-label="Cerrar">&times;</button>
+    </div>
     <?php endif; ?>
 
-    <?php if (!empty($error)): ?>
-        <div class="catalog-alert catalog-alert-danger" style="margin-bottom: 20px;">
-            <span class="icon-with-text"><svg class="ui-icon">
-                    <use href="<?= BASE_URL ?>assets/icons.svg#icon-alert"></use>
-                </svg><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></span>
-        </div>
-    <?php endif; ?>
+    <style>
+    .usr-toast {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        min-width: 280px;
+        max-width: 400px;
+        animation: usrToastIn 0.35s cubic-bezier(.22,1,.36,1) both;
+    }
+    .usr-toast--success { background: #059669; color: #ffffff; border: 1px solid #047857; }
+    .usr-toast--success svg { color: #ffffff; flex-shrink:0; }
+    .usr-toast--error   { background: #dc2626; color: #ffffff; border: 1px solid #b91c1c; }
+    .usr-toast--error svg { color: #ffffff; flex-shrink:0; }
+    .usr-toast span { flex: 1; }
+    .usr-toast__close {
+        background: none; border: none; cursor: pointer;
+        font-size: 1.2rem; line-height: 1; color: inherit;
+        opacity: 0.5; padding: 0 2px; transition: opacity .2s;
+    }
+    .usr-toast__close:hover { opacity: 1; }
+    @keyframes usrToastIn {
+        from { opacity: 0; transform: translateY(-16px) scale(.97); }
+        to   { opacity: 1; transform: translateY(0)   scale(1); }
+    }
+    @keyframes usrToastOut {
+        from { opacity: 1; transform: translateY(0)   scale(1); }
+        to   { opacity: 0; transform: translateY(-16px) scale(.97); }
+    }
+    .usr-toast--hiding { animation: usrToastOut 0.3s ease forwards; }
+    </style>
+    <script>
+    (function(){
+        var t = document.getElementById('toast-usr');
+        if (!t) return;
+        var timer = setTimeout(function(){
+            t.classList.add('usr-toast--hiding');
+            setTimeout(function(){ if(t.parentNode) t.remove(); }, 320);
+        }, 4000);
+        t.querySelector('.usr-toast__close').addEventListener('click', function(){
+            clearTimeout(timer);
+        });
+    })();
+    </script>
 
     <!-- Crear nuevo usuario -->
     <div

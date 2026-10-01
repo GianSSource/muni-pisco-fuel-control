@@ -122,7 +122,9 @@
 
             <!-- Panel Plegable de Filtros por Características Específicas -->
             <div id="advancedFiltersPanel" class="advanced-filters-panel <?= (!empty($filters['vehicle']) || !empty($filters['driver']) || !empty($filters['destination']) || !empty($filters['date_from']) || !empty($filters['date_to']) || isset($filters['min_gallons']) || !empty($filters['status'])) ? 'show' : '' ?>">
-                <div class="filters-grid">
+                <div class="filters-grid" style="grid-template-columns: repeat(4, 1fr);">
+
+                    <!-- Fila 1: Vehículo, Conductor, Tipo Combustible, Destino -->
                     <!-- 1. Vehículo / Placa -->
                     <div class="filter-field">
                         <label for="filterVehicle" class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-vehicle"></use></svg>Vehículo / Placa</label>
@@ -149,7 +151,7 @@
                         </select>
                     </div>
 
-                    <!-- 2b. Tipo de Combustible -->
+                    <!-- 3. Tipo de Combustible -->
                     <div class="filter-field">
                         <label for="filterFuelType" class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use></svg>Tipo de Combustible</label>
                         <select id="filterFuelType" name="fuel_type" class="filter-select">
@@ -162,7 +164,7 @@
                         </select>
                     </div>
 
-                    <!-- 3. Destino / Área -->
+                    <!-- 4. Destino / Área -->
                     <div class="filter-field">
                         <label for="filterDestination" class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-pin"></use></svg>Destino / Área</label>
                         <select id="filterDestination" name="destination" class="filter-select">
@@ -175,32 +177,43 @@
                         </select>
                     </div>
 
-                    <!-- 4. Rango de Fechas: Desde -->
+                    <!-- Fila 2: Fecha Desde, Fecha Hasta, Galones Mín, Galones Máx -->
+                    <!-- 5. Fecha Desde -->
                     <div class="filter-field">
                         <label for="filterDateFrom" class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-calendar"></use></svg>Fecha Desde</label>
-                        <input type="date" id="filterDateFrom" name="date_from" class="filter-input" value="<?= htmlspecialchars($filters['date_from']) ?>">
+                        <div style="position: relative;">
+                            <input type="date" id="filterDateFrom" name="date_from" class="filter-input" value="<?= htmlspecialchars($filters['date_from']) ?>" style="padding-right: 36px;">
+                            <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--text-muted,#64748b);">
+                                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            </span>
+                        </div>
                     </div>
 
-                    <!-- 5. Rango de Fechas: Hasta -->
+                    <!-- 6. Fecha Hasta -->
                     <div class="filter-field">
                         <label for="filterDateTo" class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-calendar"></use></svg>Fecha Hasta</label>
-                        <input type="date" id="filterDateTo" name="date_to" class="filter-input" value="<?= htmlspecialchars($filters['date_to']) ?>">
+                        <div style="position: relative;">
+                            <input type="date" id="filterDateTo" name="date_to" class="filter-input" value="<?= htmlspecialchars($filters['date_to']) ?>" style="padding-right: 36px;">
+                            <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--text-muted,#64748b);">
+                                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            </span>
+                        </div>
                     </div>
 
-                    <!-- 6. Galones Mínimos -->
+                    <!-- 7. Galones Mínimos -->
                     <div class="filter-field">
                         <label for="filterMinGallons" class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use></svg>Galones Mínimos</label>
                         <input type="number" step="0.1" id="filterMinGallons" name="min_gallons" placeholder="0" class="filter-input" value="<?= $filters['min_gallons'] !== null ? htmlspecialchars((string) $filters['min_gallons']) : '' ?>">
                     </div>
 
-                    <!-- 7. Galones Máximos -->
+                    <!-- 8. Galones Máximos -->
                     <div class="filter-field">
                         <label for="filterMaxGallons" class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use></svg>Galones Máximos</label>
                         <input type="number" step="0.1" id="filterMaxGallons" name="max_gallons" placeholder="500" class="filter-input" value="<?= $filters['max_gallons'] !== null ? htmlspecialchars((string) $filters['max_gallons']) : '' ?>">
                     </div>
 
-
                 </div>
+
 
                 <div class="filter-actions-row">
                     <button type="button" class="button secondary small-btn" onclick="clearAllFilters()">Limpiar Todos los Filtros</button>
@@ -275,11 +288,25 @@
                                     <span class="quantity-highlight"><?= number_format((float) $d['gallons'], 2) ?> Gal</span>
                                 </td>
 
-                                <td>
-                                    <button type="button" class="button secondary small-btn" onclick="event.stopPropagation(); openDetailModal(<?= htmlspecialchars(json_encode($d)) ?>)">Ver Detalle</button>
-                                    <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $d['id'] ?>" target="_blank" onclick="event.stopPropagation();" style="padding: 4px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-left: 6px;">
-                                        <svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-print"></use></svg> Imprimir
-                                    </a>
+                                <td style="white-space: nowrap;">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <button type="button"
+                                            style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; background: transparent; border: 1px solid var(--line, #334155); color: var(--ink); border-radius: 7px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s;"
+                                            onmouseover="this.style.background='var(--hover-bg, rgba(255,255,255,.07))'"
+                                            onmouseout="this.style.background='transparent'"
+                                            onclick="event.stopPropagation(); openDetailModal(<?= htmlspecialchars(json_encode($d)) ?>)">
+                                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            Ver Detalle
+                                        </button>
+                                        <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $d['id'] ?>" target="_blank"
+                                            onclick="event.stopPropagation();"
+                                            title="Imprimir vale"
+                                            style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #2563eb; color: #ffffff; border-radius: 7px; text-decoration: none; flex-shrink: 0; transition: background .15s;"
+                                            onmouseover="this.style.background='#1d4ed8'"
+                                            onmouseout="this.style.background='#2563eb'">
+                                            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

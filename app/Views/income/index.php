@@ -394,13 +394,23 @@
                 <!-- Fecha Desde -->
                 <div class="filter-field">
                     <label for="filterDateFrom" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Fecha Desde</label>
-                    <input type="date" id="filterDateFrom" class="filter-input" style="width: 100%; height: 38px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; padding: 0 12px;">
+                    <div style="position: relative;">
+                        <input type="date" id="filterDateFrom" class="filter-input" style="width: 100%; height: 38px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; padding: 0 36px 0 12px;">
+                        <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--text-muted,#64748b);">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Fecha Hasta -->
                 <div class="filter-field">
                     <label for="filterDateTo" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Fecha Hasta</label>
-                    <input type="date" id="filterDateTo" class="filter-input" style="width: 100%; height: 38px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; padding: 0 12px;">
+                    <div style="position: relative;">
+                        <input type="date" id="filterDateTo" class="filter-input" style="width: 100%; height: 38px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; padding: 0 36px 0 12px;">
+                        <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--text-muted,#64748b);">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -510,8 +520,15 @@
                                         <?= $isAvailable ? 'Disponible' : 'Agotado' ?>
                                     </span>
                                 </td>
-                                <td>
-                                    <button type="button" class="button secondary small-btn" onclick="event.stopPropagation(); openIncomeModal(<?= htmlspecialchars(json_encode($inc)) ?>)">Ver Detalle</button>
+                                <td style="white-space: nowrap;">
+                                    <button type="button"
+                                        style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; background: transparent; border: 1px solid var(--line, #334155); color: var(--ink); border-radius: 7px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s;"
+                                        onmouseover="this.style.background='var(--hover-bg, rgba(255,255,255,.07))'"
+                                        onmouseout="this.style.background='transparent'"
+                                        onclick="event.stopPropagation(); openIncomeModal(<?= htmlspecialchars(json_encode($inc)) ?>)">
+                                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        Ver Detalle
+                                    </button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
