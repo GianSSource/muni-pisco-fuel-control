@@ -161,6 +161,10 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
         (function() {
             const savedTheme = localStorage.getItem('app-theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
+            // Aplicar estado del sidebar ANTES del primer paint para evitar el flash de layout
+            if (localStorage.getItem('sidebar-collapsed') === '1') {
+                document.documentElement.classList.add('sidebar-pre-collapsed');
+            }
         })();
     </script>
 </head>
@@ -185,7 +189,14 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
                         <span class="sidebar-brand-mark">M</span>
                         <span class="sidebar-brand-label"><?= htmlspecialchars(APP_NAME) ?></span>
                     </a>
-                    <button class="sidebar-close" id="sidebarCloseBtn" type="button" aria-label="Cerrar menú">×</button>
+                    <div style="display:flex;gap:4px;align-items:center;">
+                        <button class="sidebar-collapse" id="sidebarCollapseBtn" type="button" aria-label="Contraer menú" title="Contraer menú">
+                            <svg class="sidebar-collapse-icon ui-icon">
+                                <use href="<?= BASE_URL ?>assets/icons.svg#icon-panel-close"></use>
+                            </svg>
+                        </button>
+                        <button class="sidebar-close" id="sidebarCloseBtn" type="button" aria-label="Cerrar menú">×</button>
+                    </div>
                 </div>
                 <nav class="sidebar-nav">
                     <p class="sidebar-section-label">Principal</p>
@@ -249,6 +260,34 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
             overlay?.addEventListener('click', closeSidebar);
             document.addEventListener('keydown', (event) => {
                 if (event.key === 'Escape') closeSidebar();
+            });
+
+            // Restaurar icono según estado actual (la clase ya fue aplicada antes del paint)
+            const appShell = document.querySelector('.app-shell');
+            const collapseBtn = document.getElementById('sidebarCollapseBtn');
+            const collapseIcon = collapseBtn?.querySelector('use');
+            const ICON_BASE = '<?= BASE_URL ?>assets/icons.svg';
+
+            const updateCollapseIcon = (isCollapsed) => {
+                if (!collapseIcon) return;
+                collapseIcon.setAttribute('href', isCollapsed
+                    ? `${ICON_BASE}#icon-panel-open`
+                    : `${ICON_BASE}#icon-panel-close`);
+            };
+
+            // Sincronizar estado: transferir la clase del <html> al .app-shell
+            // (el <head> aplica sidebar-pre-collapsed en <html> antes del paint)
+            if (document.documentElement.classList.contains('sidebar-pre-collapsed')) {
+                appShell?.classList.add('sidebar-collapsed');
+                document.documentElement.classList.remove('sidebar-pre-collapsed');
+            }
+            updateCollapseIcon(appShell?.classList.contains('sidebar-collapsed') ?? false);
+
+            collapseBtn?.addEventListener('click', () => {
+                const isNowCollapsed = appShell?.classList.toggle('sidebar-collapsed');
+                appShell?.classList.remove('sidebar-flyout');
+                localStorage.setItem('sidebar-collapsed', isNowCollapsed ? '1' : '0');
+                updateCollapseIcon(isNowCollapsed);
             });
 
             document.getElementById('themeToggleBtn')?.addEventListener('click', () => {

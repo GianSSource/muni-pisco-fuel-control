@@ -3430,55 +3430,50 @@ button {
     .sidebar-collapse {
         display: grid;
         place-items: center;
-        position: fixed;
-        top: 14px;
-        left: 62px;
-        z-index: 45;
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
         padding: 0;
-        border: 1px solid #bfdbfe;
-        border-radius: 0 9px 9px 0;
-        color: #1d4ed8;
-        background: #eff6ff;
-        box-shadow: 0 1px 3px rgba(37, 99, 235, .16);
-        font-size: 1.55rem;
+        border: 1px solid var(--line, #e2e8f0);
+        border-radius: 8px;
+        color: var(--muted, #94a3b8);
+        background: var(--bg, #f8fafc);
+        box-shadow: none;
+        font-size: 1rem;
         line-height: 1;
         cursor: pointer;
-        transition: none;
+        transition: all 0.15s ease;
     }
 
     .sidebar-collapse-icon {
         display: block;
+        width: 16px;
+        height: 16px;
     }
 
     .sidebar-collapse:hover,
     .sidebar-collapse:focus-visible {
-        color: #ffffff;
-        background: #2563eb;
-        border-color: #2563eb;
-        box-shadow: 0 4px 10px rgba(37, 99, 235, .35);
+        color: var(--primary, #2563eb);
+        background: rgba(37, 99, 235, 0.08);
+        border-color: rgba(37, 99, 235, 0.3);
         outline: none;
     }
 
     .sidebar-collapse:focus-visible {
-        outline: 3px solid rgba(96, 165, 250, .55);
+        outline: 2px solid rgba(96, 165, 250, .55);
         outline-offset: 2px;
     }
 
     [data-theme="dark"] .sidebar-collapse {
-        color: #f8fafc;
-        background: #1e3a8a;
-        border-color: #60a5fa;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, .42), 0 0 0 1px rgba(96, 165, 250, .18);
+        color: #94a3b8;
+        background: rgba(255, 255, 255, 0.06);
+        border-color: #334155;
     }
 
     [data-theme="dark"] .sidebar-collapse:hover,
     [data-theme="dark"] .sidebar-collapse:focus-visible {
-        color: #0f172a;
-        background: #93c5fd;
-        border-color: #bfdbfe;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, .46), 0 0 0 3px rgba(96, 165, 250, .28);
+        color: #e2e8f0;
+        background: rgba(255, 255, 255, 0.12);
+        border-color: #475569;
     }
 }
 
@@ -3814,11 +3809,50 @@ button {
     display: none;
 }
 
+/* Pre-collapsed: se aplica via <html> class antes del primer paint
+   para evitar el flash de layout al recargar con sidebar contraído. */
 @media (min-width: 861px) {
-    .sidebar-collapse {
+    html.sidebar-pre-collapsed .sidebar {
+        width: 78px;
+        flex-basis: 78px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    html.sidebar-pre-collapsed .app-content {
+        width: calc(100% - 78px);
+        margin-left: 78px;
+    }
+
+    html.sidebar-pre-collapsed .sidebar-brand-label,
+    html.sidebar-pre-collapsed .sidebar-section-label,
+    html.sidebar-pre-collapsed .sidebar-link-label,
+    html.sidebar-pre-collapsed .sidebar-profile-text,
+    html.sidebar-pre-collapsed .sidebar-profile-chevron,
+    html.sidebar-pre-collapsed .sidebar-utility>span:last-child {
         display: none;
     }
 
+    html.sidebar-pre-collapsed .sidebar-brand-row {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    html.sidebar-pre-collapsed .sidebar-link,
+    html.sidebar-pre-collapsed .sidebar-utility {
+        justify-content: center;
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    html.sidebar-pre-collapsed .sidebar-profile-btn {
+        justify-content: center;
+        padding: 6px;
+    }
+}
+
+@media (min-width: 861px) {
     .app-shell.sidebar-collapsed .sidebar {
         width: 78px;
         flex-basis: 78px;
@@ -3827,8 +3861,8 @@ button {
     }
 
     .app-shell.sidebar-collapsed .app-content {
-        width: 100%;
-        margin-left: 0;
+        width: calc(100% - 78px);
+        margin-left: 78px;
     }
 
     .app-shell.sidebar-collapsed .sidebar-brand-row {
@@ -3847,9 +3881,6 @@ button {
         display: none;
     }
 
-    .app-shell.sidebar-collapsed .sidebar-collapse {
-        left: 62px;
-    }
 
     .app-shell.sidebar-collapsed .sidebar-welcome {
         justify-content: center;
@@ -3908,9 +3939,6 @@ button {
         display: inline;
     }
 
-    .app-shell.sidebar-collapsed.sidebar-flyout .sidebar-collapse {
-        left: 62px;
-    }
 
     .app-shell.sidebar-collapsed.sidebar-flyout .sidebar-welcome {
         justify-content: flex-start;
