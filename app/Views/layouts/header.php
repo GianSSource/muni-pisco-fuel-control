@@ -176,6 +176,7 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
             $firstName = $nameParts[0] ?? 'Usuario';
             $avatarPalette = ['#2563eb', '#16a34a', '#dc2626', '#c026d3', '#0891b2', '#ea580c', '#7c3aed', '#0d9488'];
             $avatarColor = $avatarPalette[crc32($userDisplayName) % count($avatarPalette)];
+            $userRoleLabel = ($userRole === 'admin') ? 'Administrador' : (($userRole === 'supervisor') ? 'Supervisor' : 'Operador');
         ?>
         <div class="app-shell">
             <aside class="sidebar" id="appSidebar" aria-label="Navegación principal">
@@ -185,10 +186,6 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
                         <span class="sidebar-brand-label"><?= htmlspecialchars(APP_NAME) ?></span>
                     </a>
                     <button class="sidebar-close" id="sidebarCloseBtn" type="button" aria-label="Cerrar menú">×</button>
-                </div>
-                <div class="sidebar-welcome">
-                    <span class="user-avatar" style="background: <?= $avatarColor ?>;"><?= htmlspecialchars($userInitials) ?></span>
-                    <div class="sidebar-welcome-copy"><strong>Hola, <?= htmlspecialchars($firstName) ?></strong><small>Gestión municipal</small></div>
                 </div>
                 <nav class="sidebar-nav">
                     <p class="sidebar-section-label">Principal</p>
@@ -207,11 +204,30 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
                     <?php endif; ?>
                 </nav>
                 <div class="sidebar-footer">
-                    <button id="themeToggleBtn" class="sidebar-utility" type="button"><svg class="theme-icon icon-sun ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-sun"></use></svg><svg class="theme-icon icon-moon ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-moon"></use></svg><span>Cambiar tema</span></button>
-                    <form id="logoutForm" action="<?= BASE_URL ?>logout" method="post" style="display: none;">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken ?? $_SESSION['csrf_token'] ?? '') ?>">
-                    </form>
-                    <a href="#" onclick="event.preventDefault(); document.getElementById('logoutForm').submit();" class="sidebar-utility sidebar-logout"><span>↪</span><span>Cerrar sesión</span></a>
+                    <div class="sidebar-profile-menu" id="sidebarProfileMenu">
+                        <button type="button" class="sidebar-menu-item" id="themeToggleBtn">
+                            <svg class="theme-icon icon-sun ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-sun"></use></svg>
+                            <svg class="theme-icon icon-moon ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-moon"></use></svg>
+                            <span>Cambiar tema</span>
+                        </button>
+                        <div class="sidebar-menu-sep"></div>
+                        <form id="logoutForm" action="<?= BASE_URL ?>logout" method="post" style="margin: 0;">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken ?? $_SESSION['csrf_token'] ?? '') ?>">
+                            <button type="submit" class="sidebar-menu-item danger">
+                                <svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-logout"></use></svg>
+                                <span>Cerrar sesión</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <button type="button" class="sidebar-profile-btn" id="sidebarProfileBtn" aria-haspopup="true" aria-expanded="false">
+                        <span class="user-avatar" style="background: <?= $avatarColor ?>;"><?= htmlspecialchars($userInitials) ?></span>
+                        <div class="sidebar-profile-text">
+                            <p class="sidebar-profile-name"><?= htmlspecialchars($userDisplayName) ?></p>
+                            <p class="sidebar-profile-role"><?= htmlspecialchars($userRoleLabel) ?></p>
+                        </div>
+                        <svg class="sidebar-profile-chevron ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-selector"></use></svg>
+                    </button>
                 </div>
             </aside>
             <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -241,6 +257,30 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
                 document.documentElement.setAttribute('data-theme', next);
                 localStorage.setItem('app-theme', next);
                 window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: next } }));
+            });
+
+            // Control del menú desplegable del perfil (Cerrar sesión / Cambiar tema)
+            const profileBtn = document.getElementById('sidebarProfileBtn');
+            const profileMenu = document.getElementById('sidebarProfileMenu');
+
+            profileBtn?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = profileMenu?.classList.toggle('open');
+                profileBtn.setAttribute('aria-expanded', String(isOpen));
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!profileMenu?.contains(e.target) && !profileBtn?.contains(e.target)) {
+                    profileMenu?.classList.remove('open');
+                    profileBtn?.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    profileMenu?.classList.remove('open');
+                    profileBtn?.setAttribute('aria-expanded', 'false');
+                }
             });
 
             // Convierte el selector de cantidad en una lista visual consistente
