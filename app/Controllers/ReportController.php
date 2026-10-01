@@ -44,6 +44,24 @@ final class ReportController extends Controller
 
         $startDate = !empty($_GET['desde']) ? trim((string) $_GET['desde']) : null;
         $endDate = !empty($_GET['hasta']) ? trim((string) $_GET['hasta']) : null;
+
+        if (empty($startDate) || empty($endDate)) {
+            die("Error: Las fechas de inicio (desde) y fin (hasta) son obligatorias para exportar el reporte.");
+        }
+
+        try {
+            $dStart = new \DateTime($startDate);
+            $dEnd = new \DateTime($endDate);
+            if ($dEnd < $dStart) {
+                die("Error: La fecha de fin no puede ser anterior a la fecha de inicio.");
+            }
+            if ($dStart->diff($dEnd)->days > 366) {
+                die("Error: El rango máximo de exportación es de 1 año (366 días). Por favor reduzca el período de fechas.");
+            }
+        } catch (\Exception $e) {
+            die("Error: Formato de fecha inválido.");
+        }
+
         $vehicle = !empty($_GET['unidad']) ? trim((string) $_GET['unidad']) : null;
         $driver = !empty($_GET['responsable']) ? trim((string) $_GET['responsable']) : null;
         $area = !empty($_GET['area']) ? trim((string) $_GET['area']) : null;
@@ -57,8 +75,8 @@ final class ReportController extends Controller
         $pdf->subtitle('Fecha de impresion: ' . date('d/m/Y H:i'));
 
         $filterText = 'Filtros: ';
-        $filterText .= !empty($startDate) ? "Desde: " . date('d/m/Y', strtotime($startDate)) . " " : 'Desde: Inicio ';
-        $filterText .= !empty($endDate) ? "Hasta: " . date('d/m/Y', strtotime($endDate)) . " " : 'Hasta: Hoy ';
+        $filterText .= "Desde: " . date('d/m/Y', strtotime($startDate)) . " ";
+        $filterText .= "Hasta: " . date('d/m/Y', strtotime($endDate)) . " ";
         if (!empty($area)) {
             $filterText .= "│ Área: $area ";
         }
@@ -85,7 +103,7 @@ final class ReportController extends Controller
             'OBSERVACIONES'
         ], $widths);
 
-        $totalGalones = 0;
+        $totalGalones = 0.0;
 
         foreach ($deliveries as $d) {
             $cant = (float) $d['gallons'];
@@ -114,6 +132,24 @@ final class ReportController extends Controller
 
         $startDate = !empty($_GET['desde']) ? trim((string) $_GET['desde']) : null;
         $endDate = !empty($_GET['hasta']) ? trim((string) $_GET['hasta']) : null;
+
+        if (empty($startDate) || empty($endDate)) {
+            die("Error: Las fechas de inicio (desde) y fin (hasta) son obligatorias para exportar el reporte.");
+        }
+
+        try {
+            $dStart = new \DateTime($startDate);
+            $dEnd = new \DateTime($endDate);
+            if ($dEnd < $dStart) {
+                die("Error: La fecha de fin no puede ser anterior a la fecha de inicio.");
+            }
+            if ($dStart->diff($dEnd)->days > 366) {
+                die("Error: El rango máximo de exportación es de 1 año (366 días). Por favor reduzca el período de fechas.");
+            }
+        } catch (\Exception $e) {
+            die("Error: Formato de fecha inválido.");
+        }
+
         $vehicle = !empty($_GET['unidad']) ? trim((string) $_GET['unidad']) : null;
         $driver = !empty($_GET['responsable']) ? trim((string) $_GET['responsable']) : null;
         $area = !empty($_GET['area']) ? trim((string) $_GET['area']) : null;
@@ -125,8 +161,8 @@ final class ReportController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Entregas');
 
-        $filterDesc = !empty($startDate) ? "Desde: " . date('d/m/Y', strtotime($startDate)) . " " : 'Desde: Inicio ';
-        $filterDesc .= !empty($endDate) ? "Hasta: " . date('d/m/Y', strtotime($endDate)) . " " : 'Hasta: Hoy ';
+        $filterDesc = "Desde: " . date('d/m/Y', strtotime($startDate)) . " ";
+        $filterDesc .= "Hasta: " . date('d/m/Y', strtotime($endDate)) . " ";
         if (!empty($area)) {
             $filterDesc .= " | Área: $area";
         }
@@ -138,14 +174,14 @@ final class ReportController extends Controller
         }
         
         $sheet->setCellValue('A1', 'REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE');
-        $sheet->mergeCells('A1:H1');
+        $sheet->mergeCells('A1:G1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0F172A'));
         
         $sheet->setCellValue('A2', 'Fecha de exportación: ' . date('d/m/Y H:i:s') . ' | ' . $filterDesc);
-        $sheet->mergeCells('A2:H2');
+        $sheet->mergeCells('A2:G2');
         $sheet->getStyle('A2')->getFont()->setSize(10)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF64748B'));
 
-        $headers = ['N° RECIBO / VALE', 'FECHA Y HORA', 'VEHÍCULO / PLACA', 'CONDUCTOR / RESPONSABLE', 'DESTINO / ÁREA', 'CANTIDAD (GAL)', 'ESTADO', 'OBSERVACIONES'];
+        $headers = ['N° RECIBO / VALE', 'FECHA Y HORA', 'VEHÍCULO / PLACA', 'CONDUCTOR / RESPONSABLE', 'DESTINO / ÁREA', 'CANTIDAD (GAL)', 'OBSERVACIONES'];
         $col = 'A';
         foreach ($headers as $h) {
             $sheet->setCellValue($col . '4', $h);
@@ -159,10 +195,10 @@ final class ReportController extends Controller
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFCBD5E1']]],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
         ];
-        $sheet->getStyle('A4:H4')->applyFromArray($headerStyle);
+        $sheet->getStyle('A4:G4')->applyFromArray($headerStyle);
 
         $row = 5;
-        $totalGalones = 0;
+        $totalGalones = 0.0;
         foreach ($deliveries as $d) {
             $cant = (float) $d['gallons'];
             $totalGalones += $cant;
@@ -173,8 +209,7 @@ final class ReportController extends Controller
             $sheet->setCellValue('D' . $row, $d['driver_name']);
             $sheet->setCellValue('E' . $row, $d['destination'] ?? 'General');
             $sheet->setCellValue('F' . $row, $cant);
-            $sheet->setCellValue('G' . $row, $d['status'] ?? 'Completado');
-            $sheet->setCellValue('H' . $row, $d['notes'] ?? '');
+            $sheet->setCellValue('G' . $row, $d['notes'] ?? '-');
             
             $row++;
         }
@@ -183,18 +218,18 @@ final class ReportController extends Controller
             $dataStyle = [
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFCBD5E1']]]
             ];
-            $sheet->getStyle('A5:H' . ($row - 1))->applyFromArray($dataStyle);
+            $sheet->getStyle('A5:G' . ($row - 1))->applyFromArray($dataStyle);
             $sheet->getStyle('A5:A' . ($row - 1))->getFont()->setBold(true);
             $sheet->getStyle('C5:C' . ($row - 1))->getFont()->setBold(true);
-            $sheet->getStyle('G5:G' . ($row - 1))->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF059669'));
             $sheet->getStyle('F5:F' . ($row - 1))->getNumberFormat()->setFormatCode('#,##0.00');
         }
+
+        $totalGalones = round($totalGalones, 2);
 
         $sheet->setCellValue('A' . $row, 'TOTAL GENERAL DESPACHADO:');
         $sheet->mergeCells('A' . $row . ':E' . $row);
         $sheet->setCellValue('F' . $row, $totalGalones);
         $sheet->setCellValue('G' . $row, count($deliveries) . ' Entregas Registradas');
-        $sheet->mergeCells('G' . $row . ':H' . $row);
 
         $totalStyle = [
             'font' => ['bold' => true, 'color' => ['argb' => 'FF0284C7']],
@@ -202,7 +237,7 @@ final class ReportController extends Controller
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF93C5FD']]],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]
         ];
-        $sheet->getStyle('A' . $row . ':H' . $row)->applyFromArray($totalStyle);
+        $sheet->getStyle('A' . $row . ':G' . $row)->applyFromArray($totalStyle);
         $sheet->getStyle('F' . $row)->getNumberFormat()->setFormatCode('#,##0.00');
         $sheet->getStyle('G' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
@@ -223,6 +258,24 @@ final class ReportController extends Controller
 
         $startDate = !empty($_GET['desde']) ? trim((string) $_GET['desde']) : null;
         $endDate = !empty($_GET['hasta']) ? trim((string) $_GET['hasta']) : null;
+
+        if (empty($startDate) || empty($endDate)) {
+            die("Error: Las fechas de inicio (desde) y fin (hasta) son obligatorias para exportar el reporte.");
+        }
+
+        try {
+            $dStart = new \DateTime($startDate);
+            $dEnd = new \DateTime($endDate);
+            if ($dEnd < $dStart) {
+                die("Error: La fecha de fin no puede ser anterior a la fecha de inicio.");
+            }
+            if ($dStart->diff($dEnd)->days > 366) {
+                die("Error: El rango máximo de exportación es de 1 año (366 días). Por favor reduzca el período de fechas.");
+            }
+        } catch (\Exception $e) {
+            die("Error: Formato de fecha inválido.");
+        }
+
         $vehicle = !empty($_GET['unidad']) ? trim((string) $_GET['unidad']) : null;
         $driver = !empty($_GET['responsable']) ? trim((string) $_GET['responsable']) : null;
         $area = !empty($_GET['area']) ? trim((string) $_GET['area']) : null;
@@ -231,8 +284,8 @@ final class ReportController extends Controller
         $deliveries = $fuelModel->getFilteredDeliveries($startDate, $endDate, $vehicle, $driver, $area);
         $deliveries = array_reverse($deliveries);
 
-        $filterDesc = !empty($startDate) ? "Desde: " . date('d/m/Y', strtotime($startDate)) . " " : 'Desde: Inicio ';
-        $filterDesc .= !empty($endDate) ? "Hasta: " . date('d/m/Y', strtotime($endDate)) . " " : 'Hasta: Hoy ';
+        $filterDesc = "Desde: " . date('d/m/Y', strtotime($startDate)) . " ";
+        $filterDesc .= "Hasta: " . date('d/m/Y', strtotime($endDate)) . " ";
         if (!empty($area)) {
             $filterDesc .= " | Área: $area";
         }
@@ -259,10 +312,10 @@ final class ReportController extends Controller
         fputcsv($output, [], ';'); // Fila vacía
 
         // Cabeceras
-        $headers = ['N° RECIBO / VALE', 'FECHA Y HORA', 'VEHÍCULO / PLACA', 'CONDUCTOR / RESPONSABLE', 'DESTINO / ÁREA', 'CANTIDAD (GAL)', 'ESTADO', 'OBSERVACIONES'];
+        $headers = ['N° RECIBO / VALE', 'FECHA Y HORA', 'VEHÍCULO / PLACA', 'CONDUCTOR / RESPONSABLE', 'DESTINO / ÁREA', 'CANTIDAD (GAL)', 'OBSERVACIONES'];
         fputcsv($output, $headers, ';');
 
-        $totalGalones = 0;
+        $totalGalones = 0.0;
         foreach ($deliveries as $d) {
             $cant = (float) $d['gallons'];
             $totalGalones += $cant;
@@ -274,15 +327,16 @@ final class ReportController extends Controller
                 $d['driver_name'],
                 $d['destination'] ?? 'General',
                 number_format($cant, 2, '.', ''),
-                $d['status'] ?? 'Completado',
-                $d['notes'] ?? ''
+                $d['notes'] ?? '-'
             ];
             
             fputcsv($output, $row, ';');
         }
 
+        $totalGalones = round($totalGalones, 2);
+
         fputcsv($output, [], ';'); // Fila vacía
-        fputcsv($output, ['TOTAL GENERAL DESPACHADO:', '', '', '', '', number_format($totalGalones, 2, '.', ''), count($deliveries) . ' Entregas Registradas'], ';');
+        fputcsv($output, ['TOTAL GENERAL DESPACHADO:', '', '', '', number_format($totalGalones, 2, '.', ''), count($deliveries) . ' Entregas Registradas'], ';');
 
         fclose($output);
         exit;
