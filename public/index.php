@@ -102,8 +102,8 @@ $router->post('/admin/usuarios/eliminar', UserController::class, 'delete');
 
 $router->get('/reportes', ReportController::class, 'index');
 $router->get('/reportes/pdf', ReportController::class, 'entregasPdf');
-$router->get('/reportes/excel', ReportController::class, 'entregasCsv');
-$router->get('/reportes/csv', ReportController::class, 'entregasCsvRaw');
+$router->get('/reportes/excel', ReportController::class, 'entregasExcel');
+$router->get('/reportes/csv', ReportController::class, 'entregasCsv');
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $uri = $_SERVER['REQUEST_URI'] ?? '/';

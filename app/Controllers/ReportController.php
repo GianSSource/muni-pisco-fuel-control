@@ -108,7 +108,7 @@ final class ReportController extends Controller
         $pdf->output('reporte-entregas-' . date('Ymd-His') . '.pdf');
     }
 
-    public function entregasCsv(): void
+    public function entregasExcel(): void
     {
         $this->requireSupervisor();
 
@@ -217,7 +217,7 @@ final class ReportController extends Controller
         exit;
     }
 
-    public function entregasCsvRaw(): void
+    public function entregasCsv(): void
     {
         $this->requireSupervisor();
 
