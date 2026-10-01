@@ -59,6 +59,32 @@
         color: #ffffff;
         box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
     }
+
+    /* Botón Filtros Avanzados adaptativo (Blanco en Modo Claro, Oscuro en Modo Nocturno) */
+    #toggleFiltersBtn {
+        background-color: #ffffff !important;
+        color: #334155 !important;
+        border: 1px solid #cbd5e1 !important;
+        transition: all 0.2s ease;
+    }
+
+    #toggleFiltersBtn:hover {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+        border-color: #94a3b8 !important;
+    }
+
+    [data-theme="dark"] #toggleFiltersBtn {
+        background-color: #1e293b !important;
+        color: #f8fafc !important;
+        border-color: #334155 !important;
+    }
+
+    [data-theme="dark"] #toggleFiltersBtn:hover {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+        border-color: #475569 !important;
+    }
 </style>
 
 <div class="search-page-wrapper">

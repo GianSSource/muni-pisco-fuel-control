@@ -192,9 +192,9 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
                 </div>
                 <nav class="sidebar-nav">
                     <p class="sidebar-section-label">Principal</p>
-                    <a class="sidebar-link <?= (strpos($currentUri, 'dashboard') !== false || $currentUri === '/' || $currentUri === BASE_URL) ? 'active' : '' ?>" href="<?= BASE_URL ?>dashboard" title="Panel"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-building"></use></svg><span class="sidebar-link-label">Panel</span></a>
-                    <a class="sidebar-link <?= strpos($currentUri, 'despachos') !== false ? 'active' : '' ?>" href="<?= BASE_URL ?>despachos" title="Despachos"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-truck"></use></svg><span class="sidebar-link-label">Despachos</span></a>
-                    <a class="sidebar-link <?= strpos($currentUri, 'ingresos') !== false ? 'active' : '' ?>" href="<?= BASE_URL ?>ingresos" title="Ingresos"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use></svg><span class="sidebar-link-label">Ingresos</span></a>
+                    <a class="sidebar-link <?= (strpos($currentUri, 'dashboard') !== false || $currentUri === '/' || $currentUri === BASE_URL) ? 'active' : '' ?>" href="<?= BASE_URL ?>dashboard" title="Panel"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-grid"></use></svg><span class="sidebar-link-label">Panel</span></a>
+                    <a class="sidebar-link <?= strpos($currentUri, 'despachos') !== false ? 'active' : '' ?>" href="<?= BASE_URL ?>despachos" title="Despachos"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use></svg><span class="sidebar-link-label">Despachos</span></a>
+                    <a class="sidebar-link <?= strpos($currentUri, 'ingresos') !== false ? 'active' : '' ?>" href="<?= BASE_URL ?>ingresos" title="Ingresos"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-tank"></use></svg><span class="sidebar-link-label">Ingresos</span></a>
                     <p class="sidebar-section-label">Gestión</p>
                     <a class="sidebar-link <?= strpos($currentUri, 'calendario') !== false ? 'active' : '' ?>" href="<?= BASE_URL ?>calendario" title="Calendario"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-calendar"></use></svg><span class="sidebar-link-label">Calendario</span></a>
                     <?php if (in_array($userRole, ['admin', 'supervisor'], true)): ?>
@@ -202,7 +202,7 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
                     <?php endif; ?>
                     <?php if ($userRole === 'admin'): ?>
                         <p class="sidebar-section-label">Administración</p>
-                        <a class="sidebar-link <?= strpos($currentUri, 'catalogos') !== false ? 'active' : '' ?>" href="<?= BASE_URL ?>admin/catalogos" title="Catálogos"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-store"></use></svg><span class="sidebar-link-label">Catálogos</span></a>
+                        <a class="sidebar-link <?= strpos($currentUri, 'catalogos') !== false ? 'active' : '' ?>" href="<?= BASE_URL ?>admin/catalogos" title="Catálogos"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-list"></use></svg><span class="sidebar-link-label">Catálogos</span></a>
                         <a class="sidebar-link <?= strpos($currentUri, 'usuarios') !== false ? 'active' : '' ?>" href="<?= BASE_URL ?>admin/usuarios" title="Usuarios"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-user"></use></svg><span class="sidebar-link-label">Usuarios</span></a>
                     <?php endif; ?>
                 </nav>

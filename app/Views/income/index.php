@@ -60,6 +60,39 @@
         color: var(--text-muted, #64748b) !important;
     }
 
+    /* Botón Filtros Avanzados adaptativo (Blanco en Modo Claro, Oscuro en Modo Nocturno) */
+    #toggleFiltersBtn {
+        background-color: #ffffff !important;
+        color: #334155 !important;
+        border: 1px solid #cbd5e1 !important;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+    }
+
+    #toggleFiltersBtn:hover {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+        border-color: #94a3b8 !important;
+    }
+
+    [data-theme="dark"] #toggleFiltersBtn {
+        background-color: #1e293b !important;
+        color: #f8fafc !important;
+        border-color: #334155 !important;
+    }
+
+    [data-theme="dark"] #toggleFiltersBtn:hover {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+        border-color: #475569 !important;
+    }
+
     /* Tabla y Contenedores */
     .table-card {
         background-color: var(--card-bg, #ffffff) !important;
@@ -338,7 +371,7 @@
                 <button type="button" class="clear-search-btn" id="clearGlobalBtn" style="display:none; position: absolute; right: 10px; background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
             </div>
 
-            <button type="button" id="toggleFiltersBtn" class="button secondary icon-btn" style="background: var(--card-bg, #ffffff); color: var(--text-color, #0f172a); border: 1px solid var(--border-color, #cbd5e1); padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            <button type="button" id="toggleFiltersBtn" class="button secondary icon-btn">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                 Filtros Avanzados
             </button>

@@ -185,6 +185,43 @@ button:hover {
     background: #1e293b;
 }
 
+[data-theme="dark"] .button.secondary {
+    background: #1e293b;
+    color: #f8fafc;
+    border: 1px solid #334155;
+}
+
+[data-theme="dark"] .button.secondary:hover {
+    background: #334155;
+    color: #ffffff;
+    border-color: #475569;
+}
+
+#toggleFiltersBtn {
+    background: #ffffff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    transition: all 0.2s ease;
+}
+
+#toggleFiltersBtn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+[data-theme="dark"] #toggleFiltersBtn {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] #toggleFiltersBtn:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+    border-color: #475569 !important;
+}
+
 /* Stats Cards Grid */
 .stats-grid {
     display: grid;
