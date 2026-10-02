@@ -67,6 +67,16 @@
     </style>
     <script>
     (function(){
+        // Limpiar la URL para evitar que el mensaje reaparezca al presionar F5 (recargar)
+        if (window.history.replaceState) {
+            const url = new URL(window.location);
+            if (url.searchParams.has('success') || url.searchParams.has('error')) {
+                url.searchParams.delete('success');
+                url.searchParams.delete('error');
+                window.history.replaceState(null, null, url.toString());
+            }
+        }
+
         var t = document.getElementById('toast-usr');
         if (!t) return;
         var timer = setTimeout(function(){
@@ -88,6 +98,10 @@
             style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; align-items: flex-end;">
             <input type="hidden" name="csrf_token"
                 value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
+            
+            <!-- Hack para evitar que Edge/Chrome autocompleten contraseñas guardadas -->
+            <input type="email" name="fake_email" style="position: absolute; left: -9999px;" aria-hidden="true" tabindex="-1" autocomplete="username">
+            <input type="password" name="fake_password" style="position: absolute; left: -9999px;" aria-hidden="true" tabindex="-1" autocomplete="current-password">
 
             <!-- Campo Nombre -->
             <div>
@@ -116,7 +130,7 @@
             <div>
                 <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Contraseña
                     *</label>
-                <input type="password" name="password" autocomplete="new-password" minlength="8" maxlength="50" required pattern="^\S+$"
+                <input type="password" name="password" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');" minlength="8" maxlength="50" required pattern="^\S+$"
                     title="La contraseña debe tener al menos 8 caracteres y no contener espacios."
                     oninput="this.value = this.value.replace(/\s/g, '')" placeholder="Mínimo 8 caracteres"
                     style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); background: var(--input-bg, #fff); color: inherit;">
