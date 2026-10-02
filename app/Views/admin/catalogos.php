@@ -662,6 +662,16 @@
 </div>
 
 <script>
+    // Limpiar la URL para evitar que el mensaje de alerta reaparezca al presionar F5 (recargar)
+    if (window.history.replaceState) {
+        const url = new URL(window.location);
+        if (url.searchParams.has('success') || url.searchParams.has('error')) {
+            url.searchParams.delete('success');
+            url.searchParams.delete('error');
+            window.history.replaceState(null, null, url.toString());
+        }
+    }
+
     function switchCatalogTab(e, tabId) {
         document.querySelectorAll('.catalog-tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.catalog-tab-content').forEach(content => content.classList.remove('active'));
