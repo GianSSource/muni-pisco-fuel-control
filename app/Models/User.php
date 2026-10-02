@@ -27,8 +27,14 @@ final class User
                 email VARCHAR(160) NOT NULL UNIQUE,
                 password_hash VARCHAR(255) NOT NULL,
                 role VARCHAR(40) NOT NULL DEFAULT "operador",
+                is_active TINYINT(1) NOT NULL DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB');
+
+            // Agrega la columna is_active si la tabla ya existe sin ella
+            try {
+                $db->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1');
+            } catch (\Throwable $ignore) {}
 
             $sql = 'INSERT INTO users (name, email, password_hash, role) VALUES (:name, :email, :password_hash, :role)';
             $stmt = $db->prepare($sql);
@@ -72,7 +78,7 @@ final class User
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->prepare('SELECT id, name, email, password_hash, COALESCE(role, "operador") AS role FROM users WHERE email = :email LIMIT 1');
+            $stmt = $db->prepare('SELECT id, name, email, password_hash, COALESCE(role, "operador") AS role, COALESCE(is_active, 1) AS is_active FROM users WHERE email = :email LIMIT 1');
             $stmt->execute(['email' => $email]);
             $user = $stmt->fetch();
 
@@ -114,7 +120,14 @@ final class User
     public function getAll(): array
     {
         try {
-            $stmt = Database::getConnection()->query('SELECT id, name, email, COALESCE(role, "operador") AS role, created_at FROM users ORDER BY created_at DESC');
+            $db = Database::getConnection();
+
+            // Garantiza que la columna is_active exista (migración automática)
+            try {
+                $db->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1');
+            } catch (\Throwable $ignore) {}
+
+            $stmt = $db->query('SELECT id, name, email, COALESCE(role, "operador") AS role, COALESCE(is_active, 1) AS is_active, created_at FROM users ORDER BY created_at DESC');
             return $stmt->fetchAll();
         } catch (Throwable $e) {
             return [];
@@ -133,6 +146,31 @@ final class User
             } catch (Throwable $e2) {
                 return false;
             }
+        }
+    }
+
+    public function toggleStatus(int $id): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare('UPDATE users SET is_active = 1 - COALESCE(is_active, 1) WHERE id = :id');
+            return $stmt->execute(['id' => $id]);
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
+    public function findById(int $id): ?array
+    {
+        try {
+            $stmt = Database::getConnection()->prepare(
+                'SELECT id, name, email, COALESCE(role, "operador") AS role, COALESCE(is_active, 1) AS is_active FROM users WHERE id = :id LIMIT 1'
+            );
+            $stmt->execute(['id' => $id]);
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (Throwable $e) {
+            return null;
         }
     }
 }

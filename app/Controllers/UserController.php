@@ -123,4 +123,30 @@ final class UserController extends Controller
             $this->redirect('admin/usuarios?error=No+se+pudo+eliminar+el+usuario.');
         }
     }
+
+    public function toggleStatus(): void
+    {
+        $this->requireAdmin();
+        $this->verifyCsrf();
+
+        $userId = (int) ($_POST['user_id'] ?? 0);
+        $currentUserId = (int) ($_SESSION['user']['id'] ?? 0);
+
+        if ($userId <= 0) {
+            $this->redirect('admin/usuarios?error=Usuario+invalido.');
+        }
+
+        if ($userId === $currentUserId) {
+            $this->redirect('admin/usuarios?error=No+puedes+desactivar+tu+propia+cuenta.');
+        }
+
+        $userModel = new User();
+        if ($userModel->toggleStatus($userId)) {
+            $user = $userModel->findById($userId);
+            $estado = ((int)($user['is_active'] ?? 1)) === 1 ? 'activado' : 'desactivado';
+            $this->redirect('admin/usuarios?success=Usuario+' . $estado . '+correctamente.');
+        } else {
+            $this->redirect('admin/usuarios?error=No+se+pudo+cambiar+el+estado+del+usuario.');
+        }
+    }
 }

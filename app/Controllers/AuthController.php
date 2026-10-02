@@ -163,15 +163,26 @@ final class AuthController extends Controller
         }
 
         $this->clearLoginAttempts();
+
+        // Verificar si el usuario está activo
+        if (((int)($user['is_active'] ?? 1)) === 0) {
+            $this->view('auth/login', [
+                'title'     => 'Acceso',
+                'csrfToken' => $this->csrfToken(),
+                'error'     => 'Tu cuenta está desactivada. Contacta al administrador del sistema.',
+            ]);
+            return;
+        }
+
         session_regenerate_id(true);
         // Si por algún motivo el rol no viene definido, se asume el de MENOR
         // privilegio (operador). Jamás se debe asumir 'admin' por defecto.
         $role = $user['role'] ?? 'operador';
         $_SESSION['user'] = [
-            'id' => $user['id'], 
-            'name' => $user['name'], 
+            'id'    => $user['id'], 
+            'name'  => $user['name'], 
             'email' => $user['email'],
-            'role' => $role
+            'role'  => $role
         ];
         $this->redirect('dashboard');
     }

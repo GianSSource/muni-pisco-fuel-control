@@ -167,11 +167,9 @@
                     <th style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b);">Nombre</th>
                     <th style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b);">Correo</th>
                     <th style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b);">Rol actual</th>
-                    <th style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b);">Cambiar rol a...
-                    </th>
-                    <th
-                        style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b); text-align: center;">
-                        Acción</th>
+                    <th style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b);">Cambiar rol a...</th>
+                    <th style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b); text-align: center;">Estado</th>
+                    <th style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b); text-align: center;">Acción</th>
                 </tr>
             </thead>
             <tbody>
@@ -179,13 +177,14 @@
                     <?php
                     $roleClean = strtolower((string) $u['role']);
                     $roleColor = match ($roleClean) {
-                        'admin' => '#ef4444',
+                        'admin'      => '#ef4444',
                         'supervisor' => '#8b5cf6',
-                        default => '#3b82f6',
+                        default      => '#3b82f6',
                     };
-                    $isSelf = ((int) ($_SESSION['user']['id'] ?? 0)) === (int) $u['id'];
+                    $isSelf   = ((int) ($_SESSION['user']['id'] ?? 0)) === (int) $u['id'];
+                    $isActive = ((int) ($u['is_active'] ?? 1)) === 1;
                     ?>
-                    <tr style="border-bottom: 1px solid var(--border-color, #e2e8f0);">
+                    <tr style="border-bottom: 1px solid var(--border-color, #e2e8f0); <?= !$isActive ? 'opacity: 0.55;' : '' ?>">
                         <td style="padding: 10px 8px; font-weight: 600;">
                             <?= htmlspecialchars((string) $u['name'], ENT_QUOTES, 'UTF-8') ?>
                             <?php if ($isSelf): ?>
@@ -225,6 +224,27 @@
                                 </form>
                             <?php endif; ?>
                         </td>
+
+                        <!-- Columna Estado: toggle activo/inactivo -->
+                        <td style="padding: 10px 8px; text-align: center; white-space: nowrap;">
+                            <?php if ($isSelf): ?>
+                                <span style="font-size: 0.78rem; font-weight: 700; background: #22c55e; color: #fff; padding: 3px 10px; border-radius: 12px;">ACTIVO</span>
+                            <?php else: ?>
+                                <form method="post" action="<?= BASE_URL ?>admin/usuarios/estado" style="margin:0; display:inline;">
+                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                                    <input type="hidden" name="user_id" value="<?= (int) $u['id'] ?>">
+                                    <button type="submit" title="<?= $isActive ? 'Desactivar usuario' : 'Activar usuario' ?>"
+                                        style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; border: none; font-weight: 700; font-size: 0.78rem; cursor: pointer; transition: all 0.2s ease;
+                                               background: <?= $isActive ? '#dcfce7' : '#fee2e2' ?>;
+                                               color: <?= $isActive ? '#15803d' : '#b91c1c' ?>;">
+                                        <!-- Bolita de estado -->
+                                        <span style="width: 8px; height: 8px; border-radius: 50%; background: <?= $isActive ? '#22c55e' : '#ef4444' ?>; flex-shrink:0;"></span>
+                                        <?= $isActive ? 'Activo' : 'Inactivo' ?>
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                        </td>
+
                         <td style="padding: 10px 8px; text-align: center;">
                             <?php if ($isSelf): ?>
                                 <span style="color: var(--text-muted, #94a3b8); font-size: 0.82rem;">-</span>

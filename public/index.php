@@ -99,6 +99,7 @@ $router->get('/admin/usuarios', UserController::class, 'index');
 $router->post('/admin/usuarios/guardar', UserController::class, 'store');
 $router->post('/admin/usuarios/rol', UserController::class, 'updateRole');
 $router->post('/admin/usuarios/eliminar', UserController::class, 'delete');
+$router->post('/admin/usuarios/estado', UserController::class, 'toggleStatus');
 
 $router->get('/reportes', ReportController::class, 'index');
 $router->get('/reportes/pdf', ReportController::class, 'entregasPdf');
