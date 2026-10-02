@@ -100,6 +100,7 @@ $router->post('/admin/usuarios/guardar', UserController::class, 'store');
 $router->post('/admin/usuarios/rol', UserController::class, 'updateRole');
 $router->post('/admin/usuarios/eliminar', UserController::class, 'delete');
 $router->post('/admin/usuarios/estado', UserController::class, 'toggleStatus');
+$router->post('/admin/usuarios/editar', UserController::class, 'update');
 
 $router->get('/reportes', ReportController::class, 'index');
 $router->get('/reportes/pdf', ReportController::class, 'entregasPdf');

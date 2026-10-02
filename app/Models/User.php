@@ -117,14 +117,28 @@ final class User
         }
     }
 
+    private static bool $schemaMigrated = false;
+
+    private static function ensureSchema(\PDO $db): void
+    {
+        if (self::$schemaMigrated) {
+            return;
+        }
+        try {
+            $db->exec('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1');
+            $db->exec('ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at DATETIME NULL DEFAULT NULL');
+        } catch (\Throwable $e) {
+            try { $db->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1'); } catch (\Throwable $ignore) {}
+            try { $db->exec('ALTER TABLE users ADD COLUMN last_login_at DATETIME NULL DEFAULT NULL'); } catch (\Throwable $ignore) {}
+        }
+        self::$schemaMigrated = true;
+    }
+
     public function getAll(): array
     {
         try {
             $db = Database::getConnection();
-
-            // Migraciones automáticas de columnas nuevas
-            try { $db->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1'); } catch (\Throwable $ignore) {}
-            try { $db->exec('ALTER TABLE users ADD COLUMN last_login_at DATETIME NULL DEFAULT NULL'); } catch (\Throwable $ignore) {}
+            self::ensureSchema($db);
 
             $stmt = $db->query(
                 'SELECT id, name, email,
@@ -145,7 +159,7 @@ final class User
     {
         try {
             $db = Database::getConnection();
-            try { $db->exec('ALTER TABLE users ADD COLUMN last_login_at DATETIME NULL DEFAULT NULL'); } catch (\Throwable $ignore) {}
+            self::ensureSchema($db);
             $db->prepare('UPDATE users SET last_login_at = NOW() WHERE id = :id')
                ->execute(['id' => $id]);
         } catch (\Throwable $e) {}
@@ -188,6 +202,22 @@ final class User
             return $row ?: null;
         } catch (Throwable $e) {
             return null;
+        }
+    }
+
+    public function updateUser(int $id, string $name, string $email, string $role): bool
+    {
+        $validRoles = ['admin', 'supervisor', 'operador'];
+        if (!in_array($role, $validRoles, true)) {
+            return false;
+        }
+        try {
+            $stmt = Database::getConnection()->prepare(
+                'UPDATE users SET name = :name, email = :email, role = :role WHERE id = :id'
+            );
+            return $stmt->execute(['name' => $name, 'email' => $email, 'role' => $role, 'id' => $id]);
+        } catch (Throwable $e) {
+            return false;
         }
     }
 }
