@@ -184,6 +184,10 @@ final class AuthController extends Controller
             'email' => $user['email'],
             'role'  => $role
         ];
+
+        // Registrar fecha y hora del último acceso exitoso
+        (new User())->recordLogin((int) $user['id']);
+
         $this->redirect('dashboard');
     }
     

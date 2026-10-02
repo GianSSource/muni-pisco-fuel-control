@@ -169,6 +169,7 @@
                     <th style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b);">Rol actual</th>
                     <th style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b);">Cambiar rol a...</th>
                     <th style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b); text-align: center;">Estado</th>
+                    <th style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b); text-align: center;">Último Acceso</th>
                     <th style="padding: 8px; font-size: 0.85rem; color: var(--text-muted, #64748b); text-align: center;">Acción</th>
                 </tr>
             </thead>
@@ -183,6 +184,23 @@
                     };
                     $isSelf   = ((int) ($_SESSION['user']['id'] ?? 0)) === (int) $u['id'];
                     $isActive = ((int) ($u['is_active'] ?? 1)) === 1;
+
+                    // Calcular texto de último acceso
+                    $lastLoginRaw = $u['last_login_at'] ?? null;
+                    if ($lastLoginRaw) {
+                        $diff = time() - strtotime($lastLoginRaw);
+                        if ($diff < 86400)        { $lastLoginText = 'Hoy ' . date('H:i', strtotime($lastLoginRaw)); }
+                        elseif ($diff < 172800)   { $lastLoginText = 'Ayer ' . date('H:i', strtotime($lastLoginRaw)); }
+                        elseif ($diff < 2592000)  { $lastLoginText = 'Hace ' . floor($diff / 86400) . ' días'; }
+                        elseif ($diff < 31536000) { $lastLoginText = 'Hace ' . floor($diff / 2592000) . ' meses'; }
+                        else                       { $lastLoginText = date('d/m/Y', strtotime($lastLoginRaw)); }
+                        $lastLoginTitle = date('d/m/Y H:i:s', strtotime($lastLoginRaw));
+                        $lastLoginColor = $diff > 1209600 ? 'var(--text-muted, #94a3b8)' : 'inherit'; // >14 días = gris
+                    } else {
+                        $lastLoginText  = 'Nunca';
+                        $lastLoginTitle = 'Este usuario aún no ha iniciado sesión';
+                        $lastLoginColor = 'var(--text-muted, #94a3b8)';
+                    }
                     ?>
                     <tr style="border-bottom: 1px solid var(--border-color, #e2e8f0); <?= !$isActive ? 'opacity: 0.55;' : '' ?>">
                         <td style="padding: 10px 8px; font-weight: 600;">
@@ -243,6 +261,14 @@
                                     </button>
                                 </form>
                             <?php endif; ?>
+                        </td>
+
+                        <!-- Columna Último Acceso -->
+                        <td style="padding: 10px 8px; text-align: center; white-space: nowrap;">
+                            <span title="<?= htmlspecialchars($lastLoginTitle, ENT_QUOTES, 'UTF-8') ?>"
+                                  style="font-size: 0.82rem; font-weight: 600; color: <?= $lastLoginColor ?>;">
+                                <?= htmlspecialchars($lastLoginText, ENT_QUOTES, 'UTF-8') ?>
+                            </span>
                         </td>
 
                         <td style="padding: 10px 8px; text-align: center;">

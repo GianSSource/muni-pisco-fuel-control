@@ -122,16 +122,33 @@ final class User
         try {
             $db = Database::getConnection();
 
-            // Garantiza que la columna is_active exista (migración automática)
-            try {
-                $db->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1');
-            } catch (\Throwable $ignore) {}
+            // Migraciones automáticas de columnas nuevas
+            try { $db->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1'); } catch (\Throwable $ignore) {}
+            try { $db->exec('ALTER TABLE users ADD COLUMN last_login_at DATETIME NULL DEFAULT NULL'); } catch (\Throwable $ignore) {}
 
-            $stmt = $db->query('SELECT id, name, email, COALESCE(role, "operador") AS role, COALESCE(is_active, 1) AS is_active, created_at FROM users ORDER BY created_at DESC');
+            $stmt = $db->query(
+                'SELECT id, name, email,
+                        COALESCE(role, "operador") AS role,
+                        COALESCE(is_active, 1) AS is_active,
+                        last_login_at,
+                        created_at
+                 FROM users
+                 ORDER BY created_at DESC'
+            );
             return $stmt->fetchAll();
         } catch (Throwable $e) {
             return [];
         }
+    }
+
+    public function recordLogin(int $id): void
+    {
+        try {
+            $db = Database::getConnection();
+            try { $db->exec('ALTER TABLE users ADD COLUMN last_login_at DATETIME NULL DEFAULT NULL'); } catch (\Throwable $ignore) {}
+            $db->prepare('UPDATE users SET last_login_at = NOW() WHERE id = :id')
+               ->execute(['id' => $id]);
+        } catch (\Throwable $e) {}
     }
 
     public function delete(int $id): bool
