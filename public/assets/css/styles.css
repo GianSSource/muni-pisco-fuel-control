@@ -1400,6 +1400,7 @@ tbody tr:hover {
 
 .custom-select-wrap {
     position: relative;
+    box-sizing: border-box;
 }
 
 .custom-select-trigger {
@@ -1408,6 +1409,8 @@ tbody tr:hover {
     justify-content: space-between;
     gap: 8px;
     width: 100%;
+    height: 42px;
+    box-sizing: border-box;
     padding: 10px 12px;
     font-size: 13px;
     font-family: inherit;
@@ -2673,6 +2676,7 @@ textarea.form-control {
     position: relative;
     width: 100%;
     user-select: none;
+    box-sizing: border-box;
 }
 
 .custom-select-trigger {
@@ -2680,8 +2684,10 @@ textarea.form-control {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding: 10px 14px;
-    border-radius: 10px;
+    height: 42px;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border-radius: 8px;
     border: 1px solid var(--border-color, #cbd5e1);
     background: var(--input-bg, #ffffff);
     color: var(--text-color, #0f172a);

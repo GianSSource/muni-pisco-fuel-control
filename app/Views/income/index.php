@@ -1036,4 +1036,14 @@
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
+
+    // Limpiar la URL para evitar que el mensaje reaparezca al presionar F5 (recargar)
+    if (window.history.replaceState) {
+        const url = new URL(window.location);
+        if (url.searchParams.has('success') || url.searchParams.has('error')) {
+            url.searchParams.delete('success');
+            url.searchParams.delete('error');
+            window.history.replaceState(null, null, url.toString());
+        }
+    }
 </script>

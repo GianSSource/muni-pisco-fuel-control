@@ -85,6 +85,7 @@
 
     .form-control-styled {
         width: 100%;
+        height: 42px;
         padding: 10px 12px;
         border-radius: 8px;
         border: 1px solid var(--border-color, #cbd5e1);
@@ -989,6 +990,18 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+        // Restaurar categoría seleccionada para facilitar ingresos múltiples
+        const catSelect = document.getElementById('select_category');
+        if (catSelect) {
+            const savedCat = sessionStorage.getItem('lastCatalogCategory');
+            if (savedCat) {
+                catSelect.value = savedCat;
+            }
+            catSelect.addEventListener('change', (e) => {
+                sessionStorage.setItem('lastCatalogCategory', e.target.value);
+            });
+        }
+
         initCustomDropdown('select_category');
         initCustomDropdown('select_vehicle_type');
         initCustomDropdown('select_area');

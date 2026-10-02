@@ -16,7 +16,7 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Josefin+Sans:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/styles.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/styles.css?v=<?= time() ?>">
     <script>
         window.uiIcon = (name, className = '') => `<svg class="ui-icon ${className}" aria-hidden="true"><use href="<?= BASE_URL ?>assets/icons.svg#icon-${name}"></use></svg>`;
     </script>

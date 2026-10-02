@@ -1,6 +1,7 @@
 <style>
     .form-control-styled {
         width: 100%;
+        height: 42px;
         padding: 10px 12px;
         border-radius: 8px;
         border: 1px solid var(--border-color, #cbd5e1);

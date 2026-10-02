@@ -111,7 +111,7 @@
                     title="El nombre debe contener solo letras y espacios (mínimo 3 caracteres)."
                     oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"
                     placeholder="Nombre completo" autocomplete="off"
-                    style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); background: var(--input-bg, #fff); color: inherit;">
+                    style="width: 100%; height: 42px; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); background: var(--input-bg, #fff); color: inherit;">
             </div>
 
             <!-- Campo Correo -->
@@ -123,7 +123,7 @@
                     title="Ingrese un correo válido institucional (@muni.gob.pe) o dominio autorizado."
                     oninput="this.value = this.value.replace(/[^a-zA-Z0-9@._-]/g, '').toLowerCase()"
                     placeholder="correo@muni.gob.pe"
-                    style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); background: var(--input-bg, #fff); color: inherit;">
+                    style="width: 100%; height: 42px; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); background: var(--input-bg, #fff); color: inherit;">
             </div>
 
             <!-- Campo Contraseña -->
@@ -133,7 +133,7 @@
                 <input type="password" name="password" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');" minlength="8" maxlength="50" required pattern="^\S+$"
                     title="La contraseña debe tener al menos 8 caracteres y no contener espacios."
                     oninput="this.value = this.value.replace(/\s/g, '')" placeholder="Mínimo 8 caracteres"
-                    style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); background: var(--input-bg, #fff); color: inherit;">
+                    style="width: 100%; height: 42px; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); background: var(--input-bg, #fff); color: inherit;">
             </div>
 
             <!-- Selección de Rol -->
