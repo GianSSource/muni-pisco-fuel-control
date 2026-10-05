@@ -103,6 +103,7 @@ final class AdminController extends Controller
 
         $category = trim((string) ($_POST['category'] ?? ''));
         $name = trim((string) ($_POST['name'] ?? ''));
+        $name = mb_strtoupper(mb_substr($name, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($name, 1, null, 'UTF-8');
 
         $allowedCategories = ['fuel_type', 'area', 'supplier', 'vehicle_type'];
         if (!in_array($category, $allowedCategories, true) || $name === '') {
