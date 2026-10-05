@@ -224,6 +224,7 @@ final class FuelController extends Controller
         $fuelType = trim((string) ($_POST['fuel_type'] ?? ''));
         $vehicleId = (int) ($_POST['vehicle_id'] ?? 0);
         $driver = trim((string) ($_POST['driver_name'] ?? ''));
+        $driver = mb_convert_case($driver, MB_CASE_TITLE, 'UTF-8');
         $gallons = (float) ($_POST['gallons'] ?? 0);
         $destination = trim((string) ($_POST['destination'] ?? ''));
         $notes = trim((string) ($_POST['notes'] ?? ''));

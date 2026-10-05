@@ -54,6 +54,33 @@
         background: rgba(255, 255, 255, 0.08);
         border-color: #94a3b8;
     }
+
+    .btn-clear-styled {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 18px;
+        border-radius: 8px;
+        border: 1px solid #f97316;
+        background: transparent;
+        color: #f97316;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-clear-styled:hover {
+        background: rgba(249, 115, 22, 0.10);
+        border-color: #ea580c;
+        color: #ea580c;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(249, 115, 22, 0.2);
+    }
+
+    .btn-clear-styled:active {
+        transform: translateY(0);
+    }
 </style>
 
 <section class="container" style="max-width: 900px; margin: 40px auto; padding: 24px;">
@@ -216,18 +243,75 @@
             </div>
         </div>
 
-        <div style="display: flex; justify-content: flex-end; gap: 12px;">
-            <a href="<?= BASE_URL ?>despachos" class="btn-cancel-styled">
-                Cancelar
-            </a>
-            <button type="submit" id="submitBtn" class="btn-submit-styled">
-                Emitir Vale de Despacho
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+            <button type="button" class="btn-clear-styled" onclick="limpiarFormulario()" title="Limpiar todos los campos">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 2L7 12"/>
+                    <path d="M7 12c-2 2-3 4.5-3 7l3-1 1 3c2.5 0 5-1 7-3L7 12z"/>
+                    <path d="M14 9l3 3"/>
+                </svg>
+                Limpiar Campos
             </button>
+            <div style="display: flex; gap: 12px;">
+                <a href="<?= BASE_URL ?>despachos" class="btn-cancel-styled">
+                    Cancelar
+                </a>
+                <button type="submit" id="submitBtn" class="btn-submit-styled">
+                    Emitir Vale de Despacho
+                </button>
+            </div>
         </div>
     </form>
 </section>
 
 <script>
+    function limpiarFormulario() {
+        const form = document.getElementById('dispatchForm');
+        if (!form) return;
+
+        // Reset campos nativos
+        const nativeSelects = form.querySelectorAll('select');
+        nativeSelects.forEach(sel => { sel.selectedIndex = 0; sel.dispatchEvent(new Event('change', { bubbles: true })); });
+
+        const inputs = form.querySelectorAll('input:not([type="hidden"])');
+        inputs.forEach(inp => { inp.value = ''; inp.style.borderColor = ''; inp.style.boxShadow = ''; });
+
+        const textarea = form.querySelectorAll('textarea');
+        textarea.forEach(t => { t.value = ''; });
+
+        // Reset bordes de custom selects
+        form.querySelectorAll('.custom-select-trigger').forEach(trigger => {
+            trigger.style.borderColor = '';
+            trigger.style.boxShadow = '';
+        });
+
+        // Ocultar alertas
+        const alertBox = document.getElementById('formValidationAlert');
+        if (alertBox) alertBox.style.display = 'none';
+
+        const stockWarning = document.getElementById('stockWarning');
+        if (stockWarning) stockWarning.style.display = 'none';
+
+        const lotInfo = document.getElementById('lotAssignedInfo');
+        if (lotInfo) lotInfo.style.display = 'none';
+
+        // Re-habilitar botón submit
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+        }
+
+        // Animación visual de confirmación
+        const btn = document.querySelector('.btn-clear-styled');
+        if (btn) {
+            btn.style.background = 'rgba(249,115,22,0.18)';
+            btn.style.transform = 'scale(0.96)';
+            setTimeout(() => { btn.style.background = ''; btn.style.transform = ''; }, 300);
+        }
+    }
+
     function formatearPlaca(input) {
         if (!input) return;
         let val = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -536,6 +620,11 @@
         gallonsInput.addEventListener("input", validateStock);
         gallonsInput.addEventListener("keyup", validateStock);
 
+        // Capitaliza la primera letra de cada palabra (soporta tildes y ñ)
+        function toTitleCase(str) {
+            return str.replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+        }
+
         // Inicializador Visual de Desplegables Personalizados con Búsqueda y Formato Avanzado
         function initCustomDispatchSelect(selector, enableSearch = false, placeholder = "Buscar...", allowCreate = false, maxLength = null, onlyLetters = false, alphanumericOnly = false) {
             const selectEl = typeof selector === 'string' ? (document.getElementById(selector) || document.querySelector(`select[name="${selector}"]`)) : selector;
@@ -638,15 +727,24 @@
                             const term = searchInput.value.trim();
                             if (!term) return;
 
+                            // Si el botón "Usar nuevo conductor" está visible, activarlo directamente
+                            // (ya aplica toTitleCase y cierra el dropdown correctamente)
+                            const createBox = menu.querySelector('.custom-select-create-box');
+                            if (createBox && createBox.style.display !== 'none' && createBox.offsetParent !== null) {
+                                createBox.click();
+                                return;
+                            }
+
                             const listContainer = menu.querySelector('.custom-select-list-container');
                             const visibleItems = Array.from(listContainer.querySelectorAll('.custom-select-item')).filter(i => i.style.display !== 'none');
 
                             if (visibleItems.length > 0) {
                                 visibleItems[0].click();
                             } else if (allowCreate) {
-                                let exists = Array.from(selectEl.options).find(o => o.value.toLowerCase() === term.toLowerCase());
+                                const titleTerm = typeof toTitleCase === 'function' ? toTitleCase(term) : term;
+                                let exists = Array.from(selectEl.options).find(o => o.value.toLowerCase() === titleTerm.toLowerCase());
                                 if (!exists) {
-                                    const newOpt = new Option(term, term, true, true);
+                                    const newOpt = new Option(titleTerm, titleTerm, true, true);
                                     selectEl.add(newOpt);
                                 } else {
                                     selectEl.value = exists.value;
@@ -759,10 +857,10 @@
                         createBox.style.cssText = 'padding: 8px 12px; margin: 4px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px;';
                         menu.insertBefore(createBox, listContainer);
                     }
-                    createBox.innerHTML = `<span>+</span> Usar nuevo conductor: "<strong>${term.trim()}</strong>"`;
+                    createBox.innerHTML = `<span>+</span> Usar nuevo conductor: "<strong>${toTitleCase(term.trim())}</strong>"`;
                     createBox.onclick = (e) => {
                         e.stopPropagation();
-                        const val = term.trim();
+                        const val = toTitleCase(term.trim());
                         const newOpt = new Option(val, val, true, true);
                         selectEl.add(newOpt);
                         selectEl.dispatchEvent(new Event('change', { bubbles: true }));
