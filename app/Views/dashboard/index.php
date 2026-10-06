@@ -701,7 +701,7 @@
                 <p class="section-desc">Historial reciente con filtro y búsqueda instantánea</p>
             </div>
             <div class="table-header-right">
-                <form action="<?= BASE_URL ?>despachos" method="GET" class="dash-search-form">
+                <form action="<?= BASE_URL ?>despachos" method="GET" class="dash-search-form" onsubmit="return false;">
                     <div class="dash-search-input-wrap">
                         <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor"
                             stroke-width="2" viewBox="0 0 24 24">
