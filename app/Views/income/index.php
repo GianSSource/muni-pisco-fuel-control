@@ -603,7 +603,6 @@
     <div class="modal-card" onclick="event.stopPropagation()">
         <div class="modal-header">
             <h3 class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use></svg>Detalle del Ingreso de Combustible</h3>
-            <button class="modal-close-btn" onclick="closeIncomeModal()">&times;</button>
         </div>
         <div class="modal-body" id="incomeModalBody">
             <!-- Inyectado por JavaScript -->
@@ -619,7 +618,6 @@
     <div class="modal-card" style="max-width: 480px;" onclick="event.stopPropagation()">
         <div class="modal-header">
             <h3 class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-note"></use></svg>Observación Completa</h3>
-            <button class="modal-close-btn" onclick="closeObsModal()">&times;</button>
         </div>
         <div class="modal-body">
             <div style="background: var(--bg-body, rgba(255,255,255,0.05)); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); font-size: 0.95rem; line-height: 1.5; color: var(--text-color, inherit); word-wrap: break-word;"
