@@ -54,6 +54,33 @@
         background: rgba(255, 255, 255, 0.08);
         border-color: #94a3b8;
     }
+
+    .btn-clear-styled {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 18px;
+        border-radius: 8px;
+        border: 1px solid #f97316;
+        background: transparent;
+        color: #f97316;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-clear-styled:hover {
+        background: rgba(249, 115, 22, 0.10);
+        border-color: #ea580c;
+        color: #ea580c;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(249, 115, 22, 0.2);
+    }
+
+    .btn-clear-styled:active {
+        transform: translateY(0);
+    }
 </style>
 
 <section class="container" style="max-width: 900px; margin: 40px auto; padding: 24px;">
@@ -202,14 +229,79 @@
             </div>
         </div>
 
-        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
-            <a href="<?= BASE_URL ?>dashboard" class="btn-cancel-styled">Cancelar</a>
-            <button type="submit" class="btn-submit-styled">Guardar Ingreso</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 24px;">
+            <button type="button" class="btn-clear-styled" onclick="limpiarFormulario()" title="Limpiar todos los campos">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 2L7 12"/>
+                    <path d="M7 12c-2 2-3 4.5-3 7l3-1 1 3c2.5 0 5-1 7-3L7 12z"/>
+                    <path d="M14 9l3 3"/>
+                </svg>
+                Limpiar Campos
+            </button>
+            <div style="display: flex; gap: 12px;">
+                <a href="<?= BASE_URL ?>dashboard" class="btn-cancel-styled">Cancelar</a>
+                <button type="submit" id="submitBtn" class="btn-submit-styled">Guardar Ingreso</button>
+            </div>
         </div>
     </form>
 </section>
 
 <script>
+    function limpiarFormulario() {
+        const form = document.getElementById('incomeForm');
+        if (!form) return;
+
+        // Reset inputs de texto / número (excepto hidden como csrf_token)
+        const inputs = form.querySelectorAll('input:not([type="hidden"])');
+        inputs.forEach(inp => {
+            inp.value = '';
+            inp.style.borderColor = '';
+            inp.style.boxShadow = '';
+        });
+
+        const textareas = form.querySelectorAll('textarea');
+        textareas.forEach(t => { t.value = ''; });
+
+        // Reset selects nativos (dispara 'change' para resetear fichas visuales y custom dropdown)
+        const nativeSelects = form.querySelectorAll('select');
+        nativeSelects.forEach(sel => {
+            sel.selectedIndex = 0;
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        // Reset bordes de custom selects
+        form.querySelectorAll('.custom-select-trigger').forEach(trigger => {
+            trigger.style.borderColor = '';
+            trigger.style.boxShadow = '';
+        });
+
+        // Ocultar alerta de validación
+        const alertBox = document.getElementById('formValidationAlert');
+        if (alertBox) {
+            alertBox.style.display = 'none';
+            alertBox.innerHTML = '';
+        }
+
+        // Re-habilitar botón submit si estuviese deshabilitado
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+        }
+
+        // Animación visual de confirmación en el botón
+        const btn = document.querySelector('.btn-clear-styled');
+        if (btn) {
+            btn.style.background = 'rgba(249, 115, 22, 0.18)';
+            btn.style.transform = 'scale(0.96)';
+            setTimeout(() => {
+                btn.style.background = '';
+                btn.style.transform = '';
+            }, 300);
+        }
+    }
+
     function verificarCamposIncompletos() {
         const fuelType = document.getElementById('fuel_type')?.value.trim();
         const quantityVal = document.getElementById('quantity')?.value.trim();
