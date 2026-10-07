@@ -608,9 +608,21 @@ if (!function_exists('gallonsToTextEs')) {
       </svg>
       <span id="pdf-lbl">Guardar PDF</span>
     </button>
-    <a href="<?= BASE_URL ?>despachos" onclick="if (history.length > 1) { history.back(); return false; }">
-      ← Volver
-    </a>
+    <?php if (!empty($_GET['auto'])): ?>
+      <a href="<?= BASE_URL ?>despachos/nuevo" class="main" style="background: #2563eb; color: #fff; border-color: #2563eb;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Registrar Nuevo Despacho
+      </a>
+      <a href="<?= BASE_URL ?>despachos">
+        ← Volver a Despachos
+      </a>
+    <?php else: ?>
+      <a href="<?= BASE_URL ?>despachos" onclick="if (history.length > 1) { history.back(); return false; }">
+        ← Volver
+      </a>
+    <?php endif; ?>
   </div>
 
   <article class="vale">

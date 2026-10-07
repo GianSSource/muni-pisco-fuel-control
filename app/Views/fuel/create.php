@@ -102,7 +102,7 @@
         </div>
     <?php endif; ?>
 
-    <form method="post" action="<?= BASE_URL ?>despachos/guardar" id="dispatchForm" novalidate
+    <form method="post" action="<?= BASE_URL ?>despachos/guardar" id="dispatchForm" novalidate autocomplete="off"
         onsubmit="return validarFormularioDespacho(event)"
         style="background: var(--card-bg, #ffffff); padding: 28px; border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0); box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken ?? '') ?>">
@@ -203,7 +203,7 @@
                 <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Cantidad de
                     Galones (Máx. 15,000.00)</label>
                 <input type="text" name="gallons" id="gallons" class="form-control-styled" required
-                    placeholder="Ej: 15,000" maxlength="12"
+                    placeholder="Ej: 15,000" maxlength="12" autocomplete="off"
                     oninput="limitarGalones(this); verificarCamposIncompletos();"
                     onblur="formatearSalidaGalones(this); verificarCamposIncompletos();"
                     onfocus="limpiarFormatoGalones(this)">
@@ -237,14 +237,14 @@
             <div style="min-width: 0;">
                 <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Observaciones
                     (Opcional)</label>
-                <input type="text" name="notes" class="form-control-styled"
-                    placeholder="Ej. Turno noche maximo 50 caracteres" maxlength="50"
+                <input type="text" name="notes" id="notes" class="form-control-styled"
+                    placeholder="Ej. Turno noche maximo 50 caracteres" maxlength="50" autocomplete="off"
                     oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s.,\-\/()]/g, '')">
             </div>
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-            <button type="button" class="btn-clear-styled" onclick="limpiarFormulario()" title="Limpiar todos los campos">
+            <button type="button" class="btn-clear-styled" onclick="limpiarFormulario(true)" title="Limpiar todos los campos">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17 2L7 12"/>
                     <path d="M7 12c-2 2-3 4.5-3 7l3-1 1 3c2.5 0 5-1 7-3L7 12z"/>
@@ -265,19 +265,37 @@
 </section>
 
 <script>
-    function limpiarFormulario() {
+    function limpiarFormulario(animate = false) {
         const form = document.getElementById('dispatchForm');
         if (!form) return;
 
-        // Reset campos nativos
-        const nativeSelects = form.querySelectorAll('select');
-        nativeSelects.forEach(sel => { sel.selectedIndex = 0; sel.dispatchEvent(new Event('change', { bubbles: true })); });
+        // Reset nativo del formulario HTML
+        form.reset();
 
+        // Reset selects nativos y dispara 'change' para actualizar los dropdowns personalizados
+        const nativeSelects = form.querySelectorAll('select');
+        nativeSelects.forEach(sel => {
+            sel.selectedIndex = 0;
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        // Limpiar inputs visibles
         const inputs = form.querySelectorAll('input:not([type="hidden"])');
-        inputs.forEach(inp => { inp.value = ''; inp.style.borderColor = ''; inp.style.boxShadow = ''; });
+        inputs.forEach(inp => {
+            inp.value = '';
+            inp.style.borderColor = '';
+            inp.style.boxShadow = '';
+        });
 
         const textarea = form.querySelectorAll('textarea');
         textarea.forEach(t => { t.value = ''; });
+
+        // Reset buscador y elementos dentro de custom selects
+        form.querySelectorAll('.custom-select-search-input').forEach(si => { si.value = ''; });
+        form.querySelectorAll('.custom-select-item').forEach(item => { item.style.display = 'flex'; });
+        form.querySelectorAll('.custom-select-create-box').forEach(cb => cb.remove());
+        form.querySelectorAll('.custom-select-no-results').forEach(nr => nr.remove());
+        form.querySelectorAll('.custom-select-container.open').forEach(c => c.classList.remove('open'));
 
         // Reset bordes de custom selects
         form.querySelectorAll('.custom-select-trigger').forEach(trigger => {
@@ -287,13 +305,22 @@
 
         // Ocultar alertas
         const alertBox = document.getElementById('formValidationAlert');
-        if (alertBox) alertBox.style.display = 'none';
+        if (alertBox) {
+            alertBox.style.display = 'none';
+            alertBox.innerHTML = '';
+        }
 
         const stockWarning = document.getElementById('stockWarning');
-        if (stockWarning) stockWarning.style.display = 'none';
+        if (stockWarning) {
+            stockWarning.style.display = 'none';
+            stockWarning.innerHTML = '';
+        }
 
         const lotInfo = document.getElementById('lotAssignedInfo');
-        if (lotInfo) lotInfo.style.display = 'none';
+        if (lotInfo) {
+            lotInfo.style.display = 'none';
+            lotInfo.textContent = '';
+        }
 
         // Re-habilitar botón submit
         const submitBtn = document.getElementById('submitBtn');
@@ -303,12 +330,14 @@
             submitBtn.style.cursor = 'pointer';
         }
 
-        // Animación visual de confirmación
-        const btn = document.querySelector('.btn-clear-styled');
-        if (btn) {
-            btn.style.background = 'rgba(249,115,22,0.18)';
-            btn.style.transform = 'scale(0.96)';
-            setTimeout(() => { btn.style.background = ''; btn.style.transform = ''; }, 300);
+        // Animación visual de confirmación sólo si fue clic manual del usuario
+        if (animate) {
+            const btn = document.querySelector('.btn-clear-styled');
+            if (btn) {
+                btn.style.background = 'rgba(249,115,22,0.18)';
+                btn.style.transform = 'scale(0.96)';
+                setTimeout(() => { btn.style.background = ''; btn.style.transform = ''; }, 300);
+            }
         }
     }
 
@@ -497,6 +526,13 @@
         }
 
         if (alertBox) alertBox.style.display = 'none';
+
+        // Marcamos que se envió el despacho y limpiamos en diferido para que el historial/bfcache no guarde datos viejos
+        sessionStorage.setItem('despacho_completado', '1');
+        setTimeout(() => {
+            limpiarFormulario(false);
+        }, 100);
+
         return true;
     }
 
@@ -930,5 +966,19 @@
 
         // Ejecutar inicio (deja el campo oculto y las alertas en su estado inicial)
         validateStock();
+
+        // Si se acaba de completar un registro, asegurar que los campos comiencen totalmente limpios
+        if (sessionStorage.getItem('despacho_completado') === '1') {
+            sessionStorage.removeItem('despacho_completado');
+            limpiarFormulario(false);
+        }
+    });
+
+    // Limpieza al restaurar desde el historial o caché del navegador (Back/Forward Cache)
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted || sessionStorage.getItem('despacho_completado') === '1') {
+            sessionStorage.removeItem('despacho_completado');
+            limpiarFormulario(false);
+        }
     });
 </script>
