@@ -1,3 +1,5 @@
+
+
 <style>
     .form-control-styled {
         width: 100%;
@@ -38,6 +40,13 @@
         background: #2563eb !important;
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-submit-styled:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
     }
 
     .btn-cancel-styled {
@@ -106,6 +115,7 @@
         onsubmit="return validarFormularioDespacho(event)"
         style="background: var(--card-bg, #ffffff); padding: 28px; border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0); box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken ?? '') ?>">
+        <input type="hidden" name="auth_password" id="auth_password_input" value="">
 
         <!-- Carga de Alerta de Validación de Campos Faltantes -->
         <div id="formValidationAlert"
@@ -263,6 +273,84 @@
         </div>
     </form>
 </section>
+
+<!-- Modal de Validación de Identidad para Registro de Despacho -->
+<div id="authValidateModal" class="modal-overlay" onclick="cerrarModalAuth(event)">
+    <div class="modal-card" style="max-width: 440px;" onclick="event.stopPropagation()">
+        <div class="modal-header" style="border-bottom: 1px solid var(--border-color, #e2e8f0); padding: 18px 22px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(37, 99, 235, 0.12); color: #2563eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--ink);">Validación de Identidad</h3>
+                    <p style="margin: 2px 0 0; font-size: 0.8rem; color: var(--text-muted, #64748b);">Confirme sus credenciales para autorizar el despacho</p>
+                </div>
+            </div>
+            <button type="button" onclick="cerrarModalAuth()" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted, #64748b); cursor: pointer; line-height: 1; padding: 4px; border-radius: 6px;" title="Cerrar">&times;</button>
+        </div>
+
+        <form id="authValidateForm" autocomplete="off" onsubmit="confirmarIdentidadYDespachar(event)" style="padding: 22px;">
+            <!-- Inputs señuelo para evitar que el navegador muestre su popup de 'Contraseñas guardadas' -->
+            <input type="text" name="fake_username_decoy" style="display:none;" tabindex="-1" autocomplete="off">
+            <input type="password" name="fake_password_decoy" style="display:none;" tabindex="-1" autocomplete="off">
+
+            <div style="background: var(--bg-body, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; padding: 12px 14px; margin-bottom: 18px; display: flex; align-items: center; gap: 12px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: #2563eb; color: #fff; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <?= strtoupper(substr($_SESSION['user']['name'] ?? 'U', 0, 1)) ?>
+                </div>
+                <div style="min-width: 0; flex: 1;">
+                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <?= htmlspecialchars($_SESSION['user']['name'] ?? 'Usuario') ?>
+                    </div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted, #64748b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <?= htmlspecialchars($_SESSION['user']['email'] ?? '') ?>
+                    </div>
+                </div>
+                <span style="font-size: 0.72rem; padding: 3px 8px; border-radius: 6px; font-weight: 700; background: rgba(37, 99, 235, 0.1); color: #2563eb; text-transform: uppercase;">
+                    <?= htmlspecialchars($_SESSION['user']['role'] ?? 'operador') ?>
+                </span>
+            </div>
+
+            <!-- Alerta de Error de Contraseña en el Modal -->
+            <div id="authModalError" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; border-radius: 8px; padding: 10px 12px; margin-bottom: 16px; font-size: 0.85rem; font-weight: 600; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span id="authModalErrorText">Contraseña incorrecta.</span>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="authModalPassword" style="display: block; font-size: 0.86rem; font-weight: 600; margin-bottom: 6px; color: var(--ink);">
+                    Ingrese su Contraseña
+                </label>
+                <div style="position: relative;">
+                    <input type="password" id="authModalPassword" name="auth_confirm_key" class="form-control-styled" placeholder="••••••••••••" maxlength="50" required autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly');" style="padding-right: 42px; width: 100%;">
+                    <button type="button" id="toggleAuthPasswordBtn" onclick="toggleVisibilidadPasswordAuth()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted, #64748b); cursor: pointer; padding: 6px; display: flex; align-items: center; border-radius: 4px;" title="Ver/Ocultar contraseña">
+                        <svg id="eyeIconOpen" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <svg id="eyeIconClosed" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-cancel-styled" onclick="cerrarModalAuth()" style="padding: 9px 16px; font-size: 0.88rem;">
+                    Cancelar
+                </button>
+                <button type="submit" id="authConfirmSubmitBtn" class="btn-submit-styled" style="padding: 9px 20px; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 8px;">
+                    <span id="authConfirmBtnText">Confirmar y Emitir</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <script>
     function limpiarFormulario(animate = false) {
@@ -527,14 +615,183 @@
 
         if (alertBox) alertBox.style.display = 'none';
 
-        // Marcamos que se envió el despacho y limpiamos en diferido para que el historial/bfcache no guarde datos viejos
-        sessionStorage.setItem('despacho_completado', '1');
-        setTimeout(() => {
-            limpiarFormulario(false);
-        }, 100);
+        // Si ya se validó la identidad del usuario y se ingresó la contraseña, se permite el envío
+        const authPassword = document.getElementById('auth_password_input')?.value;
+        if (authPassword && authPassword.trim() !== '') {
+            sessionStorage.setItem('despacho_completado', '1');
+            setTimeout(() => {
+                limpiarFormulario(false);
+            }, 100);
+            return true;
+        }
 
-        return true;
+        // Si los campos son válidos pero falta validar credenciales, abrimos el modal de confirmación
+        if (e) e.preventDefault();
+        abrirModalAuth();
+        return false;
     }
+
+    function abrirModalAuth() {
+        const modal = document.getElementById('authValidateModal');
+        const pwdInput = document.getElementById('authModalPassword');
+        const errorBox = document.getElementById('authModalError');
+        const submitBtn = document.getElementById('authConfirmSubmitBtn');
+        const btnText = document.getElementById('authConfirmBtnText');
+
+        if (!modal) return;
+        if (pwdInput) {
+            pwdInput.value = '';
+            pwdInput.type = 'password';
+            pwdInput.setAttribute('readonly', 'readonly');
+        }
+        if (errorBox) errorBox.style.display = 'none';
+        if (submitBtn) submitBtn.disabled = false;
+        if (btnText) btnText.textContent = 'Confirmar y Emitir';
+
+        const eyeOpen = document.getElementById('eyeIconOpen');
+        const eyeClosed = document.getElementById('eyeIconClosed');
+        if (eyeOpen) eyeOpen.style.display = 'block';
+        if (eyeClosed) eyeClosed.style.display = 'none';
+
+        modal.classList.add('active');
+        setTimeout(() => {
+            if (pwdInput) {
+                pwdInput.removeAttribute('readonly');
+                pwdInput.focus();
+            }
+        }, 150);
+    }
+
+    function cerrarModalAuth(e) {
+        if (e && e.target && e.target.id !== 'authValidateModal') {
+            return;
+        }
+        const modal = document.getElementById('authValidateModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    function toggleVisibilidadPasswordAuth() {
+        const pwd = document.getElementById('authModalPassword');
+        const eyeOpen = document.getElementById('eyeIconOpen');
+        const eyeClosed = document.getElementById('eyeIconClosed');
+        if (!pwd) return;
+
+        if (pwd.type === 'password') {
+            pwd.type = 'text';
+            if (eyeOpen) eyeOpen.style.display = 'none';
+            if (eyeClosed) eyeClosed.style.display = 'block';
+        } else {
+            pwd.type = 'password';
+            if (eyeOpen) eyeOpen.style.display = 'block';
+            if (eyeClosed) eyeClosed.style.display = 'none';
+        }
+    }
+
+    async function confirmarIdentidadYDespachar(e) {
+        if (e) e.preventDefault();
+        const pwdInput = document.getElementById('authModalPassword');
+        const errorBox = document.getElementById('authModalError');
+        const errorText = document.getElementById('authModalErrorText');
+        const submitBtn = document.getElementById('authConfirmSubmitBtn');
+        const btnText = document.getElementById('authConfirmBtnText');
+        const form = document.getElementById('dispatchForm');
+        const authHidden = document.getElementById('auth_password_input');
+
+        const password = pwdInput ? pwdInput.value.trim() : '';
+        if (!password) {
+            if (errorBox && errorText) {
+                errorBox.style.display = 'flex';
+                errorText.textContent = 'Por favor ingrese su contraseña.';
+            }
+            if (pwdInput) pwdInput.focus();
+            return;
+        }
+
+        // Estado de carga
+        if (submitBtn) submitBtn.disabled = true;
+        if (btnText) btnText.textContent = 'Verificando...';
+        if (errorBox) errorBox.style.display = 'none';
+
+        try {
+            const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+            const formData = new URLSearchParams();
+            formData.append('password', password);
+            formData.append('csrf_token', csrfToken);
+
+            const res = await fetch('<?= BASE_URL ?>api/validar-credenciales', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData.toString()
+            });
+
+            let data = null;
+            try {
+                data = await res.json();
+            } catch (jsonErr) {
+                data = null;
+            }
+
+            if (res.ok && data && data.success) {
+                if (btnText) btnText.textContent = 'Identidad Confirmada...';
+                if (authHidden) authHidden.value = password;
+                
+                // Asegurar que galones esté formateado limpio (sin comas) para el backend
+                const g = document.getElementById('gallons');
+                if (g) g.value = g.value.replace(/,/g, '');
+
+                // Deshabilitar botón principal para evitar dobles envíos
+                const mainBtn = document.getElementById('submitBtn');
+                if (mainBtn) mainBtn.disabled = true;
+
+                // Cerrar modal y enviar formulario
+                const modal = document.getElementById('authValidateModal');
+                if (modal) modal.classList.remove('active');
+
+                sessionStorage.setItem('despacho_completado', '1');
+                if (form) form.submit();
+            } else {
+                let msg = 'Contraseña incorrecta. Verifique sus credenciales.';
+                if (data && data.message) {
+                    msg = data.message;
+                } else if (res.status === 401) {
+                    msg = 'Su sesión ha expirado. Por favor inicie sesión nuevamente.';
+                } else if (res.status === 419) {
+                    msg = 'Token de seguridad expirado. Por favor recargue la página.';
+                }
+
+                if (errorBox && errorText) {
+                    errorBox.style.display = 'flex';
+                    errorText.textContent = msg;
+                }
+                if (submitBtn) submitBtn.disabled = false;
+                if (btnText) btnText.textContent = 'Confirmar y Emitir';
+                if (pwdInput) {
+                    pwdInput.value = '';
+                    pwdInput.focus();
+                }
+            }
+        } catch (err) {
+            console.error('Error al validar credenciales:', err);
+            if (errorBox && errorText) {
+                errorBox.style.display = 'flex';
+                errorText.textContent = 'Error de conexión con el servidor. Intente nuevamente.';
+            }
+            if (submitBtn) submitBtn.disabled = false;
+            if (btnText) btnText.textContent = 'Confirmar y Emitir';
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('authValidateModal');
+            if (modal && modal.classList.contains('active')) {
+                cerrarModalAuth();
+            }
+        }
+    });
 
     document.addEventListener("DOMContentLoaded", () => {
         const fuelTypeSelect = document.getElementById("fuel_type_select");

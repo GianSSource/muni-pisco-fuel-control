@@ -71,6 +71,7 @@ $router->get('/registro', AuthController::class, 'showRegister');
 $router->post('/registro', AuthController::class, 'register');
 
 $router->post('/logout', AuthController::class, 'logout');
+$router->post('/api/validar-credenciales', AuthController::class, 'verifyCredentialsApi');
 
 $router->get('/dashboard', DashboardController::class, 'index');
 

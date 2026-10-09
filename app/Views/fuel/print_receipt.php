@@ -85,6 +85,9 @@ if (!function_exists('gallonsToTextEs')) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Vale <?= htmlspecialchars($delivery['receipt_number'] ?? 'Despacho') ?></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --ink: #18212d;
@@ -103,7 +106,7 @@ if (!function_exists('gallonsToTextEs')) {
     body {
       margin: 0;
       background: #e6ebf1;
-      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       color: var(--ink);
       font-variant-numeric: tabular-nums;
       line-height: 1.4;
@@ -111,53 +114,121 @@ if (!function_exists('gallonsToTextEs')) {
     }
 
     .bar {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      padding: 18px 16px;
+      width: 100%;
+      background: transparent;
+      padding: 20px 16px 14px;
+      box-sizing: border-box;
     }
 
-    .bar button,
-    .bar a {
-      font: inherit;
-      font-weight: 600;
-      font-size: 14px;
+    .bar-inner {
+      max-width: 780px;
+      margin: 0 auto;
       display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .bar-back {
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
       gap: 8px;
-      padding: 9px 18px;
+      padding: 7px 12px;
       border-radius: 8px;
-      border: 1px solid var(--brand);
-      background: #fff;
-      color: var(--brand);
+      transition: all 0.15s ease;
+    }
+
+    .bar-back:hover {
+      color: #1d4ed8;
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .bar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .bar-btn {
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: 8px;
       cursor: pointer;
       text-decoration: none;
-      transition: background .15s;
+      transition: all 0.15s ease;
+      line-height: 1.4;
+      white-space: nowrap;
     }
 
-    .bar button:hover,
-    .bar a:hover {
-      background: var(--brand-soft);
+    .bar-btn svg,
+    .bar-back svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
     }
 
-    .bar button.main {
-      background: var(--brand);
-      color: #fff;
+    /* Botones outline en fondo claro (Guardar PDF e Imprimir) */
+    .bar-btn-outline {
+      background: #ffffff;
+      color: #1e293b;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
 
-    .bar button.main:hover {
-      background: #0f2b4b;
+    .bar-btn-outline:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+      color: #0f172a;
     }
 
-    .bar button:focus-visible,
-    .bar a:focus-visible {
-      outline: 3px solid #7fa8d8;
+    .bar-btn-outline:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Botón azul destacado (Nuevo despacho) */
+    .bar-btn-primary {
+      background: #2563eb;
+      color: #ffffff;
+      border: 1px solid #2563eb;
+      box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+    }
+
+    .bar-btn-primary:hover {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+      color: #ffffff;
+    }
+
+    .bar-back:focus-visible,
+    .bar-btn:focus-visible {
+      outline: 2px solid #3b82f6;
       outline-offset: 2px;
     }
 
-    .bar svg {
-      width: 16px;
-      height: 16px;
+    @media (max-width: 640px) {
+      .bar {
+        padding: 14px 16px 8px;
+      }
+      .bar-inner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+      .bar-actions {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
     }
 
     .vale {
@@ -593,36 +664,43 @@ if (!function_exists('gallonsToTextEs')) {
 <body>
 
   <div class="bar">
-    <button class="main" id="btn-print" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-        stroke-linejoin="round" aria-hidden="true">
-        <path d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
-        <rect x="6" y="14" width="12" height="7" />
-      </svg>
-      Imprimir
-    </button>
-    <button id="btn-pdf" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-        stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16" />
-      </svg>
-      <span id="pdf-lbl">Guardar PDF</span>
-    </button>
-    <?php if (!empty($_GET['auto'])): ?>
-      <a href="<?= BASE_URL ?>despachos/nuevo" class="main" style="background: #2563eb; color: #fff; border-color: #2563eb;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 5v14M5 12h14"/>
+    <div class="bar-inner">
+      <a href="<?= BASE_URL ?>despachos" class="bar-back" <?= empty($_GET['auto']) ? 'onclick="if (window.history.length > 1) { window.history.back(); return false; }"' : '' ?>>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
-        Registrar Nuevo Despacho
+        <span>Volver a despachos</span>
       </a>
-      <a href="<?= BASE_URL ?>despachos">
-        ← Volver a Despachos
-      </a>
-    <?php else: ?>
-      <a href="<?= BASE_URL ?>despachos" onclick="if (history.length > 1) { history.back(); return false; }">
-        ← Volver
-      </a>
-    <?php endif; ?>
+
+      <div class="bar-actions">
+        <button id="btn-pdf" class="bar-btn bar-btn-outline" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span id="pdf-lbl">Guardar PDF</span>
+        </button>
+
+        <button id="btn-print" class="bar-btn bar-btn-outline" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+          <span>Imprimir</span>
+        </button>
+
+        <a href="<?= BASE_URL ?>despachos/nuevo" class="bar-btn bar-btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Nuevo despacho</span>
+        </a>
+      </div>
+    </div>
   </div>
 
   <article class="vale">

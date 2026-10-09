@@ -221,6 +221,26 @@ final class FuelController extends Controller
         $this->requireAuth();
         $this->verifyCsrf();
 
+        // Validación obligatoria de identidad mediante contraseña del usuario activo
+        $authPassword = (string) ($_POST['auth_password'] ?? '');
+        $userId = (int) ($_SESSION['user']['id'] ?? 0);
+        $currentUserEmail = (string) ($_SESSION['user']['email'] ?? '');
+        $userModel = new \App\Models\User();
+        $currentUser = ($userId > 0) ? $userModel->findWithPassword($userId) : null;
+        if (!$currentUser && $currentUserEmail !== '') {
+            $currentUser = $userModel->findWithPassword($currentUserEmail);
+        }
+
+        if (!$currentUser || $authPassword === '' || !password_verify($authPassword, $currentUser['password_hash'])) {
+            $this->redirect('despachos/nuevo?error=' . rawurlencode('No se pudo validar su identidad. Contraseña incorrecta.'));
+            return;
+        }
+
+        if (((int) ($currentUser['is_active'] ?? 1)) === 0) {
+            $this->redirect('despachos/nuevo?error=' . rawurlencode('Su cuenta se encuentra inactiva. Contacte al administrador.'));
+            return;
+        }
+
         $fuelType = trim((string) ($_POST['fuel_type'] ?? ''));
         $vehicleId = (int) ($_POST['vehicle_id'] ?? 0);
         $driver = trim((string) ($_POST['driver_name'] ?? ''));

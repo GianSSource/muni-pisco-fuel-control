@@ -237,4 +237,54 @@ final class AuthController extends Controller
         session_destroy();
         $this->redirect('login');
     }
+
+    public function verifyCredentialsApi(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (empty($_SESSION['user'])) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Su sesión ha expirado. Por favor inicie sesión nuevamente.']);
+            return;
+        }
+
+        $token = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || empty($token) || !hash_equals($_SESSION['csrf_token'], $token)) {
+            http_response_code(419);
+            echo json_encode(['success' => false, 'message' => 'Token de seguridad inválido o expirado.']);
+            return;
+        }
+
+        $password = (string) ($_POST['password'] ?? '');
+        if ($password === '') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Debe ingresar su contraseña.']);
+            return;
+        }
+
+        $userId = (int) ($_SESSION['user']['id'] ?? 0);
+        $userEmail = (string) ($_SESSION['user']['email'] ?? '');
+        $userModel = new User();
+        $user = ($userId > 0) ? $userModel->findWithPassword($userId) : null;
+        if (!$user && $userEmail !== '') {
+            $user = $userModel->findWithPassword($userEmail);
+        }
+
+        if (!$user || !password_verify($password, $user['password_hash'])) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Contraseña incorrecta. Verifique sus credenciales.']);
+            return;
+        }
+
+        if (((int) ($user['is_active'] ?? 1)) === 0) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Tu cuenta se encuentra desactivada.']);
+            return;
+        }
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Identidad confirmada exitosamente.'
+        ]);
+    }
 }

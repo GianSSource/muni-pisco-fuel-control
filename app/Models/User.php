@@ -205,6 +205,39 @@ final class User
         }
     }
 
+    public function findWithPassword(int|string $idOrEmail): ?array
+    {
+        try {
+            $db = Database::getConnection();
+            if (is_int($idOrEmail) || ctype_digit((string) $idOrEmail)) {
+                $stmt = $db->prepare('SELECT id, name, email, password_hash, COALESCE(role, "operador") AS role, COALESCE(is_active, 1) AS is_active FROM users WHERE id = :id LIMIT 1');
+                $stmt->execute(['id' => (int) $idOrEmail]);
+            } else {
+                $stmt = $db->prepare('SELECT id, name, email, password_hash, COALESCE(role, "operador") AS role, COALESCE(is_active, 1) AS is_active FROM users WHERE email = :email LIMIT 1');
+                $stmt->execute(['email' => trim((string) $idOrEmail)]);
+            }
+            $row = $stmt->fetch();
+            if ($row) {
+                return $row;
+            }
+        } catch (\Throwable $e) {}
+
+        try {
+            $db = Database::getConnection();
+            if (is_int($idOrEmail) || ctype_digit((string) $idOrEmail)) {
+                $stmt = $db->prepare('SELECT id, nombre AS name, email, password_hash, COALESCE(rol, "operador") AS role, 1 AS is_active FROM usuarios WHERE id = :id LIMIT 1');
+                $stmt->execute(['id' => (int) $idOrEmail]);
+            } else {
+                $stmt = $db->prepare('SELECT id, nombre AS name, email, password_hash, COALESCE(rol, "operador") AS role, 1 AS is_active FROM usuarios WHERE email = :email LIMIT 1');
+                $stmt->execute(['email' => trim((string) $idOrEmail)]);
+            }
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
     public function updateUser(int $id, string $name, string $email, string $role): bool
     {
         $validRoles = ['admin', 'supervisor', 'operador'];
