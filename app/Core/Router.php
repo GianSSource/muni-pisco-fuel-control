@@ -22,7 +22,12 @@ final class Router
 
     public function dispatch(string $method, string $path): void
     {
-        $path = $this->normalize(parse_url($path, PHP_URL_PATH) ?: '/');
+        $rawPath = parse_url($path, PHP_URL_PATH) ?: '/';
+        $base = defined('BASE_URL') ? rtrim(parse_url(BASE_URL, PHP_URL_PATH) ?: '', '/') : '';
+        if ($base !== '' && str_starts_with($rawPath, $base)) {
+            $rawPath = substr($rawPath, strlen($base)) ?: '/';
+        }
+        $path = $this->normalize($rawPath);
 
         // 405 handling
         if (!isset($this->routes[$method])) {

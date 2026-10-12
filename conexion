@@ -3,3 +3,20 @@ php -S localhost:8000 -t public
 
 Si sale error pon esto:
  C:\xampp\php\php.exe -S localhost:8000 -t public
+
+Sinecitas seguir usando la consola CMD:
+php -S 127.0.0.1:8000 -t public
+
+OJO no uses localhost en el cmd, usa:
+php -S 127.0.0.1:8000 -t public
+
+
+OPCION 1 (RECOMENDADA - 100% ESTABLE Y RAPIDO):
+Abrir directamente en el navegador con XAMPP Apache activo:
+http://localhost/muni-pisco-fuel-control/public/
+
+OPCION 2 (Servidor CLI por terminal):
+php -S 127.0.0.1:8000 -t public
+o:
+C:\xampp\php\php.exe -S 127.0.0.1:8000 -t public
+y abrir: http://127.0.0.1:8000

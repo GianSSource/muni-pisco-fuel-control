@@ -16,17 +16,36 @@ $currentUri = $_SERVER['REQUEST_URI'] ?? '';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Josefin+Sans:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/styles.css?v=<?= time() ?>">
+    <?php
+        $stylesCssPath = dirname(__DIR__, 3) . '/public/assets/css/styles.css';
+        $stylesVersion = file_exists($stylesCssPath) ? filemtime($stylesCssPath) : '1.0';
+    ?>
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/styles.css?v=<?= $stylesVersion ?>">
     <script>
         window.uiIcon = (name, className = '') => `<svg class="ui-icon ${className}" aria-hidden="true"><use href="<?= BASE_URL ?>assets/icons.svg#icon-${name}"></use></svg>`;
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 
     <!-- Flatpickr -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script defer src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
     <style>
+        /* Prevención de FOUC (Flash de contenido sin estilo e iconos gigantes) */
+        .ui-icon {
+            width: 18px;
+            height: 18px;
+            max-width: 18px;
+            max-height: 18px;
+            display: inline-block;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+        .sidebar-collapse-icon {
+            width: 18px;
+            height: 18px;
+        }
+
         /* Estilos para los botones de navegación de la barra superior */
         .topbar nav a {
             font-family: var(--font-heading);

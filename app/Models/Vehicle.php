@@ -33,9 +33,10 @@ final class Vehicle
 
             // Por si la tabla ya existía sin la columna (instalaciones previas)
             try {
-                $db->exec("ALTER TABLE vehicles ADD COLUMN vehicle_type_id INT UNSIGNED NULL AFTER area_id");
+                $db->exec("ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS vehicle_type_id INT UNSIGNED NULL AFTER area_id");
             } catch (\Throwable $e) {
-            error_log($e->getMessage());}
+                // Si la columna ya existe, ignorar silenciosamente
+            }
 
             try {
                 $db->exec("ALTER TABLE vehicles MODIFY unit_code VARCHAR(10) NOT NULL");
