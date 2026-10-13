@@ -403,7 +403,13 @@ final class Fuel
 
         try {
             $db = Database::getConnection();
-            $sql = 'SELECT COUNT(fd.id) as count, COALESCE(SUM(fd.gallons), 0) as total_gallons
+            $sql = 'SELECT 
+                        COUNT(fd.id) as count,
+                        COALESCE(SUM(fd.gallons), 0) as total_gallons,
+                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) as liquid_gallons,
+                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gnv%" OR LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) as gnv_total,
+                        COUNT(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" THEN 1 END) as liquid_count,
+                        COUNT(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gnv%" OR LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gas natural%" THEN 1 END) as gnv_count
                     FROM fuel_deliveries fd
                     LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
                     WHERE ' . implode(' AND ', $where);
@@ -412,12 +418,39 @@ final class Fuel
             $stmt->execute($params);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
+            // Desglose por tipo de combustible
+            $sqlBreakdown = 'SELECT 
+                                COALESCE(fd.fuel_type, fi.fuel_type, "Diesel B5 S-50") AS fuel_name,
+                                COALESCE(SUM(fd.gallons), 0) as total,
+                                COUNT(fd.id) as count
+                            FROM fuel_deliveries fd
+                            LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
+                            WHERE ' . implode(' AND ', $where) . '
+                            GROUP BY fuel_name
+                            ORDER BY total DESC';
+            $stmtBreakdown = $db->prepare($sqlBreakdown);
+            $stmtBreakdown->execute($params);
+            $breakdown = $stmtBreakdown->fetchAll(PDO::FETCH_ASSOC);
+
             return [
                 'count' => (int) ($row['count'] ?? 0),
-                'total_gallons' => (float) ($row['total_gallons'] ?? 0)
+                'total_gallons' => (float) ($row['total_gallons'] ?? 0),
+                'liquid_gallons' => (float) ($row['liquid_gallons'] ?? 0),
+                'gnv_total' => (float) ($row['gnv_total'] ?? 0),
+                'liquid_count' => (int) ($row['liquid_count'] ?? 0),
+                'gnv_count' => (int) ($row['gnv_count'] ?? 0),
+                'breakdown' => $breakdown
             ];
         } catch (Throwable $e) {
-            return ['count' => 0, 'total_gallons' => 0.0];
+            return [
+                'count' => 0, 
+                'total_gallons' => 0.0,
+                'liquid_gallons' => 0.0,
+                'gnv_total' => 0.0,
+                'liquid_count' => 0,
+                'gnv_count' => 0,
+                'breakdown' => []
+            ];
         }
     }
 

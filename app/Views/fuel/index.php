@@ -85,6 +85,157 @@
         color: #ffffff !important;
         border-color: #475569 !important;
     }
+
+    /* ==========================================================================
+       Tarjetas de Indicadores Rápidos (KPIs) de Despachos
+       ========================================================================== */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+        position: relative;
+        z-index: 50;
+    }
+
+    .stat-card {
+        background-color: var(--card-bg, #ffffff) !important;
+        border: 1px solid var(--border-color, #e2e8f0) !important;
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.82rem;
+        color: var(--text-muted, #64748b) !important;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.55rem;
+        font-weight: 800;
+        margin-top: 6px;
+    }
+
+    .stat-card .stat-footer {
+        font-size: 0.8rem;
+        color: var(--text-muted, #64748b);
+        font-weight: 600;
+        margin-top: 6px;
+    }
+
+    .stat-pill {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 999px;
+    }
+
+    .stat-card.dropdown-open {
+        z-index: 100;
+        position: relative;
+    }
+
+    .stat-dropdown-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 6px;
+        background: rgba(37, 99, 235, 0.10);
+        color: #2563eb;
+        border: 1px solid rgba(37, 99, 235, 0.25);
+        cursor: pointer;
+        transition: all 0.18s ease;
+    }
+
+    .stat-dropdown-trigger:hover {
+        background: rgba(37, 99, 235, 0.18);
+        border-color: #2563eb;
+    }
+
+    [data-theme="dark"] .stat-dropdown-trigger {
+        background: rgba(59, 130, 246, 0.18);
+        color: #60a5fa;
+        border-color: rgba(96, 165, 250, 0.35);
+    }
+
+    .stat-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 250px;
+        background: var(--card-bg, #ffffff);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 12px;
+        box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.18), 0 4px 10px -2px rgba(15, 23, 42, 0.06);
+        z-index: 1000;
+        overflow: hidden;
+        animation: fadeInDropdown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        color: var(--text-color, #0f172a);
+    }
+
+    [data-theme="dark"] .stat-dropdown-menu {
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+    }
+
+    .stat-dropdown-header {
+        padding: 10px 14px;
+        background: var(--bg-body, #f8fafc);
+        border-bottom: 1px solid var(--border-color, #e2e8f0);
+    }
+
+    .stat-dropdown-body {
+        max-height: 260px;
+        overflow-y: auto;
+        padding: 6px 12px;
+        background: var(--card-bg, #ffffff);
+    }
+
+    .stat-dropdown-item {
+        padding: 10px 4px;
+        border-bottom: 1px solid var(--border-color, #e2e8f0);
+        color: var(--text-color, #0f172a);
+    }
+
+    .stat-dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .stat-dropdown-footer {
+        padding: 9px 14px;
+        background: var(--bg-body, #f8fafc);
+        border-top: 1px solid var(--border-color, #e2e8f0);
+        font-size: 0.74rem;
+        color: var(--text-muted, #64748b);
+        text-align: right;
+    }
+
+    @keyframes fadeInDropdown {
+        from {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
 
 <div class="search-page-wrapper">
@@ -101,25 +252,115 @@
         </div>
     </section>
 
-    <!-- Métricas del Resultado de Búsqueda -->
-    <section class="search-summary-chips">
-        <div class="summary-chip">
-            <span class="chip-label">Resultados Encontrados</span>
-            <strong class="chip-val" id="resCount"><?= (int) $count ?></strong>
-        </div>
-        <?php 
-            $selectedFuel = $filters['fuel_type'] ?? '';
-            $filterUnit = !empty($selectedFuel) ? \App\Models\Catalog::getFuelUnit($selectedFuel, true) : 'Gal';
-            $isGnvFilter = stripos($selectedFuel, 'GNV') !== false || stripos($selectedFuel, 'Gas Natural') !== false;
-            $chipTitle = $isGnvFilter ? 'Total Volumen Filtrado' : 'Total Galones Filtrados';
-        ?>
-        <div class="summary-chip">
-            <span class="chip-label" id="resTotalLabel"><?= $chipTitle ?></span>
-            <strong class="chip-val highlight-blue" id="resTotalGallons"><?= number_format((float) $totalGallons, 2) ?> <?= $filterUnit ?></strong>
-        </div>
-        <div class="summary-chip">
-            <span class="chip-label">Promedio por Despacho</span>
-            <strong class="chip-val" id="resAvgGallons"><?= number_format((float) $avgGallons, 2) ?> <?= $filterUnit ?></strong>
+    <?php
+        $selectedFuel = $filters['fuel_type'] ?? '';
+        $isGnvFilter = stripos($selectedFuel, 'GNV') !== false || stripos($selectedFuel, 'Gas Natural') !== false;
+        $avgGnv = $gnvCount > 0 ? $gnvTotal / $gnvCount : 0;
+    ?>
+    <!-- Cards de Indicadores (KPIs) de Despachos -->
+    <section style="margin-bottom: 8px;">
+        <div class="stats-grid" id="despachosStatsGrid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
+
+            <!-- Card 1: Total Despachos -->
+            <div class="stat-card" style="border-top: 3px solid #6366f1;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <div class="stat-label">Total Despachos</div>
+                        <div class="stat-value" style="color: #6366f1;" id="resCount"><?= (int) $count ?></div>
+                        <div class="stat-footer">registros encontrados</div>
+                    </div>
+                    <div style="width:40px; height:40px; border-radius:10px; background:rgba(99,102,241,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+                    </div>
+                </div>
+                <?php if ($liquidCount > 0 || $gnvCount > 0): ?>
+                <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">
+                    <?php if ($liquidCount > 0): ?>
+                    <span class="stat-pill" style="background:rgba(37,99,235,0.12); color:#2563eb;"><?= $liquidCount ?> líquido<?= $liquidCount !== 1 ? 's' : '' ?></span>
+                    <?php endif; ?>
+                    <?php if ($gnvCount > 0): ?>
+                    <span class="stat-pill" style="background:rgba(16,185,129,0.12); color:#059669;"><?= $gnvCount ?> GNV</span>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Card 2: Combustible Líquido -->
+            <div class="stat-card" style="border-top: 3px solid #2563eb;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <div class="stat-label">Comb. Líquido Despachado</div>
+                        <div class="stat-value" style="color: #2563eb;" id="resTotalGallons"><?= number_format((float) $liquidGallons, 2) ?> <span style="font-size:1rem; font-weight:600;">Gal</span></div>
+                        <div class="stat-footer"><?= $liquidCount ?> despacho<?= $liquidCount !== 1 ? 's' : '' ?> · Prom: <?= number_format($liquidCount > 0 ? $liquidGallons / $liquidCount : 0, 2) ?> Gal</div>
+                    </div>
+                    <div style="width:40px; height:40px; border-radius:10px; background:rgba(37,99,235,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"/><path d="M3 14h10"/><path d="M13 10h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V8l-3-3"/><path d="M18 5l2 2"/><line x1="3" y1="22" x2="13" y2="22"/></svg>
+                    </div>
+                </div>
+                <?php if (!empty($breakdown)): ?>
+                <div style="margin-top:10px; border-top:1px solid var(--border-color, #e2e8f0); padding-top:8px;">
+                    <?php foreach ($breakdown as $b):
+                        $bIsGnv = stripos($b['fuel_name'], 'GNV') !== false || stripos($b['fuel_name'], 'Gas Natural') !== false;
+                        if ($bIsGnv) continue;
+                        $bUnit = \App\Models\Catalog::getFuelUnit($b['fuel_name'], true);
+                    ?>
+                    <div style="display:flex; justify-content:space-between; font-size:0.78rem; margin-bottom:3px; color:var(--text-color);">
+                        <span style="color:var(--text-muted); max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<?= htmlspecialchars($b['fuel_name']) ?>"><?= htmlspecialchars($b['fuel_name']) ?></span>
+                        <span style="font-weight:700; color:#2563eb;"><?= number_format((float)$b['total'], 2) ?> <?= $bUnit ?></span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Card 3: GNV (solo si hay despachos GNV) -->
+            <?php if ($hasGnv): ?>
+            <div class="stat-card" style="border-top: 3px solid #10b981;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <div class="stat-label">GNV Despachado</div>
+                        <div class="stat-value" style="color: #10b981;" id="resTotalGnv"><?= number_format((float) $gnvTotal, 2) ?> <span style="font-size:1rem; font-weight:600;">m³</span></div>
+                        <div class="stat-footer"><?= $gnvCount ?> despacho<?= $gnvCount !== 1 ? 's' : '' ?> · Prom: <?= number_format($avgGnv, 2) ?> m³</div>
+                    </div>
+                    <div style="width:40px; height:40px; border-radius:10px; background:rgba(16,185,129,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#10b981" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                    </div>
+                </div>
+                <div style="margin-top:10px; border-top:1px solid rgba(16,185,129,0.2); padding-top:8px;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <div style="width:8px; height:8px; border-radius:50%; background:#10b981; flex-shrink:0;"></div>
+                        <span style="font-size:0.78rem; color:var(--text-muted);">Gas Natural Vehicular</span>
+                        <span style="margin-left:auto; font-size:0.78rem; font-weight:700; color:#10b981;"><?= number_format((float)$gnvTotal, 2) ?> m³</span>
+                    </div>
+                    <div style="margin-top:6px; font-size:0.74rem; color:var(--text-muted);">
+                        Unidad: metros cúbicos (m³)
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Card 4: Promedio General -->
+            <div class="stat-card" style="border-top: 3px solid #f59e0b;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <div class="stat-label">Promedio por Despacho</div>
+                        <div class="stat-value" style="color: #f59e0b;" id="resAvgGallons"><?= number_format((float) ($liquidCount > 0 ? $liquidGallons / $liquidCount : 0), 2) ?> <span style="font-size:1rem; font-weight:600;">Gal</span></div>
+                        <div class="stat-footer">combustible líquido</div>
+                    </div>
+                    <div style="width:40px; height:40px; border-radius:10px; background:rgba(245,158,11,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    </div>
+                </div>
+                <?php if ($hasGnv && $gnvCount > 0): ?>
+                <div style="margin-top:10px; border-top:1px solid var(--border-color, #e2e8f0); padding-top:8px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.78rem;">
+                        <span style="color:var(--text-muted);">Prom. GNV</span>
+                        <span style="font-weight:700; color:#10b981;"><?= number_format($avgGnv, 2) ?> m³</span>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+
         </div>
     </section>
 

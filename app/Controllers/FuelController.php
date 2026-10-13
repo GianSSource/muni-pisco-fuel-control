@@ -35,7 +35,13 @@ final class FuelController extends Controller
 
         $stats = $fuelModel->getDeliveriesStats($filters);
         $totalGallons = $stats['total_gallons'];
+        $liquidGallons = $stats['liquid_gallons'];
+        $gnvTotal = $stats['gnv_total'];
+        $liquidCount = $stats['liquid_count'];
+        $gnvCount = $stats['gnv_count'];
         $count = $stats['count'];
+        $breakdown = $stats['breakdown'];
+        $hasGnv = $gnvTotal > 0 || $gnvCount > 0;
 
         $totalPages = $count > 0 ? (int) ceil($count / $limit) : 1;
         if ($page > $totalPages) {
@@ -68,6 +74,7 @@ final class FuelController extends Controller
 
 
         // Métricas de los resultados filtrados
+        $avgLiquidGallons = $liquidCount > 0 ? $liquidGallons / $liquidCount : 0;
         $avgGallons = $count > 0 ? $totalGallons / $count : 0;
 
         $this->view('fuel/index', [
@@ -79,6 +86,13 @@ final class FuelController extends Controller
             'destinations' => $destinations,
             'fuelTypes' => $fuelTypes,
             'totalGallons' => $totalGallons,
+            'liquidGallons' => $liquidGallons,
+            'gnvTotal' => $gnvTotal,
+            'liquidCount' => $liquidCount,
+            'gnvCount' => $gnvCount,
+            'breakdown' => $breakdown,
+            'hasGnv' => $hasGnv,
+            'avgLiquidGallons' => $avgLiquidGallons,
             'avgGallons' => $avgGallons,
             'count' => $count,
             'page' => $page,
@@ -125,6 +139,12 @@ final class FuelController extends Controller
             'status' => 'success',
             'count' => $stats['count'],
             'total_gallons' => number_format($stats['total_gallons'], 2),
+            'liquid_gallons' => number_format($stats['liquid_gallons'], 2),
+            'gnv_total' => number_format($stats['gnv_total'], 2),
+            'liquid_count' => $stats['liquid_count'],
+            'gnv_count' => $stats['gnv_count'],
+            'has_gnv' => $stats['gnv_total'] > 0 || $stats['gnv_count'] > 0,
+            'breakdown' => $stats['breakdown'],
             'page' => $page,
             'totalPages' => $totalPages,
             'data' => $deliveries
