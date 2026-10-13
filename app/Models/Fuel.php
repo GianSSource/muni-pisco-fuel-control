@@ -16,45 +16,45 @@ final class Fuel
             $db = Database::getConnection();
 
 
-            // 1. Total de combustible ingresado
+            // 1. Total de combustible líquido ingresado
             $totalIngresado = 0.0;
             try {
-                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_incomes');
+                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_incomes WHERE LOWER(fuel_type) NOT LIKE "%gnv%" AND LOWER(fuel_type) NOT LIKE "%gas natural%"');
                 $totalIngresado = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
             } catch (Throwable $t) {
                 try {
-                    $stmt = $db->query('SELECT COALESCE(SUM(cantidad), 0) AS total FROM ingresos_combustible');
+                    $stmt = $db->query('SELECT COALESCE(SUM(cantidad), 0) AS total FROM ingresos_combustible WHERE LOWER(tipo_combustible) NOT LIKE "%gnv%" AND LOWER(tipo_combustible) NOT LIKE "%gas natural%"');
                     $totalIngresado = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
                 } catch (\Throwable $t2) {
-            error_log($t2->getMessage());
+                    error_log($t2->getMessage());
                 }
             }
 
-            // 2. Total entregado
+            // 2. Total entregado (líquidos)
             $totalEntregado = 0.0;
             try {
-                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_deliveries WHERE status <> "Anulado"');
+                $stmt = $db->query('SELECT COALESCE(SUM(fd.gallons), 0) AS total FROM fuel_deliveries fd LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id WHERE fd.status <> "Anulado" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%"');
                 $totalEntregado = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
             } catch (Throwable $t) {
                 try {
-                    $stmt = $db->query('SELECT COALESCE(SUM(cantidad_entregada), 0) AS total FROM recibos');
+                    $stmt = $db->query('SELECT COALESCE(SUM(cantidad_entregada), 0) AS total FROM recibos WHERE LOWER(tipo_combustible) NOT LIKE "%gnv%" AND LOWER(tipo_combustible) NOT LIKE "%gas natural%"');
                     $totalEntregado = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
                 } catch (\Throwable $t2) {
-            error_log($t2->getMessage());
+                    error_log($t2->getMessage());
                 }
             }
 
-            // 3. Saldo disponible
+            // 3. Saldo disponible (líquidos)
             $saldoDisponible = 0.0;
             try {
-                $stmt = $db->query('SELECT COALESCE(SUM(gallons_remaining), 0) AS total FROM fuel_incomes');
+                $stmt = $db->query('SELECT COALESCE(SUM(gallons_remaining), 0) AS total FROM fuel_incomes WHERE LOWER(fuel_type) NOT LIKE "%gnv%" AND LOWER(fuel_type) NOT LIKE "%gas natural%"');
                 $saldoDisponible = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
             } catch (Throwable $t) {
                 try {
-                    $stmt = $db->query('SELECT COALESCE(SUM(saldo_actual), 0) AS total FROM saldos_combustible');
+                    $stmt = $db->query('SELECT COALESCE(SUM(saldo_actual), 0) AS total FROM saldos_combustible WHERE LOWER(tipo_combustible) NOT LIKE "%gnv%" AND LOWER(tipo_combustible) NOT LIKE "%gas natural%"');
                     $saldoDisponible = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
                 } catch (\Throwable $t2) {
-            error_log($t2->getMessage());
+                    error_log($t2->getMessage());
                 }
             }
 
@@ -62,17 +62,17 @@ final class Fuel
                 $saldoDisponible = max(0, $totalIngresado - $totalEntregado);
             }
 
-            // 4. Consumo del día
+            // 4. Consumo del día (líquidos)
             $consumoDia = 0.0;
             try {
-                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_deliveries WHERE DATE(created_at) = CURRENT_DATE() AND status <> "Anulado"');
+                $stmt = $db->query('SELECT COALESCE(SUM(fd.gallons), 0) AS total FROM fuel_deliveries fd LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id WHERE DATE(fd.created_at) = CURRENT_DATE() AND fd.status <> "Anulado" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%"');
                 $consumoDia = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
             } catch (Throwable $t) {
                 try {
-                    $stmt = $db->query('SELECT COALESCE(SUM(cantidad_entregada), 0) AS total FROM recibos WHERE DATE(fecha_hora) = CURRENT_DATE()');
+                    $stmt = $db->query('SELECT COALESCE(SUM(cantidad_entregada), 0) AS total FROM recibos WHERE DATE(fecha_hora) = CURRENT_DATE() AND LOWER(tipo_combustible) NOT LIKE "%gnv%" AND LOWER(tipo_combustible) NOT LIKE "%gas natural%"');
                     $consumoDia = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
                 } catch (\Throwable $t2) {
-            error_log($t2->getMessage());
+                    error_log($t2->getMessage());
                 }
             }
 
@@ -86,7 +86,7 @@ final class Fuel
                     $stmt = $db->query('SELECT COUNT(*) AS total FROM recibos WHERE MONTH(fecha_hora) = MONTH(CURRENT_DATE()) AND YEAR(fecha_hora) = YEAR(CURRENT_DATE())');
                     $recibosMes = (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
                 } catch (\Throwable $t2) {
-            error_log($t2->getMessage());
+                    error_log($t2->getMessage());
                 }
             }
 
@@ -95,31 +95,31 @@ final class Fuel
             $ingresoMesActual = 0.0;
             $ingresoMesAnterior = 0.0;
             try {
-                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_incomes WHERE MONTH(created_at) = MONTH(CURRENT_DATE()) AND YEAR(created_at) = YEAR(CURRENT_DATE())');
+                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_incomes WHERE LOWER(fuel_type) NOT LIKE "%gnv%" AND LOWER(fuel_type) NOT LIKE "%gas natural%" AND MONTH(created_at) = MONTH(CURRENT_DATE()) AND YEAR(created_at) = YEAR(CURRENT_DATE())');
                 $ingresoMesActual = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_incomes WHERE MONTH(created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) AND YEAR(created_at) = YEAR(CURRENT_DATE() - INTERVAL 1 MONTH)');
+                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_incomes WHERE LOWER(fuel_type) NOT LIKE "%gnv%" AND LOWER(fuel_type) NOT LIKE "%gas natural%" AND MONTH(created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) AND YEAR(created_at) = YEAR(CURRENT_DATE() - INTERVAL 1 MONTH)');
                 $ingresoMesAnterior = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
             } catch (\Throwable $t) {
-            error_log($t->getMessage());
+                error_log($t->getMessage());
             }
 
             $entregaMesActual = 0.0;
             $entregaMesAnterior = 0.0;
             try {
-                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_deliveries WHERE status <> "Anulado" AND MONTH(created_at) = MONTH(CURRENT_DATE()) AND YEAR(created_at) = YEAR(CURRENT_DATE())');
+                $stmt = $db->query('SELECT COALESCE(SUM(fd.gallons), 0) AS total FROM fuel_deliveries fd LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id WHERE fd.status <> "Anulado" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" AND MONTH(fd.created_at) = MONTH(CURRENT_DATE()) AND YEAR(fd.created_at) = YEAR(CURRENT_DATE())');
                 $entregaMesActual = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_deliveries WHERE status <> "Anulado" AND MONTH(created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) AND YEAR(created_at) = YEAR(CURRENT_DATE() - INTERVAL 1 MONTH)');
+                $stmt = $db->query('SELECT COALESCE(SUM(fd.gallons), 0) AS total FROM fuel_deliveries fd LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id WHERE fd.status <> "Anulado" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" AND MONTH(fd.created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) AND YEAR(fd.created_at) = YEAR(CURRENT_DATE() - INTERVAL 1 MONTH)');
                 $entregaMesAnterior = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
             } catch (\Throwable $t) {
-            error_log($t->getMessage());
+                error_log($t->getMessage());
             }
 
             $consumoAyer = 0.0;
             try {
-                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_deliveries WHERE status <> "Anulado" AND DATE(created_at) = CURRENT_DATE() - INTERVAL 1 DAY');
+                $stmt = $db->query('SELECT COALESCE(SUM(fd.gallons), 0) AS total FROM fuel_deliveries fd LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id WHERE fd.status <> "Anulado" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" AND DATE(fd.created_at) = CURRENT_DATE() - INTERVAL 1 DAY');
                 $consumoAyer = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
             } catch (\Throwable $t) {
-            error_log($t->getMessage());
+                error_log($t->getMessage());
             }
 
             $recibosMesAnterior = 0;
@@ -127,22 +127,22 @@ final class Fuel
                 $stmt = $db->query('SELECT COUNT(*) AS total FROM fuel_deliveries WHERE MONTH(created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) AND YEAR(created_at) = YEAR(CURRENT_DATE() - INTERVAL 1 MONTH)');
                 $recibosMesAnterior = (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
             } catch (\Throwable $t) {
-            error_log($t->getMessage());
+                error_log($t->getMessage());
             }
 
             // Saldo disponible al cierre del mes anterior, para poder comparar el
             // stock actual contra un punto de referencia real (no un acumulado total).
             $saldoInicioMes = 0.0;
             try {
-                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_incomes WHERE created_at < DATE_FORMAT(CURRENT_DATE(), "%Y-%m-01")');
+                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_incomes WHERE LOWER(fuel_type) NOT LIKE "%gnv%" AND LOWER(fuel_type) NOT LIKE "%gas natural%" AND created_at < DATE_FORMAT(CURRENT_DATE(), "%Y-%m-01")');
                 $ingresoHastaMesAnterior = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
 
-                $stmt = $db->query('SELECT COALESCE(SUM(gallons), 0) AS total FROM fuel_deliveries WHERE status <> "Anulado" AND created_at < DATE_FORMAT(CURRENT_DATE(), "%Y-%m-01")');
+                $stmt = $db->query('SELECT COALESCE(SUM(fd.gallons), 0) AS total FROM fuel_deliveries fd LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id WHERE fd.status <> "Anulado" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" AND fd.created_at < DATE_FORMAT(CURRENT_DATE(), "%Y-%m-01")');
                 $entregaHastaMesAnterior = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
 
                 $saldoInicioMes = max(0.0, $ingresoHastaMesAnterior - $entregaHastaMesAnterior);
             } catch (\Throwable $t) {
-            error_log($t->getMessage());
+                error_log($t->getMessage());
             }
 
             return [
@@ -199,6 +199,53 @@ final class Fuel
             'direction' => $direction,
             'pct' => abs($diffPct),
             'label' => $label,
+        ];
+    }
+
+    /**
+     * Retorna métricas de GNV (Gas Natural Vehicular) desde los ingresos.
+     * La card GNV del dashboard solo se muestra cuando totalGnvIngresado > 0.
+     *
+     * @return array{totalGnvIngresado: float, totalGnvRemaining: float, gnvDespachos: int, hasGnv: bool}
+     */
+    public function getGnvMetrics(): array
+    {
+        $totalGnvIngresado = 0.0;
+        $totalGnvRemaining = 0.0;
+        $gnvDespachos      = 0;
+
+        try {
+            $db = Database::getConnection();
+
+            // Total m³ GNV ingresados (los registros donde fuel_type contiene 'gnv' o 'gas natural')
+            $stmt = $db->query(
+                "SELECT COALESCE(SUM(gallons), 0) AS total, COALESCE(SUM(gallons_remaining), 0) AS remaining
+                 FROM fuel_incomes
+                 WHERE LOWER(fuel_type) LIKE '%gnv%' OR LOWER(fuel_type) LIKE '%gas natural%'"
+            );
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $totalGnvIngresado = (float) ($row['total']    ?? 0);
+            $totalGnvRemaining = (float) ($row['remaining'] ?? 0);
+
+            // Despachos realizados con lotes de GNV
+            $stmt = $db->query(
+                "SELECT COUNT(*) AS total
+                 FROM fuel_deliveries fd
+                 LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
+                 WHERE fd.status <> 'Anulado'
+                   AND (LOWER(COALESCE(fd.fuel_type, fi.fuel_type, '')) LIKE '%gnv%'
+                        OR LOWER(COALESCE(fd.fuel_type, fi.fuel_type, '')) LIKE '%gas natural%')"
+            );
+            $gnvDespachos = (int) ($stmt->fetch(\PDO::FETCH_ASSOC)['total'] ?? 0);
+        } catch (\Throwable $e) {
+            error_log('[GNV Metrics] ' . $e->getMessage());
+        }
+
+        return [
+            'totalGnvIngresado' => $totalGnvIngresado,
+            'totalGnvRemaining' => $totalGnvRemaining,
+            'gnvDespachos'      => $gnvDespachos,
+            'hasGnv'            => $totalGnvIngresado > 0,
         ];
     }
 
@@ -997,10 +1044,12 @@ final class Fuel
                                 DATE(fd.created_at) AS date,
                                 fd.created_at AS date_time,
                                 fd.gallons,
+                                COALESCE(fd.fuel_type, fi.fuel_type, "Diesel B5 S-50") AS fuel_type,
                                 fd.vehicle_plate AS vehicle,
                                 fd.driver_name AS driver,
                                 COALESCE(fd.destination, "Despacho General") AS destination
                             FROM fuel_deliveries fd
+                            LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
                             WHERE fd.status <> "Anulado"'
                             . ($days !== null ? ' AND fd.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL :days DAY)' : '')
                             . ' ORDER BY fd.created_at DESC'
@@ -1025,6 +1074,7 @@ final class Fuel
                     'date_time' => $row['date_time'],
                     'time' => date('H:i', strtotime($row['date_time'])),
                     'gallons' => (float) $row['gallons'],
+                    'fuel_type' => $row['fuel_type'] ?? '',
                     'vehicle' => $row['vehicle'],
                     'driver' => $row['driver'],
                     'destination' => $row['destination'],
@@ -1066,6 +1116,7 @@ final class Fuel
                     'date_time' => $row['date_time'],
                     'time' => date('H:i', strtotime($row['date_time'])),
                     'gallons' => (float) $row['gallons'],
+                    'fuel_type' => $row['fuel_type'] ?? '',
                     'vehicle' => 'Stock Lote',
                     'driver' => $row['supplier'],
                     'destination' => 'Almacén Central',
