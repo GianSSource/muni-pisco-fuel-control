@@ -184,3 +184,94 @@ Para resolver esto en el futuro, se recomienda reemplazar las condiciones `OR` t
    Reemplazar las condiciones `LIKE` por `MATCH(receipt_number, vehicle_plate, driver_name, destination, notes) AGAINST(:busqueda)`.
 
 Esto reducirá los tiempos de búsqueda de varios segundos a tan solo milisegundos, con un impacto casi nulo en el peso de la base de datos.
+
+---
+
+## Estado de Funcionalidades: Selector Múltiple de Combustible en Unidades
+
+### Estado Actual: **INHABILITADO (Pendiente de Activación)**
+
+> **Resumen:** Se evaluó y documentó la funcionalidad para permitir que el selector **"Tipo de Combustible"** en el formulario de **Registrar Vehículo / Unidad** (`Catálogos`) admita selección múltiple (para unidades bi-combustibles o híbridas, tales como *Gasolina + GNV* o *Gasolina + GLP*). Por requerimiento operativo actual, **esta funcionalidad se mantiene inhabilitada**, conservando el selector en modo de selección única (`1 vehículo = 1 tipo de combustible principal`).
+
+---
+
+### Análisis Técnico y Arquitectura de la Solución (Para Activación Futura)
+
+Si más adelante se decide habilitar el registro de unidades bi-combustibles o multi-combustibles, se debe aplicar la siguiente implementación modular:
+
+#### 1. Base de Datos (Relación Muchos a Muchos)
+Actualmente, la tabla `vehicles` cuenta con una columna única `fuel_type_id INT UNSIGNED NULL`. Para soportar múltiples combustibles sin romper compatibilidad con instalaciones anteriores:
+
+- **Crear tabla pivot `vehicle_fuel_types`:**
+  ```sql
+  CREATE TABLE IF NOT EXISTS vehicle_fuel_types (
+      vehicle_id INT UNSIGNED NOT NULL,
+      fuel_type_id INT UNSIGNED NOT NULL,
+      PRIMARY KEY (vehicle_id, fuel_type_id),
+      INDEX idx_vft_fuel (fuel_type_id)
+  ) ENGINE=InnoDB;
+  ```
+
+- **Migrar registros existentes:**
+  ```sql
+  INSERT IGNORE INTO vehicle_fuel_types (vehicle_id, fuel_type_id)
+  SELECT id, fuel_type_id FROM vehicles 
+  WHERE fuel_type_id IS NOT NULL AND fuel_type_id > 0;
+  ```
+
+- **Compatibilidad hacia atrás:** Mantener la columna `vehicles.fuel_type_id` registrando el primer combustible seleccionado como principal para no alterar consultas heredadas ni reportes previos.
+
+#### 2. Capa Modelo (`app/Models/Vehicle.php`)
+- **Consulta con agrupación (`GROUP_CONCAT`):**
+  Modificar `getActive()` y `findById()` para vincular la tabla pivot:
+  ```sql
+  SELECT v.id, v.unit_code, v.plate, v.area_id, v.vehicle_type_id, v.fuel_type_id,
+         COALESCE(sc.name, 'Sin área asignada') AS area_name,
+         COALESCE(vt.name, 'Sin tipo') AS vehicle_type_name,
+         COALESCE(
+             GROUP_CONCAT(DISTINCT ft.name ORDER BY ft.name SEPARATOR ' / '),
+             COALESCE(legacy_ft.name, 'Sin combustible')
+         ) AS fuel_type_name,
+         GROUP_CONCAT(DISTINCT vft.fuel_type_id ORDER BY vft.fuel_type_id) AS fuel_type_ids
+  FROM vehicles v
+  LEFT JOIN system_catalogs sc ON sc.id = v.area_id
+  LEFT JOIN system_catalogs vt ON vt.id = v.vehicle_type_id
+  LEFT JOIN vehicle_fuel_types vft ON vft.vehicle_id = v.id
+  LEFT JOIN system_catalogs ft ON ft.id = vft.fuel_type_id AND ft.status = 'activo'
+  LEFT JOIN system_catalogs legacy_ft ON legacy_ft.id = v.fuel_type_id
+  WHERE v.status = 'activo'
+  GROUP BY v.id, v.unit_code, v.plate, v.area_id, v.vehicle_type_id, v.fuel_type_id, sc.name, vt.name, legacy_ft.name
+  ORDER BY v.plate ASC
+  ```
+
+- **Método `create()`:**
+  Aceptar un parámetro de combustibles múltiple (`array|int|null $fuelTypeIds`), registrar el primer ID en `vehicles.fuel_type_id`, y luego registrar cada ID en la tabla `vehicle_fuel_types`.
+
+#### 3. Capa Controlador (`app/Controllers/AdminController.php`)
+- En `storeVehicle()`:
+  Recibir `$_POST['fuel_type_ids']` (con respaldo hacia `$_POST['fuel_type_id']`), sanitizar los identificadores numéricos y validar que se haya seleccionado al menos un combustible:
+  ```php
+  $rawFuelTypeIds = $_POST['fuel_type_ids'] ?? [];
+  if (empty($rawFuelTypeIds) && !empty($_POST['fuel_type_id'])) {
+      $rawFuelTypeIds = [$_POST['fuel_type_id']];
+  }
+  $fuelTypeIds = array_values(array_filter(
+      array_map('intval', (array) $rawFuelTypeIds),
+      fn($id) => $id > 0
+  ));
+  ```
+
+#### 4. Capa Vista (`app/Views/admin/catalogos.php`)
+- **Selector en el Formulario:**
+  Convertir el elemento a selección múltiple con nombre de array:
+  ```html
+  <select name="fuel_type_ids[]" id="select_fuel_type" multiple class="form-control-styled">
+  ```
+- **Componente Desplegable Personalizado:**
+  Configurar `initCustomDropdown()` para desplegar casillas de verificación (checkboxes) por cada combustible sin cerrar el menú al hacer clic, con soporte de badge contador `(2 seleccionados)` y botón de limpieza rápida.
+- **Listado de Vehículos Registrados:**
+  En la pestaña de catálogo, desglosar `v.fuel_type_name` para dibujar badges individuales por tipo de combustible (ej. badge azul para GNV, ámbar para GLP, índigo para Gasolina y gris para Diesel).
+
+#### 5. Módulo de Despachos (`app/Views/fuel/create.php`)
+- En la función de auto-sugerencia (`vehicleSelectEl.addEventListener('change', ...)`), comprobar si el combustible del vale actual coincide con cualquiera de los combustibles admitidos por la unidad (`fuelName.split('/')`), evitando sobreescrituras involuntarias si el vehículo admite el combustible que ya estaba seleccionado.
+

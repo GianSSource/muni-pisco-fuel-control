@@ -135,11 +135,12 @@
                             $totalFormatted = number_format($grp['total_stock'], 2);
                             $lotsJson = htmlspecialchars(json_encode($grp['lots']), ENT_QUOTES, 'UTF-8');
                             ?>
+                            <?php $fuelUnit = \App\Models\Catalog::getFuelUnit($grp['fuel_type'], true); ?>
                             <option value="<?= htmlspecialchars($grp['fuel_type']) ?>"
                                 data-stock="<?= $grp['total_stock'] ?>"
                                 data-stock-formatted="<?= $totalFormatted ?>"
                                 data-lots="<?= $lotsJson ?>">
-                                <?= htmlspecialchars($grp['fuel_type']) ?> — Stock total: <?= $totalFormatted ?> Gal
+                                <?= htmlspecialchars($grp['fuel_type']) ?> — Stock total: <?= $totalFormatted ?> <?= $fuelUnit ?>
                             </option>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -176,10 +177,12 @@
                             <option value="<?= $v['id'] ?>" data-area="<?= htmlspecialchars($v['area_name'] ?? 'Sin Área') ?>"
                                 data-plate="<?= htmlspecialchars($v['plate'] ?? '') ?>"
                                 data-unit="<?= htmlspecialchars($v['unit_code'] ?? '') ?>"
-                                data-type="<?= htmlspecialchars($v['vehicle_type_name'] ?? 'Sin tipo') ?>">
+                                data-type="<?= htmlspecialchars($v['vehicle_type_name'] ?? 'Sin tipo') ?>"
+                                data-fuel-type="<?= htmlspecialchars($v['fuel_type_name'] ?? '') ?>"
+                                data-fuel-unit="<?= htmlspecialchars(\App\Models\Catalog::getFuelUnit($v['fuel_type_name'] ?? '')) ?>">
                                 <?= htmlspecialchars($v['area_name'] ?? 'Sin Área') ?> —
                                 <?= htmlspecialchars($v['plate'] ?? '') ?> (<?= htmlspecialchars($v['unit_code'] ?? '') ?>)
-                                [<?= htmlspecialchars($v['vehicle_type_name'] ?? 'Sin tipo') ?>]
+                                [<?= htmlspecialchars($v['vehicle_type_name'] ?? 'Sin tipo') ?> · <?= htmlspecialchars($v['fuel_type_name'] ?? 'Sin combustible') ?>]
                             </option>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -210,7 +213,7 @@
             </div>
 
             <div style="min-width: 0;">
-                <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Cantidad de
+                <label id="gallonsLabel" style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Cantidad de
                     Galones (Máx. 15,000.00)</label>
                 <input type="text" name="gallons" id="gallons" class="form-control-styled" required
                     placeholder="Ej: 15,000" maxlength="12" autocomplete="off"
@@ -497,11 +500,13 @@
             return [];
         }
 
+        const isGnvDispatch = (fuelType || '').toLowerCase().includes('gnv') || (fuelType || '').toLowerCase().includes('gas natural');
+        const qtyLabelDispatch = isGnvDispatch ? 'Cantidad en Metros Cúbicos (m³)' : 'Cantidad de Galones';
         const faltantes = [];
         if (!fuelType) faltantes.push('Tipo de Combustible');
         if (!vehicleId) faltantes.push('Vehículo / Unidad');
         if (!driverName) faltantes.push('Conductor / Responsable');
-        if (!gallonsVal || parseFloat(gallonsVal.replace(/,/g, '')) <= 0) faltantes.push('Cantidad de Galones');
+        if (!gallonsVal || parseFloat(gallonsVal.replace(/,/g, '')) <= 0) faltantes.push(qtyLabelDispatch);
         if (!destination) faltantes.push('Área / Subgerencia Destino');
 
         if (faltantes.length > 0) {
@@ -581,7 +586,9 @@
         }
 
         if (!gallonsVal || parseFloat(gallonsVal) <= 0) {
-            faltantes.push('Cantidad de Galones');
+            const fTypeForVal = document.getElementById('fuel_type_select')?.value || '';
+            const isGnvV = fTypeForVal.toLowerCase().includes('gnv') || fTypeForVal.toLowerCase().includes('gas natural');
+            faltantes.push(isGnvV ? 'Cantidad en Metros Cúbicos (m³)' : 'Cantidad de Galones');
             if (g) {
                 g.style.borderColor = '#ef4444';
                 g.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.25)';
@@ -854,13 +861,24 @@
             const requested = parseFloat(rawVal || "0");
             previewLotAssignment();
 
+            const fuelVal = (fuelTypeSelect.value || '').toLowerCase();
+            const isGnv = fuelVal.includes('gnv') || fuelVal.includes('gas natural');
+            const unitLabel = isGnv ? 'm³' : 'Gal';
+            const gLabel = document.getElementById('gallonsLabel');
+            if (gLabel) {
+                gLabel.textContent = isGnv ? 'Cantidad en Metros Cúbicos — m³ (Máx. 15,000.00)' : 'Cantidad de Galones (Máx. 15,000.00)';
+            }
+            if (gallonsInput && !gallonsInput.value) {
+                gallonsInput.placeholder = isGnv ? 'Ej: 50.00 m³' : 'Ej: 15,000';
+            }
+
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             const fmtReq = requested.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const fmtTotal = totalStock.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
             let mensaje = null;
             if (requested > 0 && requested > totalStock) {
-                mensaje = `La cantidad solicitada <strong data-role="waccent">${fmtReq} Gal</strong> supera el stock total disponible de este combustible <strong data-role="waccent">${fmtTotal} Gal</strong>.`;
+                mensaje = `La cantidad solicitada <strong data-role="waccent">${fmtReq} ${unitLabel}</strong> supera el stock total disponible de este combustible <strong data-role="waccent">${fmtTotal} ${unitLabel}</strong>.`;
             }
 
             if (mensaje) {
@@ -969,10 +987,11 @@
                     const receipt = selectedOpt.getAttribute('data-receipt');
                     const stockFormatted = selectedOpt.getAttribute('data-stock-formatted');
                     const supplier = selectedOpt.getAttribute('data-supplier');
+                    const fTypeUnit = (fType || '').toLowerCase().includes('gnv') || (fType || '').toLowerCase().includes('gas natural') ? 'm³' : 'Gal';
                     triggerHTML = `
                         <div style="display:flex; flex-direction:column; gap:1px; flex:1; min-width:0; overflow:hidden;">
                             <span style="font-size:0.72rem; font-weight:700; color:#0284c7; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${fType} — ${receipt}</span>
-                            <span style="font-weight:600; font-size:0.88rem; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">Stock: ${stockFormatted} Gal (${supplier})</span>
+                            <span style="font-weight:600; font-size:0.88rem; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">Stock: ${stockFormatted} ${fTypeUnit} (${supplier})</span>
                         </div>
                     `;
                 } else {
@@ -1070,6 +1089,9 @@
                         const plate = opt.getAttribute('data-plate');
                         const unit = opt.getAttribute('data-unit');
                         const type = opt.getAttribute('data-type');
+                        const fType = opt.getAttribute('data-fuel-type') || '';
+                        const fUnit = opt.getAttribute('data-fuel-unit') || '';
+                        const fBadge = fType ? `<span style="font-size:0.75rem; background:${fType.toLowerCase().includes('gnv') ? '#dbeafe; color:#1d4ed8; border:1px solid #bfdbfe;' : '#f1f5f9; color:#334155; border:1px solid #e2e8f0;'}; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:4px;">${fType} [${fUnit}]</span>` : '';
                         item.innerHTML = `
                             <div class="item-left" style="flex:1; min-width:0; overflow:hidden;">
                                 <div style="display:flex; flex-direction:column; gap:2px;">
@@ -1077,7 +1099,7 @@
                                         ${area}
                                     </div>
                                     <div style="font-size:0.88rem; font-weight:600; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                        ${plate} <span style="color:#64748b; font-weight:500;">— ${unit}</span> <span style="font-size:0.76rem; background:#f1f5f9; padding:2px 6px; border-radius:4px; color:#475569; margin-left:4px;">[${type}]</span>
+                                        ${plate} <span style="color:#64748b; font-weight:500;">— ${unit}</span> <span style="font-size:0.76rem; background:#f1f5f9; padding:2px 6px; border-radius:4px; color:#475569; margin-left:4px;">[${type}]</span> ${fBadge}
                                     </div>
                                 </div>
                             </div>
@@ -1088,6 +1110,7 @@
                         const receipt = opt.getAttribute('data-receipt');
                         const stockFormatted = opt.getAttribute('data-stock-formatted');
                         const supplier = opt.getAttribute('data-supplier');
+                        const uLabel = (fType || '').toLowerCase().includes('gnv') ? 'm³' : 'Gal';
                         item.innerHTML = `
                             <div class="item-left" style="flex:1; min-width:0; overflow:hidden;">
                                 <div style="display:flex; flex-direction:column; gap:2px;">
@@ -1095,7 +1118,7 @@
                                         ${fType} — ${receipt}
                                     </div>
                                     <div style="font-size:0.88rem; font-weight:600; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                        Stock: ${stockFormatted} Gal <span style="color:#64748b; font-weight:500;">(${supplier})</span>
+                                        Stock: ${stockFormatted} ${uLabel} <span style="color:#64748b; font-weight:500;">(${supplier})</span>
                                     </div>
                                 </div>
                             </div>
@@ -1220,6 +1243,39 @@
         initCustomDispatchSelect('vehicle_id', true, 'Buscar por área, placa, unidad o tipo...', false, 20, false, true);
         initCustomDispatchSelect('driver_name', true, 'Buscar o escribir conductor...', true, 40, true);
         initCustomDispatchSelect('destination', false);
+
+        // Auto-sugerir combustible y área cuando se selecciona un vehículo
+        const vehicleSelectEl = document.getElementById('vehicle_id');
+        if (vehicleSelectEl) {
+            vehicleSelectEl.addEventListener('change', () => {
+                const opt = vehicleSelectEl.options[vehicleSelectEl.selectedIndex];
+                if (opt) {
+                    const fuelName = opt.getAttribute('data-fuel-type');
+                    if (fuelName && fuelTypeSelect) {
+                        for (let i = 0; i < fuelTypeSelect.options.length; i++) {
+                            const ftVal = (fuelTypeSelect.options[i].value || '').toLowerCase();
+                            const fNameClean = fuelName.toLowerCase();
+                            if (ftVal && (ftVal === fNameClean || fNameClean.includes(ftVal) || ftVal.includes(fNameClean))) {
+                                fuelTypeSelect.selectedIndex = i;
+                                fuelTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                break;
+                            }
+                        }
+                    }
+                    const vArea = opt.getAttribute('data-area');
+                    const destSelect = document.getElementById('destination');
+                    if (vArea && destSelect && !destSelect.value) {
+                        for (let j = 0; j < destSelect.options.length; j++) {
+                            if (destSelect.options[j].value.toLowerCase() === vArea.toLowerCase()) {
+                                destSelect.selectedIndex = j;
+                                destSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+        }
 
         // Ejecutar inicio (deja el campo oculto y las alertas en su estado inicial)
         validateStock();
