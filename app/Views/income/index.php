@@ -326,6 +326,8 @@
     $totalGallons = 0;
     $totalRemaining = 0;
     $activeLots = 0;
+    $hasGnv = false;
+    $hasLiquid = false;
     if (!empty($incomes)) {
         foreach ($incomes as $inc) {
             $totalGallons += (float) ($inc['gallons'] ?? 0);
@@ -333,18 +335,25 @@
             $totalRemaining += $rem;
             if ($rem > 0)
                 $activeLots++;
+            $ft = strtolower($inc['fuel_type'] ?? '');
+            if (str_contains($ft, 'gnv') || str_contains($ft, 'gas natural')) {
+                $hasGnv = true;
+            } else {
+                $hasLiquid = true;
+            }
         }
     }
+    $statsUnit = ($hasGnv && !$hasLiquid) ? 'm\u00b3' : (!$hasGnv && $hasLiquid ? 'Gal' : 'unid.');
     ?>
     <section class="stats-grid"
         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
         <div class="stat-card">
             <span class="stat-label">Total Histórico Ingresado</span>
-            <div class="stat-value" style="color: #2563eb;"><?= number_format($totalGallons, 2) ?> Gal</div>
+            <div class="stat-value" style="color: #2563eb;"><?= number_format($totalGallons, 2) ?> <?= $statsUnit ?></div>
         </div>
         <div class="stat-card">
             <span class="stat-label">Stock Remanente en Lotes</span>
-            <div class="stat-value" style="color: #10b981;"><?= number_format($totalRemaining, 2) ?> Gal</div>
+            <div class="stat-value" style="color: #10b981;"><?= number_format($totalRemaining, 2) ?> <?= $statsUnit ?></div>
         </div>
         <div class="stat-card">
             <span class="stat-label">Lotes con Stock Activo</span>
@@ -520,10 +529,10 @@
                                     </span>
                                 </td>
                                 <td style="font-weight: 700; color: #2563eb;">
-                                    <?= number_format((float) $inc['gallons'], 2) ?> Gal
+                                    <?= number_format((float) $inc['gallons'], 2) ?> <?= htmlspecialchars(\App\Models\Catalog::getFuelUnit($inc['fuel_type'] ?? '', true)) ?>
                                 </td>
                                 <td style="font-weight: 800; color: <?= $isAvailable ? '#10b981' : '#ef4444' ?>;">
-                                    <?= number_format($rem, 2) ?> Gal
+                                    <?= number_format($rem, 2) ?> <?= htmlspecialchars(\App\Models\Catalog::getFuelUnit($inc['fuel_type'] ?? '', true)) ?>
                                 </td>
                                 <td>
                                     <?php
@@ -973,6 +982,8 @@
         const isAvailable = rem > 0;
         const statusText = isAvailable ? 'Disponible' : 'Agotado';
         const statusColor = isAvailable ? '#10b981' : '#ef4444';
+        const isGnv = (inc.fuel_type || '').toLowerCase().includes('gnv') || (inc.fuel_type || '').toLowerCase().includes('gas natural');
+        const unitLabel = isGnv ? 'm³' : 'Galones';
 
         body.innerHTML = `
             <div class="modal-detail-card">
@@ -1007,12 +1018,12 @@
 
                     <div class="modal-field highlight-field" style="background: rgba(37, 99, 235, 0.05);">
                         <span class="lbl icon-with-text">${uiIcon('fuel')}Cantidad Inicial:</span>
-                        <strong class="qty-val">${parseFloat(inc.gallons).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Galones</strong>
+                        <strong class="qty-val">${parseFloat(inc.gallons).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${unitLabel}</strong>
                     </div>
                     
                     <div class="modal-field highlight-field" style="background: rgba(16, 185, 129, 0.05);">
                         <span class="lbl icon-with-text">${uiIcon('fuel')}Stock Remanente:</span>
-                        <strong class="qty-val" style="color: ${statusColor};">${rem.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Galones</strong>
+                        <strong class="qty-val" style="color: ${statusColor};">${rem.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${unitLabel}</strong>
                     </div>
                 </div>
             </div>

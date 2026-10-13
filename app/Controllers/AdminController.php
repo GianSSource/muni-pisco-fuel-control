@@ -51,9 +51,10 @@ final class AdminController extends Controller
         $plate = strtoupper(trim((string) ($_POST['plate'] ?? '')));
         $areaId = ((int) ($_POST['area_id'] ?? 0)) ?: null;
         $vehicleTypeId = ((int) ($_POST['vehicle_type_id'] ?? 0)) ?: null;
+        $fuelTypeId = ((int) ($_POST['fuel_type_id'] ?? 0)) ?: null;
 
-        if ($unitCode === '' || $plate === '' || !$vehicleTypeId || !$areaId) {
-            $this->redirect('admin/catalogos?error=Todos+los+campos+(codigo+de+unidad,+placa,+tipo+y+area)+son+obligatorios');
+        if ($unitCode === '' || $plate === '' || !$vehicleTypeId || !$areaId || !$fuelTypeId) {
+            $this->redirect('admin/catalogos?error=Todos+los+campos+(codigo+de+unidad,+placa,+tipo,+area+y+combustible)+son+obligatorios');
         }
 
         if (mb_strlen($unitCode) > 10) {
@@ -72,7 +73,7 @@ final class AdminController extends Controller
             $this->redirect('admin/catalogos?error=La+placa+o+el+codigo+de+unidad+ya+se+encuentran+registrados');
         }
 
-        if ($this->vehicle->create($unitCode, $plate, $areaId, $vehicleTypeId)) {
+        if ($this->vehicle->create($unitCode, $plate, $areaId, $vehicleTypeId, $fuelTypeId)) {
             $this->redirect('admin/catalogos?success=Vehiculo+registrado+correctamente');
         } else {
             $this->redirect('admin/catalogos?error=No+se+pudo+registrar+el+vehiculo+(revisa+que+la+placa+y+codigo+no+esten+repetidos)');
@@ -103,7 +104,13 @@ final class AdminController extends Controller
 
         $category = trim((string) ($_POST['category'] ?? ''));
         $name = trim((string) ($_POST['name'] ?? ''));
-        $name = mb_strtoupper(mb_substr($name, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($name, 1, null, 'UTF-8');
+        
+        // Si el usuario escribió un acrónimo común como gnv o glp, pasarlo a mayúsculas
+        if (in_array(mb_strtolower($name, 'UTF-8'), ['gnv', 'glp'], true)) {
+            $name = mb_strtoupper($name, 'UTF-8');
+        } elseif (mb_strlen($name, 'UTF-8') > 0 && mb_strtolower($name, 'UTF-8') === $name) {
+            $name = mb_strtoupper(mb_substr($name, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($name, 1, null, 'UTF-8');
+        }
 
         $allowedCategories = ['fuel_type', 'area', 'supplier', 'vehicle_type'];
         if (!in_array($category, $allowedCategories, true) || $name === '') {

@@ -82,11 +82,31 @@ final class Catalog
                         ('vehicle_type', 'Ambulancia'),
                         ('vehicle_type', 'Automóvil');");
                 }
+
+                // Asegurar que GNV esté registrado como tipo de combustible
+                $stmt = $db->query("SELECT COUNT(*) FROM system_catalogs WHERE category = 'fuel_type' AND (name LIKE '%GNV%' OR name LIKE '%Gas Natural%')");
+                if ((int) $stmt->fetchColumn() === 0) {
+                    $db->exec("INSERT INTO system_catalogs (category, name) VALUES ('fuel_type', 'GNV (Gas Natural Vehicular)')");
+                }
             }
             self::$tableEnsured = true;
         } catch (\Throwable $e) {
             error_log($e->getMessage());
         }
+    }
+
+    /**
+     * Retorna la unidad de medida según el tipo de combustible.
+     * GNV / Gas Natural Vehicular -> 'm³'
+     * Demás combustibles líquidos -> 'Gal' (o 'Galones')
+     */
+    public static function getFuelUnit(string $fuelType, bool $short = true): string
+    {
+        $normalized = mb_strtolower(trim($fuelType), 'UTF-8');
+        if (str_contains($normalized, 'gnv') || str_contains($normalized, 'gas natural')) {
+            return $short ? 'm³' : 'metros cúbicos (m³)';
+        }
+        return $short ? 'Gal' : 'galones';
     }
 
     public function getByCategory(string $category): array

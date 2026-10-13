@@ -318,8 +318,10 @@
         }
 
         const faltantes = [];
+        const isGnvCheck = (fuelType || '').toLowerCase().includes('gnv') || (fuelType || '').toLowerCase().includes('gas natural');
+        const qtyLabel = isGnvCheck ? 'Cantidad de Metros Cúbicos (m³)' : 'Cantidad de Galones';
         if (!fuelType) faltantes.push('Tipo de Combustible (Ficha visual)');
-        if (!quantityVal || parseFloat(quantityVal.replace(/,/g, '')) <= 0) faltantes.push('Cantidad de Galones');
+        if (!quantityVal || parseFloat(quantityVal.replace(/,/g, '')) <= 0) faltantes.push(qtyLabel);
         if (!supplier) faltantes.push('Proveedor / Grifo');
         if (!invoice) faltantes.push('N° Factura / Guía de Remisión');
 
@@ -340,8 +342,10 @@
         const invoice = document.getElementById('invoice')?.value.trim();
 
         const faltantes = [];
+        const isGnvSubmit = (fuelType || '').toLowerCase().includes('gnv') || (fuelType || '').toLowerCase().includes('gas natural');
+        const qtyLabelSubmit = isGnvSubmit ? 'Cantidad de Metros Cúbicos (m³)' : 'Cantidad de Galones';
         if (!fuelType) faltantes.push('Tipo de Combustible (Ficha visual)');
-        if (!quantityVal || parseFloat(quantityVal.replace(/,/g, '')) <= 0) faltantes.push('Cantidad de Galones');
+        if (!quantityVal || parseFloat(quantityVal.replace(/,/g, '')) <= 0) faltantes.push(qtyLabelSubmit);
         if (!supplier) faltantes.push('Proveedor / Grifo');
         if (!invoice) faltantes.push('N° Factura / Guía de Remisión');
 
@@ -438,11 +442,27 @@
                 });
             }
 
+            function updateQuantityLabel() {
+                const qLabel = document.querySelector('label[for="quantity"]');
+                const qInput = document.getElementById('quantity');
+                if (!qLabel || !selectEl) return;
+                const isGnv = (selectEl.value || '').toLowerCase().includes('gnv') || (selectEl.value || '').toLowerCase().includes('gas natural');
+                if (isGnv) {
+                    qLabel.textContent = 'Cantidad de Metros Cúbicos — m³ (Máx. 10,000.00)';
+                    if (qInput) qInput.placeholder = 'Ej: 5,000.00 m³';
+                } else {
+                    qLabel.textContent = 'Cantidad de Galones (Máx. 10,000.00)';
+                    if (qInput) qInput.placeholder = 'Ej: 5,000.00';
+                }
+            }
+
             selectEl.addEventListener('change', () => {
                 updatePills();
+                updateQuantityLabel();
                 verificarCamposIncompletos();
             });
             updatePills();
+            updateQuantityLabel();
         }
 
         // 2. Exclusivo para Proveedor / Grifo: Solo Lista Desplegable Personalizada

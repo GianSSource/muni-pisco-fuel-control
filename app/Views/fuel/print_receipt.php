@@ -68,12 +68,17 @@ if (!function_exists('numberToWordsEs')) {
 }
 
 if (!function_exists('gallonsToTextEs')) {
-  function gallonsToTextEs(float $gallons): string
+  function gallonsToTextEs(float $gallons, string $fuelType = ''): string
   {
     $integerPart = (int) floor($gallons);
     $cents = (int) round(($gallons - $integerPart) * 100);
     $words = numberToWordsEs($integerPart);
-    $unitWord = ($integerPart === 1) ? 'galón' : 'galones';
+    $isGnv = str_contains(mb_strtolower($fuelType), 'gnv') || str_contains(mb_strtolower($fuelType), 'gas natural');
+    if ($isGnv) {
+      $unitWord = ($integerPart === 1) ? 'metro cúbico' : 'metros cúbicos';
+    } else {
+      $unitWord = ($integerPart === 1) ? 'galón' : 'galones';
+    }
     return ucfirst($words) . ' ' . $unitWord . ' con ' . sprintf('%02d', $cents) . '/100';
   }
 }
@@ -769,12 +774,17 @@ if (!function_exists('gallonsToTextEs')) {
       <section>
         <h2>Combustible autorizado</h2>
         <span class="tag"><?= htmlspecialchars($delivery['fuel_type'] ?? 'Diesel B5 S-50') ?></span>
+        <?php
+          $isGnv = str_contains(mb_strtolower($delivery['fuel_type'] ?? ''), 'gnv') || str_contains(mb_strtolower($delivery['fuel_type'] ?? ''), 'gas natural');
+          $unitFull = $isGnv ? 'metros cúbicos' : 'galones';
+          $unitShort = $isGnv ? 'm³' : 'gal';
+        ?>
         <div class="qty">
           <div>
             <small>Cantidad autorizada</small>
-            <span class="words"><?= gallonsToTextEs($totalGallons) ?></span>
+            <span class="words"><?= gallonsToTextEs($totalGallons, $delivery['fuel_type'] ?? '') ?></span>
           </div>
-          <div class="n"><?= number_format($totalGallons, 2) ?> <span>galones</span></div>
+          <div class="n"><?= number_format($totalGallons, 2) ?> <span><?= htmlspecialchars($unitFull) ?></span></div>
         </div>
       </section>
 
@@ -785,7 +795,7 @@ if (!function_exists('gallonsToTextEs')) {
             <tr>
               <th>Lote</th>
               <th>Proveedor</th>
-              <th>Cantidad</th>
+              <th>Cantidad (<?= htmlspecialchars($unitShort) ?>)</th>
             </tr>
           </thead>
           <tbody>
@@ -802,7 +812,7 @@ if (!function_exists('gallonsToTextEs')) {
                     <div class="cant">
                       <span class="meter"><i style="width: <?= min(100, max(2, round($pct))) ?>%"></i></span>
                       <span class="pct"><?= round($pct) ?>%</span>
-                      <b><?= number_format($taken, 2) ?> gal</b>
+                      <b><?= number_format($taken, 2) ?> <?= htmlspecialchars($unitShort) ?></b>
                     </div>
                   </td>
                 </tr>
@@ -815,7 +825,7 @@ if (!function_exists('gallonsToTextEs')) {
                   <div class="cant">
                     <span class="meter"><i style="width: 100%"></i></span>
                     <span class="pct">100%</span>
-                    <b><?= number_format($totalGallons, 2) ?> gal</b>
+                    <b><?= number_format($totalGallons, 2) ?> <?= htmlspecialchars($unitShort) ?></b>
                   </div>
                 </td>
               </tr>
@@ -825,7 +835,7 @@ if (!function_exists('gallonsToTextEs')) {
             <tr>
               <td colspan="2">Total despachado</td>
               <td>
-                <div class="cant"><b><?= number_format($totalGallons, 2) ?> gal</b></div>
+                <div class="cant"><b><?= number_format($totalGallons, 2) ?> <?= htmlspecialchars($unitShort) ?></b></div>
               </td>
             </tr>
           </tfoot>

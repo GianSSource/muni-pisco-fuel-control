@@ -117,7 +117,8 @@ final class IncomeController extends Controller
 
             $db->commit();
 
-            $successMsg = 'Ingreso de ' . number_format((float) $quantity, 2) . ' Gal registrado correctamente. Stock actualizado.';
+            $unit = \App\Models\Catalog::getFuelUnit($fuelType, true);
+            $successMsg = 'Ingreso de ' . number_format((float) $quantity, 2) . ' ' . $unit . ' registrado correctamente. Stock actualizado.';
             header('Location: ' . BASE_URL . 'ingresos?success=' . urlencode($successMsg));
             exit;
         } catch (Throwable $e) {

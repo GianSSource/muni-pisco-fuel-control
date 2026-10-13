@@ -107,13 +107,19 @@
             <span class="chip-label">Resultados Encontrados</span>
             <strong class="chip-val" id="resCount"><?= (int) $count ?></strong>
         </div>
+        <?php 
+            $selectedFuel = $filters['fuel_type'] ?? '';
+            $filterUnit = !empty($selectedFuel) ? \App\Models\Catalog::getFuelUnit($selectedFuel, true) : 'Gal';
+            $isGnvFilter = stripos($selectedFuel, 'GNV') !== false || stripos($selectedFuel, 'Gas Natural') !== false;
+            $chipTitle = $isGnvFilter ? 'Total Volumen Filtrado' : 'Total Galones Filtrados';
+        ?>
         <div class="summary-chip">
-            <span class="chip-label">Total Galones Filtrados</span>
-            <strong class="chip-val highlight-blue" id="resTotalGallons"><?= number_format((float) $totalGallons, 2) ?> Gal</strong>
+            <span class="chip-label" id="resTotalLabel"><?= $chipTitle ?></span>
+            <strong class="chip-val highlight-blue" id="resTotalGallons"><?= number_format((float) $totalGallons, 2) ?> <?= $filterUnit ?></strong>
         </div>
         <div class="summary-chip">
             <span class="chip-label">Promedio por Despacho</span>
-            <strong class="chip-val" id="resAvgGallons"><?= number_format((float) $avgGallons, 2) ?> Gal</strong>
+            <strong class="chip-val" id="resAvgGallons"><?= number_format((float) $avgGallons, 2) ?> <?= $filterUnit ?></strong>
         </div>
     </section>
 
@@ -311,7 +317,8 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="quantity-highlight"><?= number_format((float) $d['gallons'], 2) ?> Gal</span>
+                                    <?php $dUnit = \App\Models\Catalog::getFuelUnit($d['fuel_type'] ?? '', true); ?>
+                                    <span class="quantity-highlight"><?= number_format((float) $d['gallons'], 2) ?> <?= $dUnit ?></span>
                                 </td>
 
                                 <td style="white-space: nowrap;">
@@ -701,10 +708,16 @@
 
     function renderTableResults(deliveries, count, totalGallons) {
         document.getElementById("resCount").textContent = count;
-        document.getElementById("resTotalGallons").textContent = `${totalGallons} Gal`;
+        const fuelTypeFilter = (document.getElementById("filterFuelType")?.value || '').trim();
+        const isGnvFilter = fuelTypeFilter.toUpperCase().includes('GNV') || fuelTypeFilter.toUpperCase().includes('GAS NATURAL');
+        const filterUnitSuffix = isGnvFilter ? ' m³' : ' Gal';
+        if (document.getElementById("resTotalLabel")) {
+            document.getElementById("resTotalLabel").textContent = isGnvFilter ? 'Total Volumen Filtrado' : 'Total Galones Filtrados';
+        }
+        document.getElementById("resTotalGallons").textContent = `${totalGallons}${filterUnitSuffix}`;
         
         const avg = count > 0 ? (parseFloat(totalGallons.replace(/,/g, '')) / count).toFixed(2) : '0.00';
-        document.getElementById("resAvgGallons").textContent = `${avg} Gal`;
+        document.getElementById("resAvgGallons").textContent = `${avg}${filterUnitSuffix}`;
 
         const tbody = document.getElementById("deliveriesTableBody");
         tbody.innerHTML = "";
@@ -725,6 +738,8 @@
             tr.className = "delivery-row";
             tr.onclick = () => openDetailModal(d);
 
+            const isGnv = (d.fuel_type || '').toUpperCase().includes('GNV') || (d.fuel_type || '').toUpperCase().includes('GAS NATURAL');
+            const unitBadge = isGnv ? 'm³' : 'Gal';
             const gallonsFormatted = parseFloat(d.gallons).toFixed(2);
             const dateObj = new Date(String(d.created_at || '').replace(' ', 'T'));
             const dateStr = !isNaN(dateObj) 
@@ -749,7 +764,7 @@
                 <td><span class="fuel-type-pill">${escapeHtml(d.fuel_type || 'Diesel B5')}</span></td>
                 <td>${escapeHtml(d.destination || 'Despacho General')}</td>
                 <td>${obsHtml}</td>
-                <td><span class="quantity-highlight">${gallonsFormatted} Gal</span></td>
+                <td><span class="quantity-highlight">${gallonsFormatted} ${unitBadge}</span></td>
 
                 <td>
                     <button type="button" class="button secondary small-btn" onclick="event.stopPropagation(); openDetailModal(${JSON.stringify(d).replace(/"/g, '&quot;')})">Ver Detalle</button>
@@ -814,7 +829,7 @@
 
                     <div class="modal-field highlight-field">
                         <span class="lbl icon-with-text">${uiIcon('fuel')}Cantidad Despachada:</span>
-                        <strong class="qty-val">${parseFloat(d.gallons).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Galones</strong>
+                        <strong class="qty-val">${parseFloat(d.gallons).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${((d.fuel_type || '').toUpperCase().includes('GNV') || (d.fuel_type || '').toUpperCase().includes('GAS NATURAL')) ? 'm³' : 'Galones'}</strong>
                     </div>
                 </div>
 
