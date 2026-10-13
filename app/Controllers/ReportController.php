@@ -127,15 +127,25 @@ final class ReportController extends Controller
             'PLACA / UNID',
             'CONDUCTOR / RESP.',
             'DESTINO / AREA',
-            'CANT. (GAL)',
+            'CANTIDAD',
             'OBSERVACIONES'
         ], $widths);
 
         $totalGalones = 0.0;
+        $totalGnvM3   = 0.0;
 
         foreach ($deliveries as $d) {
-            $cant = (float) $d['gallons'];
-            $totalGalones += $cant;
+            $cant    = (float) $d['gallons'];
+            $fuelRaw = mb_strtolower((string) ($d['fuel_type'] ?? ''));
+            $isGnv   = str_contains($fuelRaw, 'gnv') || str_contains($fuelRaw, 'gas natural');
+
+            if ($isGnv) {
+                $totalGnvM3 += $cant;
+                $cantLabel   = number_format($cant, 2) . ' m³';
+            } else {
+                $totalGalones += $cant;
+                $cantLabel    = number_format($cant, 2) . ' Gal';
+            }
 
             $pdf->tableRow([
                 $d['receipt_number'],
@@ -143,13 +153,27 @@ final class ReportController extends Controller
                 mb_substr($d['vehicle_plate'], 0, 7),
                 $d['driver_name'],
                 $d['destination'] ?? 'General',
-                number_format($cant, 2) . ' Gal',
+                $cantLabel,
                 $d['notes'] ?? '-',
             ], $widths);
         }
 
         $pdf->spacer();
-        $pdf->summaryBox('TOTAL DESPACHADO: ' . number_format($totalGalones, 2) . ' GALONES (' . count($deliveries) . ' ENTREGAS)');
+
+        // Resumen de totales según tipos de combustible presentes
+        $totalEntregas = count($deliveries);
+        if ($totalGnvM3 > 0 && $totalGalones > 0) {
+            // Mixto: hay líquidos y GNV
+            $pdf->summaryBox(
+                'TOTAL LÍQUIDOS: ' . number_format($totalGalones, 2) . ' Gal' .
+                '   |   TOTAL GNV: ' . number_format($totalGnvM3, 2) . ' m³' .
+                '   (' . $totalEntregas . ' ENTREGAS)'
+            );
+        } elseif ($totalGnvM3 > 0) {
+            $pdf->summaryBox('TOTAL GNV DESPACHADO: ' . number_format($totalGnvM3, 2) . ' m³ (' . $totalEntregas . ' ENTREGAS)');
+        } else {
+            $pdf->summaryBox('TOTAL DESPACHADO: ' . number_format($totalGalones, 2) . ' GALONES (' . $totalEntregas . ' ENTREGAS)');
+        }
 
         $pdf->output('reporte-entregas-' . date('Ymd-His') . '.pdf');
     }
@@ -202,20 +226,21 @@ final class ReportController extends Controller
         }
         
         $sheet->setCellValue('A1', 'REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE');
-        $sheet->mergeCells('A1:G1');
+        $sheet->mergeCells('A1:H1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0F172A'));
         
         $sheet->setCellValue('A2', 'Fecha de exportación: ' . date('d/m/Y H:i:s') . ' | ' . $filterDesc);
-        $sheet->mergeCells('A2:G2');
+        $sheet->mergeCells('A2:H2');
         $sheet->getStyle('A2')->getFont()->setSize(10)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF64748B'));
 
-        $headers = ['N° RECIBO / VALE', 'FECHA Y HORA', 'VEHÍCULO / PLACA', 'CONDUCTOR / RESPONSABLE', 'DESTINO / ÁREA', 'CANTIDAD (GAL)', 'OBSERVACIONES'];
+        $headers = ['N° RECIBO / VALE', 'FECHA Y HORA', 'VEHÍCULO / PLACA', 'CONDUCTOR / RESPONSABLE', 'DESTINO / ÁREA', 'CANTIDAD', 'UNIDAD', 'OBSERVACIONES'];
         $col = 'A';
         foreach ($headers as $h) {
             $sheet->setCellValue($col . '4', $h);
             $sheet->getColumnDimension($col)->setAutoSize(true);
             $col++;
         }
+        // Ahora son 8 columnas (A–H)
 
         $headerStyle = [
             'font' => ['bold' => true, 'color' => ['argb' => 'FF0F172A']],
@@ -223,13 +248,24 @@ final class ReportController extends Controller
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFCBD5E1']]],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
         ];
-        $sheet->getStyle('A4:G4')->applyFromArray($headerStyle);
+        $sheet->getStyle('A4:H4')->applyFromArray($headerStyle);
 
         $row = 5;
         $totalGalones = 0.0;
+        $totalGnvM3   = 0.0;
+
         foreach ($deliveries as $d) {
-            $cant = (float) $d['gallons'];
-            $totalGalones += $cant;
+            $cant    = (float) $d['gallons'];
+            $fuelRaw = mb_strtolower((string) ($d['fuel_type'] ?? ''));
+            $isGnv   = str_contains($fuelRaw, 'gnv') || str_contains($fuelRaw, 'gas natural');
+
+            if ($isGnv) {
+                $totalGnvM3 += $cant;
+                $unit        = 'm³';
+            } else {
+                $totalGalones += $cant;
+                $unit         = 'Gal';
+            }
 
             $sheet->setCellValue('A' . $row, $d['receipt_number']);
             $sheet->setCellValue('B' . $row, date('d/m/Y H:i', strtotime($d['created_at'])));
@@ -237,27 +273,64 @@ final class ReportController extends Controller
             $sheet->setCellValue('D' . $row, $d['driver_name']);
             $sheet->setCellValue('E' . $row, $d['destination'] ?? 'General');
             $sheet->setCellValue('F' . $row, $cant);
-            $sheet->setCellValue('G' . $row, $d['notes'] ?? '-');
-            
+            $sheet->setCellValue('G' . $row, $unit);
+            $sheet->setCellValue('H' . $row, $d['notes'] ?? '-');
+
             $row++;
         }
-        
+
         if ($row > 5) {
             $dataStyle = [
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFCBD5E1']]]
             ];
-            $sheet->getStyle('A5:G' . ($row - 1))->applyFromArray($dataStyle);
+            $sheet->getStyle('A5:H' . ($row - 1))->applyFromArray($dataStyle);
             $sheet->getStyle('A5:A' . ($row - 1))->getFont()->setBold(true);
             $sheet->getStyle('C5:C' . ($row - 1))->getFont()->setBold(true);
             $sheet->getStyle('F5:F' . ($row - 1))->getNumberFormat()->setFormatCode('#,##0.00');
         }
 
         $totalGalones = round($totalGalones, 2);
+        $totalGnvM3   = round($totalGnvM3, 2);
 
-        $sheet->setCellValue('A' . $row, 'TOTAL GENERAL DESPACHADO:');
+        // Fila de total líquidos (si hay)
+        if ($totalGalones > 0) {
+            $sheet->setCellValue('A' . $row, 'TOTAL LÍQUIDOS (Gal):');
+            $sheet->mergeCells('A' . $row . ':E' . $row);
+            $sheet->setCellValue('F' . $row, $totalGalones);
+            $sheet->setCellValue('G' . $row, 'Gal');
+            $sheet->setCellValue('H' . $row, '');
+            $sheet->getStyle('A' . $row . ':H' . $row)->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['argb' => 'FF0284C7']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE0F2FE']],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF93C5FD']]],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]
+            ]);
+            $sheet->getStyle('F' . $row)->getNumberFormat()->setFormatCode('#,##0.00');
+            $row++;
+        }
+
+        // Fila de total GNV (si hay)
+        if ($totalGnvM3 > 0) {
+            $sheet->setCellValue('A' . $row, 'TOTAL GNV (m³):');
+            $sheet->mergeCells('A' . $row . ':E' . $row);
+            $sheet->setCellValue('F' . $row, $totalGnvM3);
+            $sheet->setCellValue('G' . $row, 'm³');
+            $sheet->setCellValue('H' . $row, '');
+            $sheet->getStyle('A' . $row . ':H' . $row)->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['argb' => 'FF0284C7']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFDBEAFE']],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF93C5FD']]],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]
+            ]);
+            $sheet->getStyle('F' . $row)->getNumberFormat()->setFormatCode('#,##0.00');
+            $row++;
+        }
+
+        // Fila de total entregas
+        $sheet->setCellValue('A' . $row, 'TOTAL ENTREGAS:');
         $sheet->mergeCells('A' . $row . ':E' . $row);
-        $sheet->setCellValue('F' . $row, $totalGalones);
-        $sheet->setCellValue('G' . $row, count($deliveries) . ' Entregas Registradas');
+        $sheet->setCellValue('F' . $row, count($deliveries));
+        $sheet->setCellValue('H' . $row, 'Entregas Registradas');
 
         $totalStyle = [
             'font' => ['bold' => true, 'color' => ['argb' => 'FF0284C7']],
@@ -265,9 +338,8 @@ final class ReportController extends Controller
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF93C5FD']]],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]
         ];
-        $sheet->getStyle('A' . $row . ':G' . $row)->applyFromArray($totalStyle);
-        $sheet->getStyle('F' . $row)->getNumberFormat()->setFormatCode('#,##0.00');
-        $sheet->getStyle('G' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+        $sheet->getStyle('A' . $row . ':H' . $row)->applyFromArray($totalStyle);
+        $sheet->getStyle('H' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
         $filename = 'reporte-entregas-combustible-' . date('Ymd-His') . '.xlsx';
         
@@ -340,31 +412,51 @@ final class ReportController extends Controller
         fputcsv($output, [], ';'); // Fila vacía
 
         // Cabeceras
-        $headers = ['N° RECIBO / VALE', 'FECHA Y HORA', 'VEHÍCULO / PLACA', 'CONDUCTOR / RESPONSABLE', 'DESTINO / ÁREA', 'CANTIDAD (GAL)', 'OBSERVACIONES'];
+        $headers = ['N° RECIBO / VALE', 'FECHA Y HORA', 'VEHÍCULO / PLACA', 'CONDUCTOR / RESPONSABLE', 'DESTINO / ÁREA', 'CANTIDAD', 'UNIDAD', 'OBSERVACIONES'];
         fputcsv($output, $headers, ';');
 
         $totalGalones = 0.0;
-        foreach ($deliveries as $d) {
-            $cant = (float) $d['gallons'];
-            $totalGalones += $cant;
+        $totalGnvM3   = 0.0;
 
-            $row = [
+        foreach ($deliveries as $d) {
+            $cant    = (float) $d['gallons'];
+            $fuelRaw = mb_strtolower((string) ($d['fuel_type'] ?? ''));
+            $isGnv   = str_contains($fuelRaw, 'gnv') || str_contains($fuelRaw, 'gas natural');
+
+            if ($isGnv) {
+                $totalGnvM3 += $cant;
+                $unit        = 'm³';
+            } else {
+                $totalGalones += $cant;
+                $unit         = 'Gal';
+            }
+
+            $csvRow = [
                 $d['receipt_number'],
                 date('d/m/Y H:i', strtotime($d['created_at'])),
                 mb_substr($d['vehicle_plate'], 0, 7),
                 $d['driver_name'],
                 $d['destination'] ?? 'General',
                 number_format($cant, 2, '.', ''),
+                $unit,
                 $d['notes'] ?? '-'
             ];
-            
-            fputcsv($output, $row, ';');
+
+            fputcsv($output, $csvRow, ';');
         }
 
         $totalGalones = round($totalGalones, 2);
+        $totalGnvM3   = round($totalGnvM3, 2);
 
         fputcsv($output, [], ';'); // Fila vacía
-        fputcsv($output, ['TOTAL GENERAL DESPACHADO:', '', '', '', number_format($totalGalones, 2, '.', ''), count($deliveries) . ' Entregas Registradas'], ';');
+
+        if ($totalGalones > 0) {
+            fputcsv($output, ['TOTAL LÍQUIDOS (Gal):', '', '', '', number_format($totalGalones, 2, '.', ''), 'Gal', ''], ';');
+        }
+        if ($totalGnvM3 > 0) {
+            fputcsv($output, ['TOTAL GNV (m³):', '', '', '', number_format($totalGnvM3, 2, '.', ''), 'm³', ''], ';');
+        }
+        fputcsv($output, ['TOTAL ENTREGAS:', '', '', '', count($deliveries), '', 'Entregas Registradas'], ';');
 
         fclose($output);
         exit;
