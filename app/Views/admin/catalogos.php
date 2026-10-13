@@ -390,9 +390,9 @@
 
             <div style="flex: 2; min-width: 260px;">
                 <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Nombre / Descripción *</label>
-                <input type="text" name="name" id="input_catalog_name" maxlength="50"
-                    oninput="this.value = this.value.replace(/[^a-zA-Z0-9\-\s]/g, '')" required
-                    placeholder="Ej. Gasohol 97 Octanos, Subgerencia de Fiscalización, Grifo Primax..."
+                <input type="text" name="name" id="input_catalog_name" maxlength="60"
+                    oninput="this.value = this.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\-\s\(\)\.³,]/g, '')" required
+                    placeholder="Ej. GNV (Gas Natural Vehicular), Gasohol 97, Serenazgo..."
                     class="form-control-styled">
             </div>
 
@@ -419,7 +419,7 @@
 
             <div style="flex: 1; min-width: 140px;">
                 <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Código de Unidad *</label>
-                <input type="text" name="unit_code" id="input_unit_code" maxlength="8" required placeholder="Ej. UNID-045"
+                <input type="text" name="unit_code" id="input_unit_code" maxlength="10" required placeholder="Ej. UNID-045"
                     pattern="[A-Za-z0-9\-]+" title="Solo letras, números y guiones"
                     oninput="formatUnitCodeInput(this)"
                     class="form-control-styled">
@@ -433,22 +433,32 @@
                     class="form-control-styled" style="text-transform: uppercase;">
             </div>
 
-            <div style="flex: 1; min-width: 160px;">
+            <div style="flex: 1; min-width: 150px;">
                 <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Tipo de Vehículo *</label>
                 <select name="vehicle_type_id" id="select_vehicle_type" required class="form-control-styled">
-                    <option value="" disabled selected hidden>Seleccione un tipo de vehículo...</option>
+                    <option value="" disabled selected hidden>Seleccione un tipo...</option>
                     <?php foreach ($vehicleTypes as $type): ?>
                         <option value="<?= $type['id'] ?>"><?= htmlspecialchars($type['name']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
 
-            <div style="flex: 1.5; min-width: 180px;">
+            <div style="flex: 1.2; min-width: 170px;">
                 <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Área Asignada *</label>
                 <select name="area_id" id="select_area" required class="form-control-styled">
-                    <option value="" disabled selected hidden>Seleccione un área asignada...</option>
+                    <option value="" disabled selected hidden>Seleccione un área...</option>
                     <?php foreach ($areas as $area): ?>
                         <option value="<?= $area['id'] ?>"><?= htmlspecialchars($area['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div style="flex: 1.3; min-width: 180px;">
+                <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Tipo de Combustible *</label>
+                <select name="fuel_type_id" id="select_fuel_type" required class="form-control-styled">
+                    <option value="" disabled selected hidden>Seleccione combustible...</option>
+                    <?php foreach ($fuelTypes as $fuel): ?>
+                        <option value="<?= $fuel['id'] ?>"><?= htmlspecialchars($fuel['name']) ?> [<?= htmlspecialchars(\App\Models\Catalog::getFuelUnit($fuel['name'])) ?>]</option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -489,7 +499,12 @@
                     <ul class="catalog-items-list" id="fuelTypesList">
                         <?php foreach ($fuelTypes as $item): ?>
                             <li class="catalog-item-row">
-                                <span class="catalog-item-name" title="<?= htmlspecialchars($item['name']) ?>"><?= htmlspecialchars($item['name']) ?></span>
+                                <span class="catalog-item-name" title="<?= htmlspecialchars($item['name']) ?>" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <?= htmlspecialchars($item['name']) ?>
+                                    <span style="font-size: 0.74rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: <?= (str_contains(strtolower($item['name']), 'gnv')) ? '#dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe;' : '#f1f5f9; color: #475569; border: 1px solid #e2e8f0;' ?>;">
+                                        Unidad: <?= htmlspecialchars(\App\Models\Catalog::getFuelUnit($item['name'])) ?>
+                                    </span>
+                                </span>
                                 <form method="POST" action="<?= BASE_URL ?>admin/catalogos/eliminar" style="margin:0;"
                                     onsubmit="return showCustomConfirm('¿Seguro que deseas eliminar este tipo de combustible?', this)">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
@@ -624,7 +639,7 @@
                         <span class="catalog-pill-badge"><?= count($vehicles) ?> Vehículos</span>
                     </div>
                     <div>
-                        <input type="text" class="form-control-styled" maxlength="40" style="font-size: 0.82rem; padding: 7px 10px;" placeholder="Buscar por placa, unidad o área..." oninput="this.value = this.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\-\s]/g, ''); filterCatalogList(this, 'vehiclesList')">
+                        <input type="text" class="form-control-styled" maxlength="40" style="font-size: 0.82rem; padding: 7px 10px;" placeholder="Buscar por placa, unidad, combustible o área..." oninput="this.value = this.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\-\s]/g, ''); filterCatalogList(this, 'vehiclesList')">
                     </div>
                 </div>
 
@@ -636,6 +651,9 @@
                                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                         <span class="vehicle-plate-badge"><?= htmlspecialchars($v['plate']) ?></span>
                                         <span class="vehicle-unit-badge"><?= htmlspecialchars($v['unit_code']) ?></span>
+                                        <span class="vehicle-fuel-badge" style="font-size: 0.76rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: <?= (str_contains(strtolower($v['fuel_type_name'] ?? ''), 'gnv')) ? '#dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe;' : '#f1f5f9; color: #334155; border: 1px solid #e2e8f0;' ?>;">
+                                            Combustible: <?= htmlspecialchars($v['fuel_type_name'] ?? 'Sin combustible') ?>
+                                        </span>
                                     </div>
                                     <div class="vehicle-meta-tag">
                                         Tipo: <?= htmlspecialchars($v['vehicle_type_name'] ?? 'Sin tipo') ?> · Área: <?= htmlspecialchars($v['area_name'] ?? 'Sin área') ?>
@@ -767,6 +785,7 @@
                 item.addEventListener('click', (e) => {
                     e.stopPropagation();
                     selectEl.selectedIndex = idx;
+                    selectEl.value = opt.value;
                     selectEl.dispatchEvent(new Event('change', {
                         bubbles: true
                     }));
@@ -799,6 +818,14 @@
                     triggerEl.style.borderColor = '';
                     triggerEl.style.boxShadow = '';
                 }
+                const vBanner = document.getElementById('vehicleFormErrorBanner');
+                if (vBanner && selectEl.closest('#form_registrar_vehiculo')) {
+                    vBanner.style.display = 'none';
+                }
+                const cBanner = document.getElementById('catalogFormErrorBanner');
+                if (cBanner && selectEl.closest('#form_registrar_catalogo')) {
+                    cBanner.style.display = 'none';
+                }
             }
         });
 
@@ -817,6 +844,7 @@
                 const plateInput = document.getElementById('input_plate');
                 const vTypeSelect = document.getElementById('select_vehicle_type');
                 const areaSelect = document.getElementById('select_area');
+                const fuelTypeSelect = document.getElementById('select_fuel_type');
                 const errorBanner = document.getElementById('vehicleFormErrorBanner');
 
                 // Limpiar errores previos
@@ -827,7 +855,7 @@
                     }
                 });
 
-                [vTypeSelect, areaSelect].forEach(select => {
+                [vTypeSelect, areaSelect, fuelTypeSelect].forEach(select => {
                     if (select) {
                         const container = select.closest('.custom-select-container');
                         const trigger = container ? container.querySelector('.custom-select-trigger') : select;
@@ -890,11 +918,25 @@
                     }
                 }
 
+                // 5. Tipo de Combustible
+                if (!fuelTypeSelect || !fuelTypeSelect.value) {
+                    isValid = false;
+                    if (fuelTypeSelect) {
+                        const container = fuelTypeSelect.closest('.custom-select-container');
+                        const trigger = container ? container.querySelector('.custom-select-trigger') : fuelTypeSelect;
+                        if (trigger) {
+                            trigger.style.borderColor = '#ef4444';
+                            trigger.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.25)';
+                            if (!firstInvalidEl) firstInvalidEl = trigger;
+                        }
+                    }
+                }
+
                 if (!isValid) {
                     e.preventDefault();
                     if (errorBanner) {
                         errorBanner.style.display = 'block';
-                        errorBanner.innerHTML = `${uiIcon('alert')} <strong>Campos obligatorios requeridos:</strong> Debes completar Código de Unidad, Placa, Tipo de Vehículo y Área Asignada.`;
+                        errorBanner.innerHTML = `${uiIcon('alert')} <strong>Campos obligatorios requeridos:</strong> Debes completar Código de Unidad, Placa, Tipo de Vehículo, Área Asignada y Tipo de Combustible.`;
                     }
                     if (firstInvalidEl) {
                         firstInvalidEl.focus();
@@ -911,6 +953,8 @@
                         if (input.value.trim() !== '') {
                             input.style.borderColor = '';
                             input.style.boxShadow = '';
+                            const errorBanner = document.getElementById('vehicleFormErrorBanner');
+                            if (errorBanner) errorBanner.style.display = 'none';
                         }
                     });
                 }
@@ -983,6 +1027,8 @@
                     if (nameInput.value.trim() !== '') {
                         nameInput.style.borderColor = '';
                         nameInput.style.boxShadow = '';
+                        const errorBanner = document.getElementById('catalogFormErrorBanner');
+                        if (errorBanner) errorBanner.style.display = 'none';
                     }
                 });
             }
@@ -1005,37 +1051,33 @@
         initCustomDropdown('select_category');
         initCustomDropdown('select_vehicle_type');
         initCustomDropdown('select_area');
+        initCustomDropdown('select_fuel_type');
         setupFormValidation();
     });
-   /**
- * Formatea automáticamente la Placa agregando un guion tras los primeros 3 caracteres alfanuméricos.
- * Formato resultante: XXX-XXX
- */
+
+    /**
+     * Formatea la Placa permitiendo escribir letras, números y guión sin bloquear la digitación.
+     * Si se escribe seguido (ej. ABC123), formatea a ABC-123.
+     */
     function formatPlateInput(input) {
-    // 1. Limpia cualquier carácter que no sea letra o número y convierte a mayúsculas
-    let value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    
-    // 2. Si tiene más de 3 caracteres, inserta el guion
-    if (value.length > 3) {
-        value = value.slice(0, 3) + '-' + value.slice(3, 6);
-    }
-    
-    input.value = value;
+        let value = input.value.toUpperCase().replace(/[^A-Z0-9\-]/g, '');
+        let clean = value.replace(/[^A-Z0-9]/g, '');
+        if (clean.length > 3 && !value.includes('-')) {
+            value = clean.slice(0, 3) + '-' + clean.slice(3, 6);
+        }
+        input.value = value.slice(0, 7);
     }
 
-/**
- * Formatea automáticamente el Código de Unidad agregando un guion tras los primeros 4 caracteres alfanuméricos.
- * Formato resultante: XXXX-XXX
- */
+    /**
+     * Formatea el Código de Unidad permitiendo letras, números y guión (máx. 10 caracteres).
+     * Si se escribe seguido (ej. UNID001), formatea a UNID-001.
+     */
     function formatUnitCodeInput(input) {
-    // 1. Limpia caracteres no permitidos y convierte a mayúsculas
-    let value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    
-    // 2. Si tiene más de 4 caracteres, inserta el guion
-    if (value.length > 4) {
-        value = value.slice(0, 4) + '-' + value.slice(4, 7);
-    }
-    
-    input.value = value;
+        let value = input.value.toUpperCase().replace(/[^A-Z0-9\-]/g, '');
+        let clean = value.replace(/[^A-Z0-9]/g, '');
+        if (clean.length > 4 && !value.includes('-')) {
+            value = clean.slice(0, 4) + '-' + clean.slice(4, 9);
+        }
+        input.value = value.slice(0, 10);
     }
 </script>

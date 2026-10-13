@@ -31,9 +31,14 @@ final class Vehicle
                 INDEX idx_vehicles_status (status)
             ) ENGINE=InnoDB;");
 
-            // Por si la tabla ya existía sin la columna (instalaciones previas)
-            try {
+            // Por si la tabla ya existía sin la columna (instalaciones previas)            try {
                 $db->exec("ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS vehicle_type_id INT UNSIGNED NULL AFTER area_id");
+            } catch (\Throwable $e) {
+                // Si la columna ya existe, ignorar silenciosamente
+            }
+
+            try {
+                $db->exec("ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS fuel_type_id INT UNSIGNED NULL AFTER vehicle_type_id");
             } catch (\Throwable $e) {
                 // Si la columna ya existe, ignorar silenciosamente
             }
@@ -60,19 +65,21 @@ final class Vehicle
     }
 
     /**
-     * Vehículos activos, con el nombre del área ya resuelto para mostrar en selects.
+     * Vehículos activos, con el nombre del área, tipo y combustible ya resuelto para mostrar en selects.
      */
     public function getActive(): array
     {
         self::ensureTableExists();
         try {
             $db = Database::getConnection();
-            $stmt = $db->query("SELECT v.id, v.unit_code, v.plate, v.area_id, v.vehicle_type_id,
+            $stmt = $db->query("SELECT v.id, v.unit_code, v.plate, v.area_id, v.vehicle_type_id, v.fuel_type_id,
                                         COALESCE(sc.name, 'Sin área asignada') AS area_name,
-                                        COALESCE(vt.name, 'Sin tipo') AS vehicle_type_name
+                                        COALESCE(vt.name, 'Sin tipo') AS vehicle_type_name,
+                                        COALESCE(ft.name, 'Sin combustible') AS fuel_type_name
                                  FROM vehicles v
                                  LEFT JOIN system_catalogs sc ON sc.id = v.area_id
                                  LEFT JOIN system_catalogs vt ON vt.id = v.vehicle_type_id
+                                 LEFT JOIN system_catalogs ft ON ft.id = v.fuel_type_id
                                  WHERE v.status = 'activo'
                                  ORDER BY v.plate ASC");
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -86,7 +93,15 @@ final class Vehicle
         self::ensureTableExists();
         try {
             $db = Database::getConnection();
-            $stmt = $db->prepare("SELECT * FROM vehicles WHERE id = :id AND status = 'activo' LIMIT 1");
+            $stmt = $db->prepare("SELECT v.*,
+                                         COALESCE(sc.name, 'Sin área asignada') AS area_name,
+                                         COALESCE(vt.name, 'Sin tipo') AS vehicle_type_name,
+                                         COALESCE(ft.name, 'Sin combustible') AS fuel_type_name
+                                  FROM vehicles v
+                                  LEFT JOIN system_catalogs sc ON sc.id = v.area_id
+                                  LEFT JOIN system_catalogs vt ON vt.id = v.vehicle_type_id
+                                  LEFT JOIN system_catalogs ft ON ft.id = v.fuel_type_id
+                                  WHERE v.id = :id AND v.status = 'activo' LIMIT 1");
             $stmt->execute(['id' => $id]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             return $row ?: null;
@@ -99,7 +114,7 @@ final class Vehicle
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->prepare("SELECT 1 FROM vehicles WHERE plate = :plate OR unit_code = :unit_code LIMIT 1");
+            $stmt = $db->prepare("SELECT 1 FROM vehicles WHERE (plate = :plate OR unit_code = :unit_code) AND status = 'activo' LIMIT 1");
             $stmt->execute(['plate' => $plate, 'unit_code' => $unitCode]);
             return (bool) $stmt->fetchColumn();
         } catch (Throwable $e) {
@@ -107,7 +122,7 @@ final class Vehicle
         }
     }
 
-    public function create(string $unitCode, string $plate, ?int $areaId, ?int $vehicleTypeId = null): bool
+    public function create(string $unitCode, string $plate, ?int $areaId, ?int $vehicleTypeId = null, ?int $fuelTypeId = null): bool
     {
         self::ensureTableExists();
         $unitCode = trim($unitCode);
@@ -129,12 +144,13 @@ final class Vehicle
 
         try {
             $db = Database::getConnection();
-            $stmt = $db->prepare("INSERT INTO vehicles (unit_code, plate, area_id, vehicle_type_id, status) VALUES (:unit_code, :plate, :area_id, :vehicle_type_id, 'activo')");
+            $stmt = $db->prepare("INSERT INTO vehicles (unit_code, plate, area_id, vehicle_type_id, fuel_type_id, status) VALUES (:unit_code, :plate, :area_id, :vehicle_type_id, :fuel_type_id, 'activo')");
             return $stmt->execute([
                 'unit_code' => $unitCode,
                 'plate' => $plate,
                 'area_id' => $areaId,
                 'vehicle_type_id' => $vehicleTypeId,
+                'fuel_type_id' => $fuelTypeId,
             ]);
         } catch (Throwable $e) {
             return false;

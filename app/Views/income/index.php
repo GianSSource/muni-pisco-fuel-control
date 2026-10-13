@@ -31,6 +31,111 @@
         margin-top: 6px;
     }
 
+
+    /* Dropdown de desglose de combustibles en la tarjeta de Líquidos */
+    .stats-grid {
+        position: relative;
+        z-index: 50;
+    }
+
+    .stat-card.dropdown-open {
+        z-index: 100;
+        position: relative;
+    }
+
+    .stat-dropdown-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 6px;
+        background: rgba(37, 99, 235, 0.10);
+        color: #2563eb;
+        border: 1px solid rgba(37, 99, 235, 0.25);
+        cursor: pointer;
+        transition: all 0.18s ease;
+    }
+
+    .stat-dropdown-trigger:hover {
+        background: rgba(37, 99, 235, 0.18);
+        border-color: #2563eb;
+    }
+
+    [data-theme="dark"] .stat-dropdown-trigger {
+        background: rgba(59, 130, 246, 0.18);
+        color: #60a5fa;
+        border-color: rgba(96, 165, 250, 0.35);
+    }
+
+    [data-theme="dark"] .stat-dropdown-trigger:hover {
+        background: rgba(59, 130, 246, 0.30);
+    }
+
+    /* Menú desplegable — usa variables de tema para adaptarse automáticamente */
+    .stat-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 250px;
+        background: var(--card-bg, #ffffff);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 12px;
+        box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.18), 0 4px 10px -2px rgba(15, 23, 42, 0.06);
+        z-index: 1000;
+        overflow: hidden;
+        animation: fadeInDropdown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        color: var(--text-color, #0f172a);
+    }
+
+    [data-theme="dark"] .stat-dropdown-menu {
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+    }
+
+    .stat-dropdown-header {
+        padding: 10px 14px;
+        background: var(--bg-body, #f8fafc);
+        border-bottom: 1px solid var(--border-color, #e2e8f0);
+    }
+
+    .stat-dropdown-body {
+        max-height: 260px;
+        overflow-y: auto;
+        padding: 6px 12px;
+        background: var(--card-bg, #ffffff);
+    }
+
+    .stat-dropdown-item {
+        padding: 10px 4px;
+        border-bottom: 1px solid var(--border-color, #e2e8f0);
+        color: var(--text-color, #0f172a);
+    }
+
+    .stat-dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .stat-dropdown-footer {
+        padding: 9px 14px;
+        background: var(--bg-body, #f8fafc);
+        border-top: 1px solid var(--border-color, #e2e8f0);
+        font-size: 0.74rem;
+        color: var(--text-muted, #64748b);
+        text-align: right;
+    }
+
+    @keyframes fadeInDropdown {
+        from {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     /* Tarjeta del Buscador e Input */
     .search-card {
         background-color: var(--card-bg, #ffffff) !important;
@@ -323,32 +428,156 @@
 
     <!-- Resumen rápido de Ingresos -->
     <?php
-    $totalGallons = 0;
-    $totalRemaining = 0;
+    $totalLiquidGallons = 0;
+    $totalLiquidRemaining = 0;
+    $totalGnvQuantity = 0;
+    $totalGnvRemaining = 0;
     $activeLots = 0;
+    $exhaustedLots = 0;
+    $activeLiquidLots = 0;
+    $activeGnvLots = 0;
+    $hasGnv = false;
+    $hasLiquid = false;
+
+    // Desglose histórico por cada tipo de combustible líquido
+    $liquidBreakdown = [];
+
     if (!empty($incomes)) {
         foreach ($incomes as $inc) {
-            $totalGallons += (float) ($inc['gallons'] ?? 0);
+            $qty = (float) ($inc['gallons'] ?? 0);
             $rem = (float) ($inc['gallons_remaining'] ?? 0);
-            $totalRemaining += $rem;
-            if ($rem > 0)
+            if ($rem > 0) {
                 $activeLots++;
+            } else {
+                $exhaustedLots++;
+            }
+            $rawFt = trim($inc['fuel_type'] ?? 'Diesel B5 S-50');
+            $ft = strtolower($rawFt);
+            if (str_contains($ft, 'gnv') || str_contains($ft, 'gas natural')) {
+                $hasGnv = true;
+                $totalGnvQuantity += $qty;
+                $totalGnvRemaining += $rem;
+                if ($rem > 0) {
+                    $activeGnvLots++;
+                }
+            } else {
+                $hasLiquid = true;
+                $totalLiquidGallons += $qty;
+                $totalLiquidRemaining += $rem;
+                if ($rem > 0) {
+                    $activeLiquidLots++;
+                }
+                if (!isset($liquidBreakdown[$rawFt])) {
+                    $liquidBreakdown[$rawFt] = [
+                        'name' => $rawFt,
+                        'entered' => 0.0,
+                        'remaining' => 0.0,
+                        'lots' => 0,
+                        'activeLots' => 0,
+                    ];
+                }
+                $liquidBreakdown[$rawFt]['entered'] += $qty;
+                $liquidBreakdown[$rawFt]['remaining'] += $rem;
+                $liquidBreakdown[$rawFt]['lots']++;
+                if ($rem > 0) {
+                    $liquidBreakdown[$rawFt]['activeLots']++;
+                }
+            }
         }
     }
+    // Ordenar desglose de mayor ingreso a menor
+    uasort($liquidBreakdown, fn($a, $b) => $b['entered'] <=> $a['entered']);
     ?>
     <section class="stats-grid"
-        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
-        <div class="stat-card">
-            <span class="stat-label">Total Histórico Ingresado</span>
-            <div class="stat-value" style="color: #2563eb;"><?= number_format($totalGallons, 2) ?> Gal</div>
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; position: relative; z-index: 50;">
+        
+        <?php if ($hasLiquid || !$hasGnv): ?>
+        <!-- Card 1: Total Líquidos Ingresados con Dropdown de Desglose Histórico -->
+        <div class="stat-card" style="border-left: 3px solid #2563eb !important; position: relative;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+                <span class="stat-label"><?= $hasGnv ? 'Total Líquidos Ingresados' : 'Total Histórico Ingresado' ?></span>
+                
+                <?php if (!empty($liquidBreakdown)): ?>
+                <div style="position: relative;">
+                    <button type="button" id="liquidDropdownBtn" class="stat-dropdown-trigger" onclick="toggleLiquidDropdown(event)" title="Ver histórico desglosado por combustible">
+                        <span>Por tipo</span>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s;"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+
+                    <!-- Menú Desplegable Flotante -->
+                    <div id="liquidDropdownMenu" class="stat-dropdown-menu" style="display: none;" onclick="event.stopPropagation()">
+                        <div class="stat-dropdown-header">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="font-weight: 700; font-size: 0.82rem; color: var(--text-color, #0f172a);">Histórico por Combustible</span>
+                                <span style="font-size: 0.72rem; color: var(--text-muted, #64748b); font-weight: 600;"><?= count($liquidBreakdown) ?> tipos</span>
+                            </div>
+                        </div>
+                        <div class="stat-dropdown-body">
+                            <?php foreach ($liquidBreakdown as $bName => $bData): ?>
+                            <div class="stat-dropdown-item" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 4px;">
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-color, #0f172a);">
+                                    <?= htmlspecialchars($bName) ?>
+                                </span>
+                                <span style="font-size: 0.88rem; font-weight: 800; color: #2563eb;">
+                                    <?= number_format($bData['entered'], 2) ?> Gal
+                                </span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="stat-dropdown-footer">
+                            <span>Total acumulado: <strong style="color: #2563eb;"><?= number_format($totalLiquidGallons, 2) ?> Gal</strong></span>
+                        </div>
+                    </div>
+                </div>
+                <?php else: ?>
+                <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(37, 99, 235, 0.12); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.25);">Gal</span>
+                <?php endif; ?>
+            </div>
+
+            <div class="stat-value" style="color: #2563eb;"><?= number_format($totalLiquidGallons, 2) ?> Gal</div>
+            
+            <div style="font-size: 0.8rem; color: var(--text-muted, #64748b); font-weight: 600; margin-top: 6px;">
+                <?= count($liquidBreakdown) ?> tipo(s) de combustible
+            </div>
         </div>
-        <div class="stat-card">
-            <span class="stat-label">Stock Remanente en Lotes</span>
-            <div class="stat-value" style="color: #10b981;"><?= number_format($totalRemaining, 2) ?> Gal</div>
+
+        <!-- Card 2: Stock Remanente (Líquidos) -->
+        <div class="stat-card" style="border-left: 3px solid #10b981 !important;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+                <span class="stat-label"><?= $hasGnv ? 'Stock Remanente (Líquidos)' : 'Stock Remanente en Lotes' ?></span>
+                <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25);">Disponible</span>
+            </div>
+            <div class="stat-value" style="color: #10b981;"><?= number_format($totalLiquidRemaining, 2) ?> Gal</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted, #64748b); font-weight: 600; margin-top: 6px;">
+                Saldo en <strong style="color: #10b981;"><?= $activeLiquidLots ?> lote(s)</strong> activos
+            </div>
         </div>
-        <div class="stat-card">
-            <span class="stat-label">Lotes con Stock Activo</span>
+        <?php endif; ?>
+
+        <!-- Card 3: Total GNV Ingresado (Condicional si hay GNV) -->
+        <?php if ($hasGnv && $totalGnvQuantity > 0): ?>
+        <div class="stat-card" style="border-left: 3px solid #0284c7 !important;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+                <span class="stat-label">Total GNV Ingresado</span>
+                <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(2, 132, 199, 0.12); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.25);">m³</span>
+            </div>
+            <div class="stat-value" style="color: #0284c7;"><?= number_format($totalGnvQuantity, 2) ?> m³</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted, #64748b); font-weight: 600; margin-top: 6px;">
+                Remanente: <strong style="color: <?= $totalGnvRemaining > 0 ? '#0284c7' : '#ef4444' ?>;"><?= number_format($totalGnvRemaining, 2) ?> m³</strong>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Card 4: Lotes con Stock Activo -->
+        <div class="stat-card" style="border-left: 3px solid #8b5cf6 !important;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+                <span class="stat-label">Lotes con Stock Activo</span>
+                <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(139, 92, 246, 0.12); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.25);">En uso</span>
+            </div>
             <div class="stat-value" style="color: #8b5cf6;"><?= $activeLots ?> Lotes</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted, #64748b); font-weight: 600; margin-top: 6px;">
+                <?= $exhaustedLots ?> lote(s) agotado(s) histórico
+            </div>
         </div>
     </section>
 
@@ -520,10 +749,10 @@
                                     </span>
                                 </td>
                                 <td style="font-weight: 700; color: #2563eb;">
-                                    <?= number_format((float) $inc['gallons'], 2) ?> Gal
+                                    <?= number_format((float) $inc['gallons'], 2) ?> <?= htmlspecialchars(\App\Models\Catalog::getFuelUnit($inc['fuel_type'] ?? '', true)) ?>
                                 </td>
                                 <td style="font-weight: 800; color: <?= $isAvailable ? '#10b981' : '#ef4444' ?>;">
-                                    <?= number_format($rem, 2) ?> Gal
+                                    <?= number_format($rem, 2) ?> <?= htmlspecialchars(\App\Models\Catalog::getFuelUnit($inc['fuel_type'] ?? '', true)) ?>
                                 </td>
                                 <td>
                                     <?php
@@ -973,6 +1202,8 @@
         const isAvailable = rem > 0;
         const statusText = isAvailable ? 'Disponible' : 'Agotado';
         const statusColor = isAvailable ? '#10b981' : '#ef4444';
+        const isGnv = (inc.fuel_type || '').toLowerCase().includes('gnv') || (inc.fuel_type || '').toLowerCase().includes('gas natural');
+        const unitLabel = isGnv ? 'm³' : 'Galones';
 
         body.innerHTML = `
             <div class="modal-detail-card">
@@ -1007,12 +1238,12 @@
 
                     <div class="modal-field highlight-field" style="background: rgba(37, 99, 235, 0.05);">
                         <span class="lbl icon-with-text">${uiIcon('fuel')}Cantidad Inicial:</span>
-                        <strong class="qty-val">${parseFloat(inc.gallons).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Galones</strong>
+                        <strong class="qty-val">${parseFloat(inc.gallons).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${unitLabel}</strong>
                     </div>
                     
                     <div class="modal-field highlight-field" style="background: rgba(16, 185, 129, 0.05);">
                         <span class="lbl icon-with-text">${uiIcon('fuel')}Stock Remanente:</span>
-                        <strong class="qty-val" style="color: ${statusColor};">${rem.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Galones</strong>
+                        <strong class="qty-val" style="color: ${statusColor};">${rem.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${unitLabel}</strong>
                     </div>
                 </div>
             </div>
@@ -1044,4 +1275,46 @@
             window.history.replaceState(null, null, url.toString());
         }
     }
+
+    // Control del menú desplegable de desglose por combustible líquido
+    function toggleLiquidDropdown(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        const menu = document.getElementById("liquidDropdownMenu");
+        const btn = document.getElementById("liquidDropdownBtn");
+        const card = btn ? btn.closest(".stat-card") : null;
+        if (!menu) return;
+        const isVisible = menu.style.display === "block";
+        menu.style.display = isVisible ? "none" : "block";
+        if (card) {
+            card.classList.toggle("dropdown-open", !isVisible);
+            card.style.zIndex = isVisible ? "" : "100";
+        }
+        if (btn) {
+            const svg = btn.querySelector("svg");
+            if (svg) svg.style.transform = isVisible ? "" : "rotate(180deg)";
+        }
+    }
+
+    document.addEventListener("click", (e) => {
+        const menu = document.getElementById("liquidDropdownMenu");
+        const btn = document.getElementById("liquidDropdownBtn");
+        if (menu && menu.style.display === "block") {
+            if (!menu.contains(e.target) && (!btn || !btn.contains(e.target))) {
+                menu.style.display = "none";
+                const card = btn ? btn.closest(".stat-card") : null;
+                if (card) {
+                    card.classList.remove("dropdown-open");
+                    card.style.zIndex = "";
+                }
+                if (btn) {
+                    const svg = btn.querySelector("svg");
+                    if (svg) svg.style.transform = "";
+                }
+            }
+        }
+    });
+
 </script>
