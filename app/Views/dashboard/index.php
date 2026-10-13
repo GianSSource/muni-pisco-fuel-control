@@ -479,29 +479,40 @@
         <?php endif; ?>
     </section>
 
-
-
-
-    <!-- Visualizaciones: Gráfico Dinámico Multivista, Gráfico Circular de Stock y Resumen del Calendario -->
+    <!-- Visualizaciones: Gráfico Dinámico Multivista y Resumen de Stock por Tipo -->
     <section class="visuals-grid"
         style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px;">
         <article class="chart-container-card">
-            <div class="card-header-flex chart-header-wrap">
+            <div class="card-header-flex chart-header-wrap" style="gap: 12px; align-items: center; justify-content: space-between;">
                 <div>
                     <h2 id="chartTitle">Combustible Despachado Semanal</h2>
-                    <p class="section-desc" id="chartSubtitle">Volumen diario consumido en galones (últimos 7 días)</p>
+                    <p class="section-desc" id="chartSubtitle">Volumen diario consumido (últimos 7 días)</p>
                 </div>
-                <div class="chart-view-switcher" role="tablist">
-                    <button type="button" class="switcher-btn active" data-view="semanal"
-                        onclick="switchChartView(event, 'semanal')">Semanal</button>
-                    <button type="button" class="switcher-btn" data-view="tipo"
-                        onclick="switchChartView(event, 'tipo')">Por Tipo</button>
-                    <button type="button" class="switcher-btn" data-view="mensual"
-                        onclick="switchChartView(event, 'mensual')">Mensual</button>
-                    <button type="button" class="switcher-btn" data-view="anual"
-                        onclick="switchChartView(event, 'anual')">Anual</button>
-                    <button type="button" class="switcher-btn" data-view="area"
-                        onclick="switchChartView(event, 'area')">Por Área</button>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                    <!-- Filtro de Unidad / Energía -->
+                    <div class="energy-filter-switcher" role="radiogroup" aria-label="Filtro de Energía">
+                        <button type="button" class="energy-btn active" data-energy="all"
+                            onclick="switchEnergyFilter(event, 'all')" title="Ver todos los tipos">Todos</button>
+                        <button type="button" class="energy-btn" data-energy="liquid"
+                            onclick="switchEnergyFilter(event, 'liquid')" title="Solo combustibles líquidos (Gal)">Líquidos (Gal)</button>
+                        <?php if (!empty($hasGnv)): ?>
+                        <button type="button" class="energy-btn" data-energy="gnv"
+                            onclick="switchEnergyFilter(event, 'gnv')" title="Solo Gas Natural (m³)">GNV (m³)</button>
+                        <?php endif; ?>
+                    </div>
+                    <!-- Selector de Vista Temporal / Criterio -->
+                    <div class="chart-view-switcher" role="tablist">
+                        <button type="button" class="switcher-btn active" data-view="semanal"
+                            onclick="switchChartView(event, 'semanal')">Semanal</button>
+                        <button type="button" class="switcher-btn" data-view="tipo"
+                            onclick="switchChartView(event, 'tipo')">Por Tipo</button>
+                        <button type="button" class="switcher-btn" data-view="mensual"
+                            onclick="switchChartView(event, 'mensual')">Mensual</button>
+                        <button type="button" class="switcher-btn" data-view="anual"
+                            onclick="switchChartView(event, 'anual')">Anual</button>
+                        <button type="button" class="switcher-btn" data-view="area"
+                            onclick="switchChartView(event, 'area')">Por Área</button>
+                    </div>
                 </div>
             </div>
 
@@ -521,7 +532,24 @@
             ],
             $stockByFuelType ?? []
         );
-        $totalStock = array_sum(array_column($stockItems, 'value'));
+
+        $isGnvFuel = static function (string $fuelType): bool {
+            $type = mb_strtolower($fuelType);
+            return str_contains($type, 'gnv') || str_contains($type, 'gas natural');
+        };
+
+        $liquidStockItems = [];
+        $gnvStockItems = [];
+        foreach ($stockItems as $stockItem) {
+            if ($isGnvFuel($stockItem['label'])) {
+                $gnvStockItems[] = $stockItem;
+            } else {
+                $liquidStockItems[] = $stockItem;
+            }
+        }
+
+        $totalLiquidStock = array_sum(array_column($liquidStockItems, 'value'));
+        $totalGnvStock = array_sum(array_column($gnvStockItems, 'value'));
 
         // Paleta de colores únicos: cada tipo de combustible recibe un color distinto,
         // sin repetir, aunque compartan familia (p. ej. Gasohol Premium vs Regular).
@@ -535,7 +563,7 @@
                 str_contains($type, 'gasohol regular') => '#ec4899',
                 str_contains($type, 'gasohol') => '#a855f7',
                 str_contains($type, 'glp') || str_contains($type, 'gas licuado') => '#06b6d4',
-                str_contains($type, 'gnv') || str_contains($type, 'gas natural') => '#2563eb',
+                str_contains($type, 'gnv') || str_contains($type, 'gas natural') => '#10b981',
                 default => '#64748b',
             };
         };
@@ -567,57 +595,74 @@
         ?>
         <article class="chart-container-card stock-summary-card"
             style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0); padding: 20px; display: flex; flex-direction: column; justify-content: flex-start; align-self: start;">
-            <div style="margin-bottom: 12px;">
+            <div style="margin-bottom: 14px;">
                 <h2 class="icon-with-text"
                     style="font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-color, #1e293b);"><svg
                         class="ui-icon">
                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use>
-                    </svg>Stock
-                    Disponible por Tipo</h2>
-                <p class="section-desc" style="font-size: 0.85rem; color: var(--text-muted, #64748b); margin-top: 4px;">
-                    Distribución de galones restantes en inventario</p>
+                    </svg>Stock Disponible en Tanques</h2>
+                <p class="section-desc" style="font-size: 0.82rem; color: var(--text-muted, #64748b); margin-top: 4px;">
+                    Distribución de saldo restante en inventario</p>
             </div>
 
-            <div class="stock-chart-wrapper native-stock-chart-wrapper">
-                <?php if ($totalStock > 0): ?>
-                    <div class="native-stock-chart" role="img"
-                        aria-label="Resumen de stock disponible por tipo de combustible">
-                        <div class="native-stock-total">
-                            <span>Inventario total</span>
-                            <strong><?= number_format($totalStock, 2) ?> Gal</strong>
-                        </div>
-                        <div class="native-stock-bars">
-                            <?php foreach ($stockItems as $stockItem): ?>
-                                <?php
-                                $percentage = ($stockItem['value'] / $totalStock) * 100;
-                                $color = $stockColorForType($stockItem['label']);
-                                ?>
-                                <div class="native-stock-row">
-                                    <div class="native-stock-row-header">
-                                        <strong
-                                            title="<?= htmlspecialchars($stockItem['label']) ?>"><?= htmlspecialchars($stockItem['label']) ?></strong>
-                                        <span class="native-stock-row-value"><?= number_format($percentage, 2) ?>%</span>
-                                    </div>
-                                    <div class="native-stock-track" aria-hidden="true">
-                                        <span class="native-stock-fill"
-                                            style="width: <?= number_format($percentage, 2, '.', '') ?>%; background: <?= $color ?>;"></span>
-                                    </div>
-                                    <span class="native-stock-row-gallons"><?= number_format($stockItem['value'], 2) ?> <?= \App\Models\Catalog::getFuelUnit($stockItem['label'] ?? '', true) ?></span>
+            <!-- Bloque Combustibles Líquidos -->
+            <div class="native-stock-chart" style="margin-bottom: <?= (!empty($hasGnv) || $totalGnvStock > 0) ? '14px' : '0' ?>;">
+                <div class="native-stock-total" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #64748b);">Líquidos en Tanques</span>
+                    <strong style="color: #2563eb;"><?= number_format($totalLiquidStock, 2) ?> Gal</strong>
+                </div>
+                <?php if ($totalLiquidStock > 0): ?>
+                    <div class="native-stock-bars" style="margin-top: 8px;">
+                        <?php foreach ($liquidStockItems as $stockItem): ?>
+                            <?php
+                            $percentage = ($stockItem['value'] / $totalLiquidStock) * 100;
+                            $color = $stockColorForType($stockItem['label']);
+                            ?>
+                            <div class="native-stock-row">
+                                <div class="native-stock-row-header">
+                                    <strong
+                                        title="<?= htmlspecialchars($stockItem['label']) ?>"><?= htmlspecialchars($stockItem['label']) ?></strong>
+                                    <span class="native-stock-row-value"><?= number_format($percentage, 1) ?>%</span>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <ul class="native-stock-legend" aria-label="Leyenda de tipos de combustible">
-                            <?php foreach ($stockItems as $stockItem): ?>
-                                <li><span class="native-stock-legend-dot"
-                                        style="background: <?= $stockColorForType($stockItem['label']) ?>;"></span><?= htmlspecialchars($stockItem['label']) ?>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
+                                <div class="native-stock-track" aria-hidden="true">
+                                    <span class="native-stock-fill"
+                                        style="width: <?= number_format($percentage, 2, '.', '') ?>%; background: <?= $color ?>;"></span>
+                                </div>
+                                <span class="native-stock-row-gallons"><?= number_format($stockItem['value'], 2) ?> Gal</span>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <p class="empty-state">Sin información de lotes.</p>
+                    <p class="empty-state" style="font-size: 0.85rem; margin: 6px 0;">Sin stock de combustibles líquidos.</p>
                 <?php endif; ?>
             </div>
+
+            <!-- Bloque Separado GNV (Gas Natural) -->
+            <?php if (!empty($hasGnv) || $totalGnvStock > 0 || !empty($gnvStockItems)): ?>
+            <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 12px; margin-top: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+                        <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #047857;">Gas Natural (GNV)</span>
+                    </div>
+                    <span style="font-size: 0.85rem; font-weight: 800; color: #059669; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 6px;">
+                        <?= number_format($totalGnvStock > 0 ? $totalGnvStock : (float)($gnvRemaining ?? 0), 2) ?> m³
+                    </span>
+                </div>
+                <?php if (!empty($gnvStockItems)): ?>
+                    <?php foreach ($gnvStockItems as $gnvItem): ?>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-top: 4px;">
+                            <span style="color: var(--text-muted, #64748b);"><?= htmlspecialchars($gnvItem['label']) ?></span>
+                            <strong style="color: #047857;"><?= number_format($gnvItem['value'], 2) ?> m³</strong>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p style="font-size: 0.82rem; color: var(--text-muted, #64748b); margin: 2px 0 0;">
+                        Saldo disponible para despachos de gas natural.
+                    </p>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
         </article>
     </section>
 
@@ -868,11 +913,14 @@
     let fuelChartInstance = null;
     let chartResizeObserver = null;
     let currentViewKey = 'semanal';
+    let currentEnergyKey = 'all';
+    const hasGnv = <?= !empty($hasGnv) ? 'true' : 'false' ?>;
+
     const chartDataSets = {
-        semanal: { title: 'Combustible Despachado Semanal', subtitle: 'Volumen diario consumido en galones (últimos 7 días)', colors: ['#2563eb'], lightColors: ['#60a5fa'], data: <?= json_encode($dailyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
-        tipo: { title: 'Despacho por Tipo de Combustible', subtitle: 'Distribución de galones consumidos según Diesel B5, Gasohol Regular o Premium', colors: ['#10b981', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ec4899'], lightColors: ['#6ee7b7', '#7dd3fc', '#fcd34d', '#c4b5fd', '#f9a8d4'], data: <?= json_encode($typeFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
-        mensual: { title: 'Combustible Despachado Mensualmente', subtitle: 'Evolución y total de galones despachados por mes (año actual)', colors: ['#0d9488'], lightColors: ['#5eead4'], data: <?= json_encode($monthlyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
-        anual: { title: 'Acumulado de Combustible Anual', subtitle: 'Consumo total de combustible en galones por año', colors: ['#7c3aed'], lightColors: ['#c4b5fd'], data: <?= json_encode($yearlyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
+        semanal: { title: 'Combustible Despachado Semanal', subtitle: 'Volumen diario consumido (últimos 7 días)', colors: ['#2563eb'], lightColors: ['#60a5fa'], data: <?= json_encode($dailyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
+        tipo: { title: 'Despacho por Tipo de Combustible', subtitle: 'Distribución consumida según tipo de combustible', colors: ['#10b981', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ec4899'], lightColors: ['#6ee7b7', '#7dd3fc', '#fcd34d', '#c4b5fd', '#f9a8d4'], data: <?= json_encode($typeFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
+        mensual: { title: 'Combustible Despachado Mensualmente', subtitle: 'Evolución y total despachado por mes (año actual)', colors: ['#0d9488'], lightColors: ['#5eead4'], data: <?= json_encode($monthlyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
+        anual: { title: 'Acumulado de Combustible Anual', subtitle: 'Consumo total de combustible por año', colors: ['#7c3aed'], lightColors: ['#c4b5fd'], data: <?= json_encode($yearlyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
         area: { title: 'Despacho por Área o Destino', subtitle: 'Distribución del combustible entregado a cada área municipal', colors: ['#f97316', '#ef4444', '#eab308', '#14b8a6', '#3b82f6'], lightColors: ['#fdba74', '#fca5a5', '#fde047', '#5eead4', '#93c5fd'], data: <?= json_encode($areaFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> }
     };
 
@@ -880,8 +928,16 @@
         return document.documentElement.getAttribute('data-theme') === 'dark';
     }
 
+    function formatNumber(value, decimals = 1) {
+        return Number(value || 0).toLocaleString('es-PE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
     function formatGallons(value, decimals = 1) {
-        return `${Number(value || 0).toLocaleString('es-PE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })} Gal`;
+        return `${formatNumber(value, decimals)} Gal`;
+    }
+
+    function formatGnv(value, decimals = 1) {
+        return `${formatNumber(value, decimals)} m³`;
     }
 
     function getThemeColors() {
@@ -895,10 +951,6 @@
         };
     }
 
-    // Mantiene la paleta del gráfico "Por Tipo" sincronizada con el
-    // resumen de stock, incluso si cambia el orden de los combustibles.
-    // Cada tipo recibe un color único garantizado (no se repiten, aunque
-    // compartan familia, p. ej. Gasohol Premium vs Gasohol Regular).
     const FUEL_COLOR_PALETTE = [
         { color: '#f59e0b', lightColor: '#fcd34d' },
         { color: '#8b5cf6', lightColor: '#c4b5fd' },
@@ -922,7 +974,7 @@
         if (fuelType.includes('gasohol regular')) return { color: '#ec4899', lightColor: '#f9a8d4' };
         if (fuelType.includes('gasohol')) return { color: '#a855f7', lightColor: '#d8b4fe' };
         if (fuelType.includes('glp') || fuelType.includes('gas licuado')) return { color: '#06b6d4', lightColor: '#67e8f9' };
-        if (fuelType.includes('gnv') || fuelType.includes('gas natural')) return { color: '#2563eb', lightColor: '#93c5fd' };
+        if (fuelType.includes('gnv') || fuelType.includes('gas natural')) return { color: '#10b981', lightColor: '#6ee7b7' };
 
         return { color: '#64748b', lightColor: '#cbd5e1' };
     }
@@ -958,6 +1010,31 @@
         return (colorMap && colorMap.get(String(label || ''))) || getPreferredFuelColor(label);
     }
 
+    function updateChartTitles() {
+        const config = chartDataSets[currentViewKey];
+        if (!config) return;
+
+        let title = config.title;
+        let subtitle = config.subtitle;
+
+        if (currentEnergyKey === 'liquid') {
+            title += ' (Líquidos)';
+            subtitle += ' - Solo combustibles líquidos (Gal)';
+        } else if (currentEnergyKey === 'gnv') {
+            title += ' (GNV)';
+            subtitle = 'Consumo de Gas Natural Vehicular en metros cúbicos (m³)';
+        } else {
+            if (currentViewKey !== 'tipo') {
+                subtitle += ' - Comparativa Líquidos (Gal) y GNV (m³)';
+            }
+        }
+
+        const titleEl = document.getElementById('chartTitle');
+        const subEl = document.getElementById('chartSubtitle');
+        if (titleEl) titleEl.textContent = title;
+        if (subEl) subEl.textContent = subtitle;
+    }
+
     function initChart(viewKey) {
         if (viewKey) currentViewKey = viewKey;
         if (typeof echarts === 'undefined') return;
@@ -969,69 +1046,211 @@
         fuelChartInstance = echarts.getInstanceByDom(element) || echarts.init(element);
         const theme = getThemeColors();
         const horizontal = currentViewKey === 'area';
-        const data = Array.isArray(config.data) ? config.data : [];
-        const palette = config.colors;
-        const lightPalette = config.lightColors;
+        const rawData = Array.isArray(config.data) ? config.data : [];
 
+        // Modo Por Tipo
+        if (currentViewKey === 'tipo') {
+            let data = rawData;
+            if (currentEnergyKey === 'liquid') {
+                data = rawData.filter(d => !d.is_gnv);
+            } else if (currentEnergyKey === 'gnv') {
+                data = rawData.filter(d => d.is_gnv);
+            }
+
+            const tipoColorMap = buildFuelTypeColorMap(data);
+
+            fuelChartInstance.setOption({
+                animationDuration: 300,
+                legend: { show: false },
+                grid: { left: 8, right: 14, top: 28, bottom: 12, containLabel: true },
+                tooltip: {
+                    trigger: 'axis', axisPointer: { type: 'shadow' },
+                    backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
+                    textStyle: { color: theme.text },
+                    formatter: (params) => {
+                        const item = data[params[0]?.dataIndex];
+                        const unit = item?.unit || (item?.is_gnv ? 'm³' : 'Gal');
+                        return `${params[0]?.axisValueLabel || ''}<br/><strong>Total: ${formatNumber(params[0]?.value, 2)} ${unit}</strong>`;
+                    }
+                },
+                xAxis: {
+                    type: 'category', data: data.map((item) => item.label),
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { lineStyle: { color: theme.grid } }
+                },
+                yAxis: {
+                    type: 'value', min: 0,
+                    axisLabel: { color: theme.text, formatter: (value) => `${Number(value).toLocaleString('es-PE')}` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
+                },
+                series: [{
+                    name: 'Consumo por Tipo', type: 'bar', barMaxWidth: 54,
+                    data: data.map((item) => {
+                        const fuelColors = getFuelTypeColors(item.label, tipoColorMap);
+                        return {
+                            value: Number(item.total_gallons || 0),
+                            itemStyle: {
+                                borderRadius: [6, 6, 0, 0],
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    { offset: 0, color: fuelColors.lightColor },
+                                    { offset: 0.45, color: fuelColors.color },
+                                    { offset: 1, color: fuelColors.color }
+                                ])
+                            }
+                        };
+                    }),
+                    label: {
+                        show: true, position: 'top', color: theme.text, fontSize: 10, fontWeight: 600,
+                        formatter: ({ dataIndex, value }) => {
+                            const u = data[dataIndex]?.unit || (data[dataIndex]?.is_gnv ? 'm³' : 'Gal');
+                            return `${formatNumber(value, 1)} ${u}`;
+                        }
+                    },
+                    emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
+                }]
+            }, { notMerge: true, lazyUpdate: true });
+            return;
+        }
+
+        // Vistas Semanal, Mensual, Anual, Área
+        const categories = rawData.map(d => d.label);
+
+        // Si filtro es solo Líquidos o solo GNV: una sola serie
+        if (currentEnergyKey === 'liquid' || currentEnergyKey === 'gnv') {
+            const isGnv = currentEnergyKey === 'gnv';
+            const unit = isGnv ? 'm³' : 'Gal';
+            const seriesName = isGnv ? 'GNV (m³)' : 'Líquidos (Gal)';
+            const seriesColor = isGnv ? { c: '#10b981', light: '#6ee7b7' } : { c: '#2563eb', light: '#60a5fa' };
+            const values = rawData.map(d => isGnv ? Number(d.gnv_m3 || 0) : Number(d.liquid_gallons || 0));
+
+            fuelChartInstance.setOption({
+                animationDuration: 300,
+                legend: { show: false },
+                grid: horizontal
+                    ? { left: 12, right: 26, top: 24, bottom: 24, containLabel: true }
+                    : { left: 8, right: 14, top: 28, bottom: 12, containLabel: true },
+                tooltip: {
+                    trigger: 'axis', axisPointer: { type: 'shadow' },
+                    backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
+                    textStyle: { color: theme.text },
+                    formatter: (params) => `${params[0]?.axisValueLabel || ''}<br/><strong>${seriesName}: ${formatNumber(params[0]?.value, 2)} ${unit}</strong>`
+                },
+                xAxis: horizontal ? {
+                    type: 'value', min: 0,
+                    axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} ${unit}` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { lineStyle: { color: theme.grid } }
+                } : {
+                    type: 'category', data: categories,
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { lineStyle: { color: theme.grid } }
+                },
+                yAxis: horizontal ? {
+                    type: 'category', data: categories,
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { show: false }
+                } : {
+                    type: 'value', min: 0,
+                    axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} ${unit}` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
+                },
+                series: [{
+                    name: seriesName, type: 'bar', barMaxWidth: horizontal ? 34 : 52,
+                    data: values.map(val => ({
+                        value: val,
+                        itemStyle: {
+                            borderRadius: horizontal ? [0, 6, 6, 0] : [6, 6, 0, 0],
+                            color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, horizontal ? 0 : 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
+                                { offset: 0, color: seriesColor.light },
+                                { offset: 1, color: seriesColor.c }
+                            ])
+                        }
+                    })),
+                    label: {
+                        show: true, position: horizontal ? 'right' : 'top', color: theme.text, fontSize: 10, fontWeight: 600,
+                        formatter: ({ value }) => value > 0 ? `${formatNumber(value, 1)} ${unit}` : ''
+                    },
+                    emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
+                }]
+            }, { notMerge: true, lazyUpdate: true });
+            return;
+        }
+
+        // Modo TODOS: Doble Serie Comparativa (Líquidos en Gal + GNV en m3)
         fuelChartInstance.setOption({
             animationDuration: 300,
+            legend: {
+                show: true, top: 0, right: 10,
+                textStyle: { color: theme.text, fontSize: 11, fontWeight: 600 }
+            },
             grid: horizontal
-                ? { left: 12, right: 22, top: 24, bottom: 24, containLabel: true }
-                : { left: 8, right: 14, top: 28, bottom: 12, containLabel: true },
+                ? { left: 12, right: 26, top: 32, bottom: 24, containLabel: true }
+                : { left: 8, right: 14, top: 32, bottom: 12, containLabel: true },
             tooltip: {
                 trigger: 'axis', axisPointer: { type: 'shadow' },
                 backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
                 textStyle: { color: theme.text },
-                formatter: (params) => `${params[0]?.axisValueLabel || ''}<br/><strong>Total: ${formatGallons(params[0]?.value, 2)}</strong>`
+                formatter: (params) => {
+                    const idx = params[0]?.dataIndex;
+                    const item = rawData[idx] || {};
+                    let html = `<strong>${params[0]?.axisValueLabel || ''}</strong><br/>`;
+                    html += `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563eb;margin-right:6px;"></span>Líquidos: <strong>${formatGallons(item.liquid_gallons || 0, 2)}</strong><br/>`;
+                    if (Number(item.gnv_m3 || 0) > 0 || hasGnv) {
+                        html += `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;margin-right:6px;"></span>GNV: <strong>${formatGnv(item.gnv_m3 || 0, 2)}</strong>`;
+                    }
+                    return html;
+                }
             },
             xAxis: horizontal ? {
-                type: 'value', min: 0, axisLabel: { color: theme.text, formatter: (value) => `${Number(value).toLocaleString('es-PE')} Gal` },
+                type: 'value', min: 0,
+                axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')}` },
                 splitLine: { lineStyle: { color: theme.grid } }, axisLine: { lineStyle: { color: theme.grid } }
             } : {
-                type: 'category', data: data.map((item) => item.label), axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                type: 'category', data: categories,
+                axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
                 axisTick: { show: false }, axisLine: { lineStyle: { color: theme.grid } }
             },
             yAxis: horizontal ? {
-                type: 'category', data: data.map((item) => item.label), axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                type: 'category', data: categories,
+                axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
                 axisTick: { show: false }, axisLine: { show: false }
             } : {
-                type: 'value', min: 0, axisLabel: { color: theme.text, formatter: (value) => `${Number(value).toLocaleString('es-PE')} Gal` },
+                type: 'value', min: 0,
+                axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')}` },
                 splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
             },
-            series: [{
-                name: 'Galones Despachados', type: 'bar', barMaxWidth: horizontal ? 38 : 58,
-                data: (() => {
-                    const tipoColorMap = currentViewKey === 'tipo' ? buildFuelTypeColorMap(data) : null;
-                    return data.map((item, index) => {
-                    const fuelColors = currentViewKey === 'tipo'
-                        ? getFuelTypeColors(item.label, tipoColorMap)
-                        : { color: palette[index % palette.length], lightColor: lightPalette[index % lightPalette.length] };
-
-                    return {
-                        value: Number(item.total_gallons || 0),
-                        itemStyle: {
-                            borderRadius: 8,
-                            color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, horizontal ? 0 : 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
-                                { offset: 0, color: fuelColors.lightColor },
-                                { offset: 0.45, color: fuelColors.color },
-                                { offset: 1, color: fuelColors.color }
-                            ])
-                        }
-                    };
-                    });
-                })(),
-                label: { show: !horizontal, position: 'top', color: theme.text, fontSize: 10, fontWeight: 600, formatter: ({ value }) => formatGallons(value, 2) },
-                emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
-            }]
+            series: [
+                {
+                    name: 'Líquidos (Gal)', type: 'bar', barMaxWidth: horizontal ? 18 : 28,
+                    data: rawData.map(d => Number(d.liquid_gallons || 0)),
+                    itemStyle: {
+                        borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
+                        color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, horizontal ? 0 : 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
+                            { offset: 0, color: '#60a5fa' },
+                            { offset: 1, color: '#2563eb' }
+                        ])
+                    },
+                    label: {
+                        show: !horizontal, position: 'top', color: theme.text, fontSize: 9, fontWeight: 600,
+                        formatter: ({ value }) => value > 0 ? `${formatNumber(value, 1)} Gal` : ''
+                    }
+                },
+                {
+                    name: 'GNV (m³)', type: 'bar', barMaxWidth: horizontal ? 18 : 28,
+                    data: rawData.map(d => Number(d.gnv_m3 || 0)),
+                    itemStyle: {
+                        borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
+                        color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, horizontal ? 0 : 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
+                            { offset: 0, color: '#6ee7b7' },
+                            { offset: 1, color: '#10b981' }
+                        ])
+                    },
+                    label: {
+                        show: !horizontal, position: 'top', color: theme.text, fontSize: 9, fontWeight: 600,
+                        formatter: ({ value }) => value > 0 ? `${formatNumber(value, 1)} m³` : ''
+                    }
+                }
+            ]
         }, { notMerge: true, lazyUpdate: true });
-
-        fuelChartInstance.off('click');
-        fuelChartInstance.on('click', (params) => {
-            const status = document.getElementById('chartInteractionStatus');
-            if (params.componentType === 'series' && status) {
-                status.textContent = `Seleccionado ${params.name}: ${formatGallons(params.value, 2)}.`;
-            }
-        });
     }
 
     function resizeCharts() {
@@ -1066,14 +1285,26 @@
         });
     });
 
+    function switchEnergyFilter(evt, energyKey) {
+        evt?.preventDefault();
+        evt?.stopPropagation();
+        currentEnergyKey = energyKey;
+        document.querySelectorAll('.energy-btn').forEach((button) => {
+            button.classList.toggle('active', button.dataset.energy === energyKey);
+        });
+        updateChartTitles();
+        initChart(currentViewKey);
+        return false;
+    }
+
     function switchChartView(evt, viewKey) {
         evt?.preventDefault();
         evt?.stopPropagation();
-        const config = chartDataSets[viewKey];
-        if (!config) return false;
-        document.querySelectorAll('.switcher-btn').forEach((button) => button.classList.toggle('active', button.dataset.view === viewKey));
-        document.getElementById('chartTitle').textContent = config.title;
-        document.getElementById('chartSubtitle').textContent = config.subtitle;
+        currentViewKey = viewKey;
+        document.querySelectorAll('.switcher-btn').forEach((button) => {
+            button.classList.toggle('active', button.dataset.view === viewKey);
+        });
+        updateChartTitles();
         initChart(viewKey);
         return false;
     }

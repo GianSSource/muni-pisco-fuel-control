@@ -620,9 +620,12 @@ final class Fuel
 
             $sql = 'SELECT 
                         DATE(fd.created_at) AS date,
+                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS liquid_gallons,
+                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gnv%" OR LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS gnv_m3,
                         COALESCE(SUM(fd.gallons), 0) AS total_gallons,
                         COUNT(fd.id) AS delivery_count
                     FROM fuel_deliveries fd
+                    LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
                     WHERE fd.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL :days DAY) AND fd.status <> "Anulado"
                     GROUP BY DATE(fd.created_at)
                     ORDER BY date ASC';
@@ -652,6 +655,8 @@ final class Fuel
                 $mapped[] = [
                     'date' => $date,
                     'label' => $dayNum . ' ' . ($months[$mNum] ?? ''),
+                    'liquid_gallons' => $row ? (float) $row['liquid_gallons'] : 0.0,
+                    'gnv_m3' => $row ? (float) $row['gnv_m3'] : 0.0,
                     'total_gallons' => $row ? (float) $row['total_gallons'] : 0.0,
                     'delivery_count' => $row ? (int) $row['delivery_count'] : 0
                 ];
@@ -711,9 +716,12 @@ final class Fuel
             $db = Database::getConnection();
             $sql = 'SELECT 
                         MONTH(fd.created_at) AS month_num,
+                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS liquid_gallons,
+                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gnv%" OR LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS gnv_m3,
                         COALESCE(SUM(fd.gallons), 0) AS total_gallons,
                         COUNT(fd.id) AS delivery_count
                     FROM fuel_deliveries fd
+                    LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
                     WHERE YEAR(fd.created_at) = YEAR(CURRENT_DATE()) AND fd.status <> "Anulado"
                     GROUP BY MONTH(fd.created_at)
                     ORDER BY month_num ASC';
@@ -727,6 +735,8 @@ final class Fuel
                     $mNum = (int) $row['month_num'];
                     $output[] = [
                         'label' => $monthsMap[$mNum] ?? 'Mes ' . $mNum,
+                        'liquid_gallons' => (float) $row['liquid_gallons'],
+                        'gnv_m3' => (float) $row['gnv_m3'],
                         'total_gallons' => (float) $row['total_gallons'],
                         'delivery_count' => (int) $row['delivery_count']
                     ];
@@ -746,9 +756,12 @@ final class Fuel
             $db = Database::getConnection();
             $sql = 'SELECT 
                         YEAR(fd.created_at) AS year_num,
+                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS liquid_gallons,
+                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gnv%" OR LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS gnv_m3,
                         COALESCE(SUM(fd.gallons), 0) AS total_gallons,
                         COUNT(fd.id) AS delivery_count
                     FROM fuel_deliveries fd
+                    LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
                     WHERE fd.status <> "Anulado"
                     GROUP BY YEAR(fd.created_at)
                     ORDER BY year_num ASC';
@@ -761,6 +774,8 @@ final class Fuel
                 foreach ($results as $row) {
                     $output[] = [
                         'label' => 'Año ' . $row['year_num'],
+                        'liquid_gallons' => (float) $row['liquid_gallons'],
+                        'gnv_m3' => (float) $row['gnv_m3'],
                         'total_gallons' => (float) $row['total_gallons'],
                         'delivery_count' => (int) $row['delivery_count']
                     ];
@@ -778,24 +793,14 @@ final class Fuel
     {
         try {
             $db = Database::getConnection();
-            // Sin LIMIT en el SQL: se trae todo agrupado y se recorta en
-            // PHP, agrupando el resto en "Otros" en vez de descartarlo
-            // silenciosamente (antes un LIMIT 8 en la consulta hacía que
-            // las áreas más allá de la 8va desaparecieran del reporte).
-            //
-            // ORDER BY con desempate por nombre: sin el "area_name ASC",
-            // dos áreas con el mismo total_gallons (muy común con pocos
-            // datos, o simplemente 0) no tienen un orden garantizado por
-            // MySQL entre una ejecución y otra. Eso hacía que el área que
-            // cae justo en el límite de "top 7" pudiera cambiar de una
-            // carga de página a la siguiente sin que nadie tocara nada,
-            // y su conteo individual "desaparecía" dentro de "Otros" y
-            // volvía a aparecer de forma aparentemente aleatoria.
             $sql = 'SELECT 
                         COALESCE(fd.destination, "Despacho General") AS area_name,
+                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS liquid_gallons,
+                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gnv%" OR LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS gnv_m3,
                         COALESCE(SUM(fd.gallons), 0) AS total_gallons,
                         COUNT(fd.id) AS delivery_count
                     FROM fuel_deliveries fd
+                    LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
                     WHERE fd.status <> "Anulado"
                     GROUP BY area_name
                     ORDER BY total_gallons DESC, area_name ASC';
@@ -806,6 +811,8 @@ final class Fuel
             if (!empty($results)) {
                 $topLimit = 7;
                 $output = [];
+                $otrosLiquid = 0.0;
+                $otrosGnv = 0.0;
                 $otrosGallons = 0.0;
                 $otrosCount = 0;
 
@@ -813,28 +820,27 @@ final class Fuel
                     if ($i < $topLimit) {
                         $output[] = [
                             'label' => $row['area_name'],
+                            'liquid_gallons' => (float) $row['liquid_gallons'],
+                            'gnv_m3' => (float) $row['gnv_m3'],
                             'total_gallons' => (float) $row['total_gallons'],
                             'delivery_count' => (int) $row['delivery_count']
                         ];
                     } else {
+                        $otrosLiquid += (float) $row['liquid_gallons'];
+                        $otrosGnv += (float) $row['gnv_m3'];
                         $otrosGallons += (float) $row['total_gallons'];
                         $otrosCount += (int) $row['delivery_count'];
                     }
                 }
 
                 if ($otrosCount > 0) {
-                    // Si alguna de las áreas del catálogo se llama
-                    // literalmente "Otros" (o "Otras"), no se puede usar
-                    // esa misma etiqueta para el sobrante: sus galones
-                    // quedarían sumados dentro del bucket de sobrantes y
-                    // ya no se podría distinguir cuánto es del área real
-                    // y cuánto es del resto. Se desambigua con un
-                    // asterisco solo en ese caso raro.
                     $usedLabels = array_column($output, 'label');
                     $sobranteLabel = in_array('Otros', $usedLabels, true) ? 'Otros*' : 'Otros';
 
                     $output[] = [
                         'label' => $sobranteLabel,
+                        'liquid_gallons' => $otrosLiquid,
+                        'gnv_m3' => $otrosGnv,
                         'total_gallons' => $otrosGallons,
                         'delivery_count' => $otrosCount
                     ];
@@ -869,10 +875,14 @@ final class Fuel
             if (!empty($results)) {
                 $output = [];
                 foreach ($results as $row) {
+                    $name = (string) $row['fuel_type_name'];
+                    $isGnv = (stripos($name, 'gnv') !== false || stripos($name, 'gas natural') !== false);
                     $output[] = [
-                        'label' => $row['fuel_type_name'],
+                        'label' => $name,
                         'total_gallons' => (float) $row['total_gallons'],
-                        'delivery_count' => (int) $row['delivery_count']
+                        'delivery_count' => (int) $row['delivery_count'],
+                        'is_gnv' => $isGnv ? 1 : 0,
+                        'unit' => $isGnv ? 'm³' : 'Gal'
                     ];
                 }
                 return $output;
