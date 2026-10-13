@@ -267,10 +267,29 @@
 
     .fuel-type-pill {
         background-color: #cbd5e1 !important;
-        /* Gris claro neutro */
         color: #000000 !important;
         padding: 3px 8px;
         border-radius: 6px;
+    }
+
+    /* Card GNV — cuando el grid tiene 6 tarjetas ampliar a 6 columnas */
+    @media (min-width: 1200px) {
+        .stats-grid.has-gnv {
+            grid-template-columns: repeat(6, 1fr);
+        }
+    }
+
+    /* Ícono GNV con color cyan */
+    .icon-gnv {
+        background: rgba(2, 132, 199, 0.12);
+        color: #0284c7;
+    }
+
+    /* Badge GNV */
+    .badge-gnv {
+        background: rgba(2, 132, 199, 0.15);
+        color: #0284c7;
+        border: 1px solid rgba(2, 132, 199, 0.30);
     }
 </style>
 
@@ -347,7 +366,7 @@
     };
     ?>
 
-    <section class="stats-grid">
+    <section class="stats-grid<?= !empty($hasGnv) && $hasGnv ? ' has-gnv' : '' ?>">
         <!-- 1. Saldo disponible -->
         <article class="stat-card balance-card">
             <div class="stat-header">
@@ -438,6 +457,26 @@
                 <?= $renderTrend($recibosMesTrend) ?>
             </div>
         </article>
+
+        <?php if (!empty($hasGnv) && $hasGnv): ?>
+        <!-- 6. GNV Ingresado (solo visible si hay ingresos GNV) -->
+        <article class="stat-card" style="border-left: 3px solid #0284c7;">
+            <div class="stat-header">
+                <span class="stat-icon icon-gnv">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M12 22c5.523 0 9-3.582 9-8 0-3-1.5-5.5-4-7 .5 2-1 4-3 4-1.5 0-2.5-1-2.5-2.5C11.5 7 10 5.5 8 5c1 2.5-.5 5-2 6.5C4.5 13 4 14.5 4 16c0 3.314 3.582 6 8 6z"/>
+                    </svg>
+                </span>
+                <span class="badge badge-gnv">GNV</span>
+            </div>
+            <div class="stat-body">
+                <strong><?= number_format((float) $gnvIngresado, 2) ?> <small>m³</small></strong>
+                <span>Total GNV ingresado</span>
+                <span><?= (int) $gnvDespachos ?> despacho(s) &middot; <?= number_format((float) $gnvRemaining, 2) ?> m³ disponibles</span>
+            </div>
+        </article>
+        <?php endif; ?>
     </section>
 
 
@@ -563,8 +602,7 @@
                                         <span class="native-stock-fill"
                                             style="width: <?= number_format($percentage, 2, '.', '') ?>%; background: <?= $color ?>;"></span>
                                     </div>
-                                    <span class="native-stock-row-gallons"><?= number_format($stockItem['value'], 2) ?>
-                                        Gal</span>
+                                    <span class="native-stock-row-gallons"><?= number_format($stockItem['value'], 2) ?> <?= \App\Models\Catalog::getFuelUnit($stockItem['label'] ?? '', true) ?></span>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -631,9 +669,16 @@
                             <strong><?= htmlspecialchars($ev['title']) ?></strong>
                             <div class="event-sub">
                                 <span class="badge <?= $ev['badge_class'] ?>"><?= htmlspecialchars($ev['badge']) ?></span>
+                                <?php
+                                $evFuel = $ev['fuel_type'] ?? '';
+                                if (empty($evFuel) && !empty($ev['title']) && preg_match('/\((.*?)\)/', $ev['title'], $m)) {
+                                    $evFuel = $m[1];
+                                }
+                                $evUnit = \App\Models\Catalog::getFuelUnit($evFuel, true);
+                                ?>
                                 <span class="icon-with-text"><svg class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use>
-                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?> Gal - <svg class="ui-icon">
+                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?> <?= $evUnit ?> - <svg class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-user"></use>
                                     </svg>
                                     <?= htmlspecialchars($ev['driver'] ?? $ev['title'] ?? 'Responsable') ?></span>
@@ -667,9 +712,16 @@
                             <strong><?= htmlspecialchars($ev['title']) ?></strong>
                             <div class="event-sub">
                                 <span class="badge <?= $ev['badge_class'] ?>"><?= htmlspecialchars($ev['badge']) ?></span>
+                                <?php
+                                $evFuel = $ev['fuel_type'] ?? '';
+                                if (empty($evFuel) && !empty($ev['title']) && preg_match('/\((.*?)\)/', $ev['title'], $m)) {
+                                    $evFuel = $m[1];
+                                }
+                                $evUnit = \App\Models\Catalog::getFuelUnit($evFuel, true);
+                                ?>
                                 <span class="icon-with-text"><svg class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-download"></use>
-                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?> Gal - <svg class="ui-icon">
+                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?> <?= $evUnit ?> - <svg class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-store"></use>
                                     </svg>
                                     <?= htmlspecialchars($ev['driver'] ?? 'Proveedor') ?></span>
@@ -766,8 +818,8 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="quantity-highlight"><?= number_format((float) $entrega['gallons'], 2) ?>
-                                        Gal</span>
+                                    <?php $dUnit = \App\Models\Catalog::getFuelUnit($entrega['fuel_type'] ?? '', true); ?>
+                                    <span class="quantity-highlight"><?= number_format((float) $entrega['gallons'], 2) ?> <?= $dUnit ?></span>
                                 </td>
                                 <td>
                                     <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $entrega['id'] ?>" target="_blank"

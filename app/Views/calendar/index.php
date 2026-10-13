@@ -87,12 +87,19 @@
                                         class="badge <?= $event['badge_class'] ?>"><?= htmlspecialchars($event['badge']) ?></span>
                                 </div>
                                 <div class="agenda-meta">
+                                    <?php
+                                    $evFuel = $event['fuel_type'] ?? '';
+                                    if (empty($evFuel) && !empty($event['title']) && preg_match('/\((.*?)\)/', $event['title'], $m)) {
+                                        $evFuel = $m[1];
+                                    }
+                                    $evUnit = \App\Models\Catalog::getFuelUnit($evFuel, true);
+                                    ?>
                                     <?php if ($event['type'] === 'income'): ?>
                                         <span>Proveedor: <?= htmlspecialchars($event['driver']) ?></span>
-                                        <span><?= number_format($event['gallons'], 2) ?> Gal</span>
+                                        <span><?= number_format($event['gallons'], 2) ?> <?= $evUnit ?></span>
                                     <?php else: ?>
                                         <span>Placa: <?= htmlspecialchars($event['vehicle']) ?></span>
-                                        <span><?= number_format($event['gallons'], 2) ?> Gal</span>
+                                        <span><?= number_format($event['gallons'], 2) ?> <?= $evUnit ?></span>
                                         <span> <?= htmlspecialchars($event['driver']) ?></span>
                                     <?php endif; ?>
                                 </div>
@@ -132,6 +139,24 @@
         const n = parseFloat(val);
         if (isNaN(n)) return val;
         return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function getFuelUnit(ft, title = '') {
+        let s = (ft || '').toLowerCase();
+        if (!s && title) {
+            const m = title.match(/\((.*?)\)/);
+            if (m) s = m[1].toLowerCase();
+        }
+        return (s.includes('gnv') || s.includes('gas natural')) ? 'm³' : 'Gal';
+    }
+
+    function getFuelUnitFull(ft, title = '') {
+        let s = (ft || '').toLowerCase();
+        if (!s && title) {
+            const m = title.match(/\((.*?)\)/);
+            if (m) s = m[1].toLowerCase();
+        }
+        return (s.includes('gnv') || s.includes('gas natural')) ? 'm³' : 'Galones';
     }
 
     function escapeHtml(text) {
@@ -240,7 +265,7 @@
                     pill.className = `event-pill ${ev.badge_class}`;
                     pill.title = `${ev.title} (${ev.time || ''})`;
                     if (ev.type === 'fuel') {
-                        pill.textContent = `${fmtGal(ev.gallons)} Gal`;
+                        pill.textContent = `${fmtGal(ev.gallons)} ${getFuelUnit(ev.fuel_type)}`;
                     } else {
                         pill.textContent = ev.title.replace(/^Ingreso Lote\s+/i, '').replace(/\s*\(.*?\)/, '');
                     }
@@ -331,6 +356,8 @@
             receiptNum = ev.title.replace(/^Despacho\s+/i, '').replace(/\s*\(.*?\)/, '');
         }
 
+        const actualFuel = ev.fuel_type || (isIncome ? fuelType : '');
+
         let html = `
             <div class="modal-detail-card">
                 <div class="modal-badge-row">
@@ -343,7 +370,7 @@
                     <div class="modal-field"><span class="lbl">${isIncome ? 'Tipo Combustible:' : 'Vehículo / Placa:'}</span> <strong>${escapeHtml(fuelType)}</strong></div>
                     <div class="modal-field"><span class="lbl">${isIncome ? 'Proveedor / Grifo:' : 'Conductor:'}</span> <span>${escapeHtml(ev.driver)}</span></div>
                     <div class="modal-field"><span class="lbl">${isIncome ? 'Almacén / Destino:' : 'Destino / Área:'}</span> <span>${escapeHtml(ev.destination)}</span></div>
-                    <div class="modal-field highlight-field"><span class="lbl">${isIncome ? 'Cantidad Ingresada:' : 'Cantidad Despachada:'}</span> <strong class="qty-val">${fmtGal(ev.gallons)} Galones</strong></div>
+                    <div class="modal-field highlight-field"><span class="lbl">${isIncome ? 'Cantidad Ingresada:' : 'Cantidad Despachada:'}</span> <strong class="qty-val">${fmtGal(ev.gallons)} ${getFuelUnitFull(actualFuel, ev.title)}</strong></div>
                 </div>
             </div>
         `;
@@ -368,7 +395,7 @@
                         <strong>${escapeHtml(ev.title)}</strong>
                     </div>
                     <div class="day-modal-sub">
-                        <span class="icon-with-text">${uiIcon('fuel')}${fmtGal(ev.gallons)} Gal - ${uiIcon('user')}${escapeHtml(ev.driver)}</span>
+                        <span class="icon-with-text">${uiIcon('fuel')}${fmtGal(ev.gallons)} ${getFuelUnit(ev.fuel_type, ev.title)} - ${uiIcon('user')}${escapeHtml(ev.driver)}</span>
                     </div>
                 </div>
             `;

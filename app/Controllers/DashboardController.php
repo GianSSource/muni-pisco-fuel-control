@@ -23,6 +23,7 @@ final class DashboardController extends Controller
         $areaFuel = $fuelModel->getFuelDispatchedByArea();
         $typeFuel = $fuelModel->getFuelDispatchedByType();
         $stockByFuelType = $fuelModel->getStockByFuelType();
+        $gnvMetrics     = $fuelModel->getGnvMetrics();
 
 
         // Se limita a los últimos 90 días y 200 eventos para evitar que el
@@ -57,8 +58,12 @@ final class DashboardController extends Controller
             'yearlyFuel' => $yearlyFuel,
             'areaFuel' => $areaFuel,
             'typeFuel' => $typeFuel,
-            'stockByFuelType' => $stockByFuelType,
-            'calendarEvents' => $calendarEvents,
+            'stockByFuelType'   => $stockByFuelType,
+            'gnvIngresado'      => $gnvMetrics['totalGnvIngresado'],
+            'gnvRemaining'      => $gnvMetrics['totalGnvRemaining'],
+            'gnvDespachos'      => $gnvMetrics['gnvDespachos'],
+            'hasGnv'            => $gnvMetrics['hasGnv'],
+            'calendarEvents'    => $calendarEvents,
             'uniquePlates' => $uniquePlates,
             'uniqueDrivers' => $uniqueDrivers,
             'areaRelations' => $areaRelations,
