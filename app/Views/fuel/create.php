@@ -390,16 +390,23 @@
     }
 
     .v-group-item {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: stretch !important;
-        text-align: left !important;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        text-align: left;
         padding: 6px 8px;
         border-radius: 6px;
         cursor: pointer;
         transition: background 0.15s ease;
         margin: 1px 0;
         user-select: none;
+    }
+
+    /* Ocultar elementos filtrados */
+    .v-hidden,
+    .v-group-item.v-hidden,
+    .v-group-wrap.v-hidden {
+        display: none !important;
     }
 
     .v-group-item:hover,
@@ -889,6 +896,8 @@
         form.querySelectorAll('.custom-select-search-input').forEach(si => { si.value = ''; });
         form.querySelectorAll('.custom-select-item').forEach(item => { item.style.display = 'flex'; });
         form.querySelectorAll('.v-group-wrap').forEach(gw => { gw.style.display = 'block'; });
+        form.querySelectorAll('.v-hidden').forEach(el => el.classList.remove('v-hidden'));
+        form.querySelectorAll('.v-fuel-filter-badge').forEach(b => b.remove());
         form.querySelectorAll('.custom-select-create-box').forEach(cb => cb.remove());
         form.querySelectorAll('.custom-select-no-results').forEach(nr => nr.remove());
         form.querySelectorAll('.custom-select-container.open').forEach(c => c.classList.remove('open'));
@@ -1439,6 +1448,55 @@
         // Capitaliza la primera letra de cada palabra (soporta tildes y ñ)
         function toTitleCase(str) {
             return str.replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+        }
+
+        // Normaliza texto de combustible (minúsculas, sin tildes, sin espacios extras)
+        function normalizeFuelText(str) {
+            return (str || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim();
+        }
+
+        // Obtiene la categoría principal de un combustible (gnv, glp, diesel, gasolina)
+        function getFuelCategory(str) {
+            const n = normalizeFuelText(str);
+            if (n.includes('gnv') || n.includes('gas natural')) return 'gnv';
+            if (n.includes('glp')) return 'glp';
+            if (n.includes('diesel')) return 'diesel';
+            if (n.includes('gasolina') || n.includes('gasohol')) return 'gasolina';
+            return n;
+        }
+
+        // Comprueba si el combustible de un vehículo (admite combinados como "Diésel / Gasolina")
+        // es compatible con un tipo de combustible específico
+        function isFuelCompatible(vehicleFuelType, targetFuelType) {
+            if (!targetFuelType) return true;
+            if (!vehicleFuelType) return false;
+
+            const targetNorm = normalizeFuelText(targetFuelType);
+            const targetCat = getFuelCategory(targetFuelType);
+
+            // Desglosa si el vehículo admite varios combustibles separados por '/'
+            const vParts = vehicleFuelType.split('/').map(p => p.trim()).filter(Boolean);
+
+            for (const part of vParts) {
+                const partNorm = normalizeFuelText(part);
+                const partCat = getFuelCategory(part);
+
+                // 1. Coincidencia por categoría canónica (ej. 'gnv' === 'gnv', 'diesel' === 'diesel')
+                if (targetCat && partCat && targetCat === partCat) {
+                    return true;
+                }
+
+                // 2. Coincidencia textual directa o contenida (ej. "Gasohol Regular" y "Gasolina")
+                if (partNorm && targetNorm && (partNorm.includes(targetNorm) || targetNorm.includes(partNorm))) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         // Determina la paleta de colores y metadata por tipo de combustible
@@ -2068,6 +2126,9 @@
                         item.className = `v-group-item custom-select-item ${isSelected ? 'selected' : ''}`;
                         item.setAttribute('data-index', v.index);
                         item.setAttribute('data-vehicle-id', v.id);
+                        // Guardar el tipo de combustible del vehículo en la propiedad del elemento
+                        // para que filterVehicles() pueda verificar compatibilidad sin re-leer el DOM
+                        item.__fuelType = v.fuelType;
 
                         let subParts = [];
                         if (v.type && v.type !== 'Sin tipo') subParts.push(v.type);
@@ -2127,7 +2188,7 @@
             }
 
             function getVisibleItems() {
-                return allVehicleItems.filter(v => v.el.style.display !== 'none');
+                return allVehicleItems.filter(v => !v.el.classList.contains('v-hidden'));
             }
 
             function setActiveItem(targetEl) {
@@ -2141,6 +2202,14 @@
                 }
             }
 
+            // Filtro activo de combustible (vacío = sin filtro)
+            let activeFuelFilter = '';
+
+            function fuelMatchesFilter(vehicleFuelType) {
+                if (!activeFuelFilter) return true;
+                return isFuelCompatible(vehicleFuelType, activeFuelFilter);
+            }
+
             function filterVehicles(term) {
                 const clean = term.toLowerCase().trim();
                 let totalVisible = 0;
@@ -2150,21 +2219,23 @@
                     let groupCount = 0;
 
                     groupItems.forEach(v => {
-                        if (!clean || v.meta.includes(clean)) {
-                            v.el.style.display = 'flex';
+                        const matchesTerm = !clean || v.meta.includes(clean);
+                        const matchesFuel = fuelMatchesFilter(v.el.__fuelType || '');
+                        if (matchesTerm && matchesFuel) {
+                            v.el.classList.remove('v-hidden');
                             groupCount++;
                             totalVisible++;
                         } else {
-                            v.el.style.display = 'none';
+                            v.el.classList.add('v-hidden');
                             v.el.classList.remove('is-focused');
                         }
                     });
 
                     if (groupCount > 0) {
-                        g.wrap.style.display = 'block';
+                        g.wrap.classList.remove('v-hidden');
                         g.countBadge.textContent = groupCount;
                     } else {
-                        g.wrap.style.display = 'none';
+                        g.wrap.classList.add('v-hidden');
                     }
                 });
 
@@ -2173,13 +2244,16 @@
                 }
 
                 let noRes = listContainer.querySelector('.custom-select-no-results');
+                const noResMsg = activeFuelFilter
+                    ? `Sin vehículos compatibles con "${activeFuelFilter}"`
+                    : 'No se encontraron vehículos que coincidan';
                 if (totalVisible === 0) {
                     if (!noRes) {
                         noRes = document.createElement('div');
                         noRes.className = 'custom-select-no-results';
-                        noRes.textContent = 'No se encontraron vehículos que coincidan';
                         listContainer.appendChild(noRes);
                     }
+                    noRes.textContent = noResMsg;
                 } else if (noRes) {
                     noRes.remove();
                 }
@@ -2191,6 +2265,50 @@
                     setActiveItem(null);
                 }
             }
+
+            // Aplica un filtro externo por tipo de combustible y refresca la lista
+            function filterVehiclesByFuel(fuelType) {
+                activeFuelFilter = (fuelType || '').trim();
+
+                // Si el vehículo actualmente seleccionado no es compatible, deseleccionarlo
+                const selOpt = selectEl.options[selectEl.selectedIndex];
+                if (selOpt && selOpt.value !== '') {
+                    const vFuel = selOpt.getAttribute('data-fuel-type') || '';
+                    if (!fuelMatchesFilter(vFuel)) {
+                        selectEl.selectedIndex = 0;
+                        selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+
+                // Actualizar el texto de búsqueda en el selector agrupado
+                if (activeFuelFilter) {
+                    const searchBox = container.querySelector('.v-search-input');
+                    if (searchBox) searchBox.value = '';
+                }
+
+                filterVehicles(container.querySelector('.v-search-input')?.value || '');
+
+                // Badge informativo encima del trigger cuando hay filtro activo
+                const existingBadge = container.parentNode.querySelector('.v-fuel-filter-badge');
+                if (activeFuelFilter) {
+                    if (!existingBadge) {
+                        const badge = document.createElement('div');
+                        badge.className = 'v-fuel-filter-badge';
+                        badge.style.cssText = 'margin-top:5px; font-size:0.73rem; color:#2563eb; font-weight:600; display:flex; align-items:center; gap:4px;';
+                        badge.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Mostrando solo vehículos compatibles con <strong style="color:#1d4ed8;">${activeFuelFilter}</strong>`;
+                        container.parentNode.appendChild(badge);
+                    } else {
+                        existingBadge.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Mostrando solo vehículos compatibles con <strong style="color:#1d4ed8;">${activeFuelFilter}</strong>`;
+                        existingBadge.style.display = 'flex';
+                    }
+                } else if (existingBadge) {
+                    existingBadge.style.display = 'none';
+                }
+            }
+
+            // Registrar la función en el elemento para acceso externo
+            container.__filterByFuel = filterVehiclesByFuel;
+            container.__selectEl = selectEl;
 
             function handleKeyNavigation(e) {
                 if (!container.classList.contains('open')) return;
@@ -2247,7 +2365,7 @@
                 searchInput.value = '';
                 filterVehicles('');
 
-                const currentSelected = allVehicleItems.find(v => v.index === selectEl.selectedIndex && v.el.style.display !== 'none');
+                const currentSelected = allVehicleItems.find(v => v.index === selectEl.selectedIndex && !v.el.classList.contains('v-hidden'));
                 if (currentSelected) {
                     setActiveItem(currentSelected.el);
                     setTimeout(() => currentSelected.el.scrollIntoView({ block: 'nearest' }), 30);
@@ -2303,6 +2421,19 @@
         initCustomDispatchSelect('driver_name', true, 'Buscar o escribir conductor...', true, 40, true);
         initCustomDispatchSelect('destination', true, 'Buscar área o subgerencia...');
 
+        // Referencia al contenedor del selector de vehículos (para acceso a filterByFuel)
+        const vehicleGroupedContainer = document.querySelector('.vehicle-grouped-select-container');
+
+        // === FILTRO DE VEHÍCULOS POR TIPO DE COMBUSTIBLE ===
+        // Cuando cambia el combustible seleccionado, se filtran los vehículos
+        // mostrando únicamente los que son compatibles con ese combustible.
+        fuelTypeSelect.addEventListener('change', () => {
+            const selectedFuel = fuelTypeSelect.value || '';
+            if (vehicleGroupedContainer && vehicleGroupedContainer.__filterByFuel) {
+                vehicleGroupedContainer.__filterByFuel(selectedFuel);
+            }
+        });
+
         // Auto-sugerir combustible y área cuando se selecciona un vehículo
         const vehicleSelectEl = document.getElementById('vehicle_id');
         if (vehicleSelectEl) {
@@ -2311,16 +2442,15 @@
                 if (opt) {
                     const fuelName = opt.getAttribute('data-fuel-type');
                     if (fuelName && fuelTypeSelect) {
-                        const vehicleFuels = fuelName.split('/').map(s => s.trim().toLowerCase()).filter(Boolean);
-                        const currentFuelVal = (fuelTypeSelect.value || '').toLowerCase();
-                        
-                        // Si el combustible ya seleccionado en el formulario coincide con alguno de los que admite el vehículo, no lo sobreescribimos
-                        const alreadyCompatible = currentFuelVal && vehicleFuels.some(vf => currentFuelVal === vf || vf.includes(currentFuelVal) || currentFuelVal.includes(vf));
-                        
-                        if (!alreadyCompatible && vehicleFuels.length > 0) {
-                            for (let i = 0; i < fuelTypeSelect.options.length; i++) {
-                                const ftVal = (fuelTypeSelect.options[i].value || '').toLowerCase();
-                                if (ftVal && vehicleFuels.some(vf => ftVal === vf || vf.includes(ftVal) || ftVal.includes(vf))) {
+                        const currentFuelVal = fuelTypeSelect.value || '';
+
+                        // Si el combustible ya seleccionado en el formulario es compatible con el vehículo, no lo sobreescribimos
+                        const alreadyCompatible = currentFuelVal && isFuelCompatible(fuelName, currentFuelVal);
+
+                        if (!alreadyCompatible) {
+                            for (let i = 1; i < fuelTypeSelect.options.length; i++) {
+                                const ftVal = fuelTypeSelect.options[i].value || '';
+                                if (ftVal && isFuelCompatible(fuelName, ftVal)) {
                                     fuelTypeSelect.selectedIndex = i;
                                     fuelTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
                                     break;

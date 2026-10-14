@@ -473,7 +473,7 @@
             <div class="stat-body">
                 <strong><?= number_format((float) $gnvIngresado, 2) ?> <small>m³</small></strong>
                 <span>Total GNV ingresado</span>
-                <span><?= (int) $gnvDespachos ?> despacho(s) &middot; <?= number_format((float) $gnvRemaining, 2) ?> m³ disponibles</span>
+                <span style="font-size: 0.98rem; margin-top: 4px;"><strong style="font-weight: 700; color: var(--text-color, #1e293b); font-size: 0.98rem;"><?= number_format((float) $gnvRemaining, 2) ?> m³</strong> disponibles</span>
             </div>
         </article>
         <?php endif; ?>
@@ -639,27 +639,29 @@
 
             <!-- Bloque Separado GNV (Gas Natural) -->
             <?php if (!empty($hasGnv) || $totalGnvStock > 0 || !empty($gnvStockItems)): ?>
+            <?php 
+                $gnvDisplayStock = $totalGnvStock > 0 ? $totalGnvStock : (float)($gnvRemaining ?? 0);
+                $hasMultipleGnv = count($gnvStockItems) > 1;
+            ?>
             <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 12px; margin-top: auto;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;<?= $hasMultipleGnv ? ' margin-bottom: 8px;' : '' ?>">
                     <div style="display: flex; align-items: center; gap: 6px;">
                         <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
-                        <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #047857;">Gas Natural (GNV)</span>
+                        <span style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #047857;">Gas Natural (GNV)</span>
                     </div>
-                    <span style="font-size: 0.85rem; font-weight: 800; color: #059669; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 6px;">
-                        <?= number_format($totalGnvStock > 0 ? $totalGnvStock : (float)($gnvRemaining ?? 0), 2) ?> m³
+                    <span style="font-size: 0.88rem; font-weight: 800; color: #059669; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 6px;">
+                        <?= number_format($gnvDisplayStock, 2) ?> m³
                     </span>
                 </div>
-                <?php if (!empty($gnvStockItems)): ?>
-                    <?php foreach ($gnvStockItems as $gnvItem): ?>
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-top: 4px;">
-                            <span style="color: var(--text-muted, #64748b);"><?= htmlspecialchars($gnvItem['label']) ?></span>
-                            <strong style="color: #047857;"><?= number_format($gnvItem['value'], 2) ?> m³</strong>
-                        </div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <p style="font-size: 0.82rem; color: var(--text-muted, #64748b); margin: 2px 0 0;">
-                        Saldo disponible para despachos de gas natural.
-                    </p>
+                <?php if ($hasMultipleGnv): ?>
+                    <div style="padding-top: 6px; border-top: 1px dashed rgba(16, 185, 129, 0.25);">
+                        <?php foreach ($gnvStockItems as $gnvItem): ?>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-top: 4px;">
+                                <span style="color: var(--text-muted, #64748b);"><?= htmlspecialchars($gnvItem['label']) ?></span>
+                                <strong style="color: #047857;"><?= number_format($gnvItem['value'], 2) ?> m³</strong>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
             </div>
             <?php endif; ?>
@@ -1035,6 +1037,19 @@
         if (subEl) subEl.textContent = subtitle;
     }
 
+    function calcNiceMax(max) {
+        const num = Number(max || 0);
+        if (num <= 0) return 10;
+        const target = num * 1.25; // 25% de margen superior para evitar colisiones con leyendas o borde
+        if (target <= 10) return 10;
+        if (target <= 20) return 20;
+        if (target <= 25) return 25;
+        if (target <= 50) return 50;
+        if (target <= 100) return 100;
+        const mag = Math.pow(10, Math.floor(Math.log10(target)));
+        return Math.ceil(target / mag) * mag;
+    }
+
     function initChart(viewKey) {
         if (viewKey) currentViewKey = viewKey;
         if (typeof echarts === 'undefined') return;
@@ -1062,7 +1077,7 @@
             fuelChartInstance.setOption({
                 animationDuration: 300,
                 legend: { show: false },
-                grid: { left: 8, right: 14, top: 28, bottom: 12, containLabel: true },
+                grid: { left: 8, right: 14, top: 38, bottom: 12, containLabel: true },
                 tooltip: {
                     trigger: 'axis', axisPointer: { type: 'shadow' },
                     backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
@@ -1080,6 +1095,7 @@
                 },
                 yAxis: {
                     type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
                     axisLabel: { color: theme.text, formatter: (value) => `${Number(value).toLocaleString('es-PE')}` },
                     splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
                 },
@@ -1100,7 +1116,7 @@
                         };
                     }),
                     label: {
-                        show: true, position: 'top', color: theme.text, fontSize: 10, fontWeight: 600,
+                        show: true, position: 'top', distance: 6, color: theme.text, fontSize: 10, fontWeight: 600,
                         formatter: ({ dataIndex, value }) => {
                             const u = data[dataIndex]?.unit || (data[dataIndex]?.is_gnv ? 'm³' : 'Gal');
                             return `${formatNumber(value, 1)} ${u}`;
@@ -1127,8 +1143,8 @@
                 animationDuration: 300,
                 legend: { show: false },
                 grid: horizontal
-                    ? { left: 12, right: 26, top: 24, bottom: 24, containLabel: true }
-                    : { left: 8, right: 14, top: 28, bottom: 12, containLabel: true },
+                    ? { left: 12, right: 36, top: 24, bottom: 24, containLabel: true }
+                    : { left: 8, right: 14, top: 38, bottom: 12, containLabel: true },
                 tooltip: {
                     trigger: 'axis', axisPointer: { type: 'shadow' },
                     backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
@@ -1137,6 +1153,7 @@
                 },
                 xAxis: horizontal ? {
                     type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
                     axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} ${unit}` },
                     splitLine: { lineStyle: { color: theme.grid } }, axisLine: { lineStyle: { color: theme.grid } }
                 } : {
@@ -1150,6 +1167,7 @@
                     axisTick: { show: false }, axisLine: { show: false }
                 } : {
                     type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
                     axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} ${unit}` },
                     splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
                 },
@@ -1166,7 +1184,7 @@
                         }
                     })),
                     label: {
-                        show: true, position: horizontal ? 'right' : 'top', color: theme.text, fontSize: 10, fontWeight: 600,
+                        show: true, position: horizontal ? 'right' : 'top', distance: 6, color: theme.text, fontSize: 10, fontWeight: 600,
                         formatter: ({ value }) => value > 0 ? `${formatNumber(value, 1)} ${unit}` : ''
                     },
                     emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
@@ -1179,12 +1197,12 @@
         fuelChartInstance.setOption({
             animationDuration: 300,
             legend: {
-                show: true, top: 0, right: 10,
+                show: true, top: 2, right: 14, itemGap: 14,
                 textStyle: { color: theme.text, fontSize: 11, fontWeight: 600 }
             },
             grid: horizontal
-                ? { left: 12, right: 26, top: 32, bottom: 24, containLabel: true }
-                : { left: 8, right: 14, top: 32, bottom: 12, containLabel: true },
+                ? { left: 12, right: 36, top: 38, bottom: 24, containLabel: true }
+                : { left: 8, right: 14, top: 50, bottom: 12, containLabel: true },
             tooltip: {
                 trigger: 'axis', axisPointer: { type: 'shadow' },
                 backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
@@ -1202,6 +1220,7 @@
             },
             xAxis: horizontal ? {
                 type: 'value', min: 0,
+                max: (val) => calcNiceMax(val.max),
                 axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')}` },
                 splitLine: { lineStyle: { color: theme.grid } }, axisLine: { lineStyle: { color: theme.grid } }
             } : {
@@ -1215,6 +1234,7 @@
                 axisTick: { show: false }, axisLine: { show: false }
             } : {
                 type: 'value', min: 0,
+                max: (val) => calcNiceMax(val.max),
                 axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')}` },
                 splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
             },
@@ -1230,7 +1250,7 @@
                         ])
                     },
                     label: {
-                        show: !horizontal, position: 'top', color: theme.text, fontSize: 9, fontWeight: 600,
+                        show: !horizontal, position: 'top', distance: 6, color: theme.text, fontSize: 9, fontWeight: 600,
                         formatter: ({ value }) => value > 0 ? `${formatNumber(value, 1)} Gal` : ''
                     }
                 },
@@ -1245,7 +1265,7 @@
                         ])
                     },
                     label: {
-                        show: !horizontal, position: 'top', color: theme.text, fontSize: 9, fontWeight: 600,
+                        show: !horizontal, position: 'top', distance: 6, color: theme.text, fontSize: 9, fontWeight: 600,
                         formatter: ({ value }) => value > 0 ? `${formatNumber(value, 1)} m³` : ''
                     }
                 }
