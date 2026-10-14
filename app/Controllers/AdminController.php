@@ -64,8 +64,8 @@ final class AdminController extends Controller
             $this->redirect('admin/catalogos?error=Todos+los+campos+(codigo+de+unidad,+placa,+tipo,+area+y+combustible)+son+obligatorios');
         }
 
-        if (mb_strlen($unitCode) > 10) {
-            $this->redirect('admin/catalogos?error=El+codigo+de+unidad+no+debe+superar+10+caracteres');
+        if (mb_strlen($unitCode) > 8) {
+            $this->redirect('admin/catalogos?error=El+codigo+de+unidad+no+debe+superar+8+caracteres');
         }
 
         if (mb_strlen($plate) > 7) {

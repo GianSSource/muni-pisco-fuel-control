@@ -419,8 +419,8 @@
 
             <div style="flex: 1; min-width: 140px;">
                 <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Código de Unidad *</label>
-                <input type="text" name="unit_code" id="input_unit_code" maxlength="10" required placeholder="Ej. UNID-045"
-                    pattern="[A-Za-z0-9\-]+" title="Solo letras, números y guiones"
+                <input type="text" name="unit_code" id="input_unit_code" maxlength="8" required placeholder="Ej. UNID-045"
+                    pattern="[A-Za-z0-9\-]+" title="Solo letras, números y guiones (máx. 8 caracteres)"
                     oninput="formatUnitCodeInput(this)"
                     class="form-control-styled">
             </div>
@@ -1193,15 +1193,15 @@
     }
 
     /**
-     * Formatea el Código de Unidad permitiendo letras, números y guión (máx. 10 caracteres).
+     * Formatea el Código de Unidad permitiendo letras, números y guión (máx. 8 caracteres).
      * Si se escribe seguido (ej. UNID001), formatea a UNID-001.
      */
     function formatUnitCodeInput(input) {
         let value = input.value.toUpperCase().replace(/[^A-Z0-9\-]/g, '');
         let clean = value.replace(/[^A-Z0-9]/g, '');
         if (clean.length > 4 && !value.includes('-')) {
-            value = clean.slice(0, 4) + '-' + clean.slice(4, 9);
+            value = clean.slice(0, 4) + '-' + clean.slice(4, 7);
         }
-        input.value = value.slice(0, 10);
+        input.value = value.slice(0, 8);
     }
 </script>
