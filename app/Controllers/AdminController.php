@@ -51,9 +51,16 @@ final class AdminController extends Controller
         $plate = strtoupper(trim((string) ($_POST['plate'] ?? '')));
         $areaId = ((int) ($_POST['area_id'] ?? 0)) ?: null;
         $vehicleTypeId = ((int) ($_POST['vehicle_type_id'] ?? 0)) ?: null;
-        $fuelTypeId = ((int) ($_POST['fuel_type_id'] ?? 0)) ?: null;
+        $rawFuelTypeIds = $_POST['fuel_type_ids'] ?? [];
+        if (empty($rawFuelTypeIds) && !empty($_POST['fuel_type_id'])) {
+            $rawFuelTypeIds = [$_POST['fuel_type_id']];
+        }
+        $fuelTypeIds = array_values(array_filter(
+            array_map('intval', (array) $rawFuelTypeIds),
+            fn($id) => $id > 0
+        ));
 
-        if ($unitCode === '' || $plate === '' || !$vehicleTypeId || !$areaId || !$fuelTypeId) {
+        if ($unitCode === '' || $plate === '' || !$vehicleTypeId || !$areaId || empty($fuelTypeIds)) {
             $this->redirect('admin/catalogos?error=Todos+los+campos+(codigo+de+unidad,+placa,+tipo,+area+y+combustible)+son+obligatorios');
         }
 
@@ -73,7 +80,7 @@ final class AdminController extends Controller
             $this->redirect('admin/catalogos?error=La+placa+o+el+codigo+de+unidad+ya+se+encuentran+registrados');
         }
 
-        if ($this->vehicle->create($unitCode, $plate, $areaId, $vehicleTypeId, $fuelTypeId)) {
+        if ($this->vehicle->create($unitCode, $plate, $areaId, $vehicleTypeId, $fuelTypeIds)) {
             $this->redirect('admin/catalogos?success=Vehiculo+registrado+correctamente');
         } else {
             $this->redirect('admin/catalogos?error=No+se+pudo+registrar+el+vehiculo+(revisa+que+la+placa+y+codigo+no+esten+repetidos)');

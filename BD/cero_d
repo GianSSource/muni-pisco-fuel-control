@@ -1,0 +1,246 @@
+-- ========================================================
+-- Base de Datos: tecnosoluciones (Esquema Limpio / Cero Valores Agregados)
+-- Proyecto: MUNIPISCO2 - Sistema de Control de Combustible
+-- Archivo: cero_d
+-- Descripción: Estructura de base de datos completa con triggers,
+--              índices, llaves foráneas y usuario administrador inicial.
+--              Cero registros de despachos, ingresos, vales ni vehículos.
+-- ========================================================
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+-- Crear base de datos si no existe
+CREATE DATABASE IF NOT EXISTS `tecnosoluciones` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `tecnosoluciones`;
+
+-- --------------------------------------------------------
+-- Desactivar restricciones de claves foráneas para recreación limpia
+-- --------------------------------------------------------
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS `vehicle_fuel_types`;
+DROP TABLE IF EXISTS `fuel_delivery_lot_allocations`;
+DROP TABLE IF EXISTS `fuel_deliveries`;
+DROP TABLE IF EXISTS `fuel_incomes`;
+DROP TABLE IF EXISTS `vehicles`;
+DROP TABLE IF EXISTS `system_catalogs`;
+DROP TABLE IF EXISTS `sequence_counters`;
+DROP TABLE IF EXISTS `login_attempts`;
+DROP TABLE IF EXISTS `users`;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- --------------------------------------------------------
+-- Tabla: `users`
+-- --------------------------------------------------------
+CREATE TABLE `users` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(120) NOT NULL,
+  `email` varchar(160) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `role` enum('admin','supervisor','operador') NOT NULL DEFAULT 'operador',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `last_login_at` datetime DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+-- Tabla: `system_catalogs`
+-- --------------------------------------------------------
+CREATE TABLE `system_catalogs` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `category` enum('fuel_type','area','supplier','vehicle_type') NOT NULL,
+  `name` varchar(160) NOT NULL,
+  `status` enum('activo','inactivo') DEFAULT 'activo',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_catalogs_cat` (`category`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+-- Tabla: `vehicles`
+-- --------------------------------------------------------
+CREATE TABLE `vehicles` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `unit_code` varchar(10) NOT NULL,
+  `plate` varchar(7) NOT NULL,
+  `area_id` int(10) UNSIGNED DEFAULT NULL,
+  `vehicle_type_id` int(10) UNSIGNED DEFAULT NULL,
+  `fuel_type_id` int(10) UNSIGNED DEFAULT NULL,
+  `status` enum('activo','inactivo') NOT NULL DEFAULT 'activo',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unit_code` (`unit_code`),
+  UNIQUE KEY `plate` (`plate`),
+  KEY `fk_vehicles_area` (`area_id`),
+  KEY `fk_vehicles_type` (`vehicle_type_id`),
+  KEY `fk_vehicles_fuel_type` (`fuel_type_id`),
+  KEY `idx_vehicles_status` (`status`),
+  CONSTRAINT `fk_vehicles_area` FOREIGN KEY (`area_id`) REFERENCES `system_catalogs` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_vehicles_type` FOREIGN KEY (`vehicle_type_id`) REFERENCES `system_catalogs` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_vehicles_fuel_type` FOREIGN KEY (`fuel_type_id`) REFERENCES `system_catalogs` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+-- Tabla opcional: `vehicle_fuel_types` (relación muchos a muchos para bi-combustibles)
+-- --------------------------------------------------------
+CREATE TABLE `vehicle_fuel_types` (
+  `vehicle_id` int(10) UNSIGNED NOT NULL,
+  `fuel_type_id` int(10) UNSIGNED NOT NULL,
+  PRIMARY KEY (`vehicle_id`,`fuel_type_id`),
+  KEY `idx_vft_fuel` (`fuel_type_id`),
+  CONSTRAINT `fk_vft_vehicle` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_vft_fuel` FOREIGN KEY (`fuel_type_id`) REFERENCES `system_catalogs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+-- Tabla: `sequence_counters`
+-- --------------------------------------------------------
+CREATE TABLE `sequence_counters` (
+  `name` varchar(60) NOT NULL,
+  `value` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+-- Tabla: `login_attempts`
+-- --------------------------------------------------------
+CREATE TABLE `login_attempts` (
+  `identifier` varchar(191) NOT NULL,
+  `attempts` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `locked_until` datetime DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`identifier`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+-- Tabla: `fuel_incomes`
+-- --------------------------------------------------------
+CREATE TABLE `fuel_incomes` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` int(10) UNSIGNED DEFAULT NULL,
+  `supplier` varchar(160) NOT NULL,
+  `fuel_type` varchar(80) NOT NULL DEFAULT 'Diesel B5 S-50',
+  `gallons` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `gallons_remaining` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `receipt_number` varchar(80) NOT NULL,
+  `invoice_number` varchar(40) DEFAULT NULL,
+  `notes` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `receipt_number` (`receipt_number`),
+  KEY `idx_incomes_supplier` (`supplier`),
+  KEY `idx_incomes_user` (`user_id`),
+  CONSTRAINT `fk_incomes_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+-- Tabla: `fuel_deliveries`
+-- --------------------------------------------------------
+CREATE TABLE `fuel_deliveries` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `fuel_income_id` int(10) UNSIGNED DEFAULT NULL,
+  `fuel_type` varchar(80) DEFAULT NULL,
+  `user_id` int(10) UNSIGNED DEFAULT NULL,
+  `vehicle_id` int(10) UNSIGNED DEFAULT NULL,
+  `receipt_number` varchar(80) NOT NULL,
+  `vehicle_plate` varchar(7) NOT NULL,
+  `driver_name` varchar(120) NOT NULL,
+  `gallons` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `destination` varchar(160) DEFAULT NULL,
+  `notes` varchar(255) DEFAULT NULL,
+  `status` enum('Pendiente','Completado','Anulado') NOT NULL DEFAULT 'Completado',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `receipt_number` (`receipt_number`),
+  KEY `idx_deliveries_income` (`fuel_income_id`),
+  KEY `idx_deliveries_plate` (`vehicle_plate`),
+  KEY `idx_deliveries_vehicle` (`vehicle_id`),
+  KEY `idx_deliveries_status` (`status`),
+  KEY `idx_deliveries_user` (`user_id`),
+  CONSTRAINT `fk_deliveries_incomes` FOREIGN KEY (`fuel_income_id`) REFERENCES `fuel_incomes` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `fk_deliveries_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_deliveries_vehicle` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+-- Tabla: `fuel_delivery_lot_allocations`
+-- --------------------------------------------------------
+CREATE TABLE `fuel_delivery_lot_allocations` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `delivery_id` int(10) UNSIGNED NOT NULL,
+  `fuel_income_id` int(10) UNSIGNED NOT NULL,
+  `gallons_taken` decimal(10,2) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_alloc_delivery` (`delivery_id`),
+  KEY `idx_alloc_income` (`fuel_income_id`),
+  CONSTRAINT `fk_alloc_delivery` FOREIGN KEY (`delivery_id`) REFERENCES `fuel_deliveries` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_alloc_income` FOREIGN KEY (`fuel_income_id`) REFERENCES `fuel_incomes` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+-- Disparadores (Triggers) para control automático de existencias
+-- --------------------------------------------------------
+DELIMITER $$
+
+-- Inicializa el stock disponible del lote igual a la cantidad ingresada
+CREATE TRIGGER `trg_incomes_before_insert` BEFORE INSERT ON `fuel_incomes` FOR EACH ROW BEGIN
+    SET NEW.gallons_remaining = NEW.gallons;
+END$$
+
+-- Valida que haya suficiente stock en el lote antes de insertar la asignación
+CREATE TRIGGER `trg_alloc_before_insert` BEFORE INSERT ON `fuel_delivery_lot_allocations` FOR EACH ROW BEGIN
+    DECLARE available DECIMAL(10,2);
+
+    SELECT gallons_remaining INTO available
+        FROM fuel_incomes WHERE id = NEW.fuel_income_id FOR UPDATE;
+
+    IF available IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'El lote de combustible indicado no existe';
+    ELSEIF available < NEW.gallons_taken THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'No hay suficiente combustible disponible en ese lote';
+    END IF;
+END$$
+
+-- Descuenta automáticamente el stock del lote asignado
+CREATE TRIGGER `trg_alloc_after_insert` AFTER INSERT ON `fuel_delivery_lot_allocations` FOR EACH ROW BEGIN
+    UPDATE fuel_incomes
+    SET gallons_remaining = gallons_remaining - NEW.gallons_taken
+    WHERE id = NEW.fuel_income_id;
+END$$
+
+-- Restaura automáticamente el stock del lote si se anula o elimina la asignación
+CREATE TRIGGER `trg_alloc_after_delete` AFTER DELETE ON `fuel_delivery_lot_allocations` FOR EACH ROW BEGIN
+    UPDATE fuel_incomes
+    SET gallons_remaining = gallons_remaining + OLD.gallons_taken
+    WHERE id = OLD.fuel_income_id;
+END$$
+
+DELIMITER ;
+
+-- --------------------------------------------------------
+-- Usuario Administrador Inicial
+-- Credenciales de inicio de sesión:
+-- Correo:      admin@muni.gob.pe
+-- Contraseña:  CambiaEstaClave123!
+-- --------------------------------------------------------
+INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `role`, `is_active`, `created_at`) VALUES
+(1, 'Admin', 'admin@muni.gob.pe', '$2b$10$EQ15uOuZs1KZJu8GIHYcjORiOfNsYV7/NmvSFiXYI1eKekXlYa33K', 'admin', 1, current_timestamp());
+
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

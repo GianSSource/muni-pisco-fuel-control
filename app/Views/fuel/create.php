@@ -90,6 +90,20 @@
     .btn-clear-styled:active {
         transform: translateY(0);
     }
+
+    /* Altura confortable y espaciado generoso para selectores con datos multilínea */
+    .custom-select-trigger {
+        min-height: 48px;
+        height: auto !important;
+        padding: 7px 14px !important;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    .custom-select-trigger .custom-select-chevron {
+        margin-left: 10px;
+        flex-shrink: 0;
+    }
 </style>
 
 <section class="container" style="max-width: 900px; margin: 40px auto; padding: 24px;">
@@ -936,6 +950,57 @@
             return str.replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
         }
 
+        // Determina la paleta de colores y metadata por tipo de combustible
+        function getFuelStyle(name) {
+            const n = (name || '').toLowerCase();
+            if (n.includes('gnv') || n.includes('gas natural')) {
+                return {
+                    color: '#1d4ed8',
+                    bg: 'rgba(29, 78, 216, 0.08)',
+                    border: 'rgba(29, 78, 216, 0.25)',
+                    tagBg: '#eff6ff',
+                    category: 'GNV',
+                    unit: 'm³'
+                };
+            } else if (n.includes('glp')) {
+                return {
+                    color: '#b45309',
+                    bg: 'rgba(217, 119, 6, 0.08)',
+                    border: 'rgba(217, 119, 6, 0.25)',
+                    tagBg: '#fffbeb',
+                    category: 'GLP',
+                    unit: 'Gal'
+                };
+            } else if (n.includes('gasolina') || n.includes('gasohol')) {
+                return {
+                    color: '#c2410c',
+                    bg: 'rgba(234, 88, 12, 0.08)',
+                    border: 'rgba(234, 88, 12, 0.25)',
+                    tagBg: '#fff7ed',
+                    category: 'Gasolina',
+                    unit: 'Gal'
+                };
+            } else if (n.includes('diesel')) {
+                return {
+                    color: '#047857',
+                    bg: 'rgba(4, 120, 87, 0.08)',
+                    border: 'rgba(4, 120, 87, 0.25)',
+                    tagBg: '#ecfdf5',
+                    category: 'Diesel',
+                    unit: 'Gal'
+                };
+            } else {
+                return {
+                    color: '#475569',
+                    bg: 'rgba(100, 116, 139, 0.08)',
+                    border: 'rgba(100, 116, 139, 0.25)',
+                    tagBg: '#f8fafc',
+                    category: 'Combustible',
+                    unit: 'Gal'
+                };
+            }
+        }
+
         // Inicializador Visual de Desplegables Personalizados con Búsqueda y Formato Avanzado
         function initCustomDispatchSelect(selector, enableSearch = false, placeholder = "Buscar...", allowCreate = false, maxLength = null, onlyLetters = false, alphanumericOnly = false) {
             const selectEl = typeof selector === 'string' ? (document.getElementById(selector) || document.querySelector(`select[name="${selector}"]`)) : selector;
@@ -976,10 +1041,26 @@
                     const plate = selectedOpt.getAttribute('data-plate');
                     const unit = selectedOpt.getAttribute('data-unit');
                     const type = selectedOpt.getAttribute('data-type');
+                    const fType = selectedOpt.getAttribute('data-fuel-type') || '';
+                    let fBadgeTrigger = '';
+                    if (fType) {
+                        const parts = fType.split('/').map(p => p.trim()).filter(Boolean);
+                        fBadgeTrigger = parts.map(p => {
+                            const st = getFuelStyle(p);
+                            return `<span style="font-size:0.71rem; font-weight:700; background:${st.tagBg}; color:${st.color}; border:1px solid ${st.border}; padding:1px 6px; border-radius:4px; white-space:nowrap;">${p}</span>`;
+                        }).join(' ');
+                    }
                     triggerHTML = `
-                        <div style="display:flex; flex-direction:column; gap:1px; flex:1; min-width:0; overflow:hidden;">
-                            <span style="font-size:0.72rem; font-weight:700; color:#2563eb; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${area}</span>
-                            <span style="font-weight:600; font-size:0.88rem; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${plate} — ${unit} [${type}]</span>
+                        <div style="display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; overflow:hidden;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                                <span style="font-size:0.73rem; font-weight:700; color:#2563eb; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${area}</span>
+                                <span style="font-size:0.70rem; font-weight:600; background:rgba(100,116,139,0.12); color:#475569; padding:1px 6px; border-radius:4px; white-space:nowrap; flex-shrink:0;">${type}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                <span style="font-weight:700; font-size:0.90rem; color:var(--text-color, #0f172a); letter-spacing:0.3px; white-space:nowrap;">${plate}</span>
+                                ${unit ? `<span style="font-weight:600; font-size:0.82rem; color:#64748b; white-space:nowrap;">— ${unit}</span>` : ''}
+                                ${fBadgeTrigger ? `<div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">${fBadgeTrigger}</div>` : ''}
+                            </div>
                         </div>
                     `;
                 } else if (selectedOpt.hasAttribute('data-receipt') && selectedOpt.getAttribute('data-receipt') !== '') {
@@ -987,11 +1068,21 @@
                     const receipt = selectedOpt.getAttribute('data-receipt');
                     const stockFormatted = selectedOpt.getAttribute('data-stock-formatted');
                     const supplier = selectedOpt.getAttribute('data-supplier');
-                    const fTypeUnit = (fType || '').toLowerCase().includes('gnv') || (fType || '').toLowerCase().includes('gas natural') ? 'm³' : 'Gal';
+                    const st = getFuelStyle(fType);
                     triggerHTML = `
                         <div style="display:flex; flex-direction:column; gap:1px; flex:1; min-width:0; overflow:hidden;">
-                            <span style="font-size:0.72rem; font-weight:700; color:#0284c7; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${fType} — ${receipt}</span>
-                            <span style="font-weight:600; font-size:0.88rem; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">Stock: ${stockFormatted} ${fTypeUnit} (${supplier})</span>
+                            <span style="font-size:0.72rem; font-weight:700; color:${st.color}; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${fType} — ${receipt}</span>
+                            <span style="font-weight:600; font-size:0.88rem; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">Stock: ${stockFormatted} ${st.unit} (${supplier})</span>
+                        </div>
+                    `;
+                } else if (selectedOpt.hasAttribute('data-stock-formatted') && selectedOpt.getAttribute('data-stock-formatted') !== '') {
+                    const fName = selectedOpt.value;
+                    const fStock = selectedOpt.getAttribute('data-stock-formatted');
+                    const st = getFuelStyle(fName);
+                    triggerHTML = `
+                        <div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; overflow:hidden;">
+                            <span style="font-size:0.75rem; font-weight:700; color:${st.color}; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${fName}</span>
+                            <span style="font-weight:600; font-size:0.88rem; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">Stock disponible: ${fStock} ${st.unit}</span>
                         </div>
                     `;
                 } else {
@@ -1090,16 +1181,31 @@
                         const unit = opt.getAttribute('data-unit');
                         const type = opt.getAttribute('data-type');
                         const fType = opt.getAttribute('data-fuel-type') || '';
-                        const fUnit = opt.getAttribute('data-fuel-unit') || '';
-                        const fBadge = fType ? `<span style="font-size:0.75rem; background:${fType.toLowerCase().includes('gnv') ? '#dbeafe; color:#1d4ed8; border:1px solid #bfdbfe;' : '#f1f5f9; color:#334155; border:1px solid #e2e8f0;'}; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:4px;">${fType} [${fUnit}]</span>` : '';
+                        let fBadge = '';
+                        if (fType) {
+                            const parts = fType.split('/').map(p => p.trim()).filter(Boolean);
+                            fBadge = parts.map(p => {
+                                const st = getFuelStyle(p);
+                                return `<span style="font-size:0.71rem; font-weight:700; padding:1px 7px; border-radius:4px; background:${st.tagBg}; color:${st.color}; border:1px solid ${st.border}; white-space:nowrap; display:inline-flex; align-items:center;">${p}</span>`;
+                            }).join(' ');
+                        }
                         item.innerHTML = `
                             <div class="item-left" style="flex:1; min-width:0; overflow:hidden;">
-                                <div style="display:flex; flex-direction:column; gap:2px;">
-                                    <div style="font-size:0.73rem; font-weight:700; color:#2563eb; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                        ${area}
+                                <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
+                                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                                        <span style="font-size:0.72rem; font-weight:700; color:#2563eb; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                            ${area}
+                                        </span>
+                                        <span style="font-size:0.70rem; font-weight:600; background:rgba(100,116,139,0.12); color:#475569; padding:1px 6px; border-radius:4px; white-space:nowrap; flex-shrink:0;">
+                                            ${type}
+                                        </span>
                                     </div>
-                                    <div style="font-size:0.88rem; font-weight:600; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                        ${plate} <span style="color:#64748b; font-weight:500;">— ${unit}</span> <span style="font-size:0.76rem; background:#f1f5f9; padding:2px 6px; border-radius:4px; color:#475569; margin-left:4px;">[${type}]</span> ${fBadge}
+                                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                        <span style="font-size:0.90rem; font-weight:700; color:var(--text-color, #0f172a); letter-spacing:0.3px;">
+                                            ${plate}
+                                        </span>
+                                        ${unit ? `<span style="font-size:0.82rem; font-weight:600; color:#64748b; white-space:nowrap;">— ${unit}</span>` : ''}
+                                        ${fBadge ? `<div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">${fBadge}</div>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -1110,15 +1216,32 @@
                         const receipt = opt.getAttribute('data-receipt');
                         const stockFormatted = opt.getAttribute('data-stock-formatted');
                         const supplier = opt.getAttribute('data-supplier');
-                        const uLabel = (fType || '').toLowerCase().includes('gnv') ? 'm³' : 'Gal';
+                        const st = getFuelStyle(fType);
                         item.innerHTML = `
                             <div class="item-left" style="flex:1; min-width:0; overflow:hidden;">
                                 <div style="display:flex; flex-direction:column; gap:2px;">
-                                    <div style="font-size:0.73rem; font-weight:700; color:#0284c7; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    <div style="font-size:0.73rem; font-weight:700; color:${st.color}; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                                         ${fType} — ${receipt}
                                     </div>
                                     <div style="font-size:0.88rem; font-weight:600; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                        Stock: ${stockFormatted} ${uLabel} <span style="color:#64748b; font-weight:500;">(${supplier})</span>
+                                        Stock: ${stockFormatted} ${st.unit} <span style="color:#64748b; font-weight:500;">(${supplier})</span>
+                                    </div>
+                                </div>
+                            </div>
+                            ${isSelected ? `<span class="item-check" style="flex-shrink:0; margin-left:8px;">${uiIcon('check')}</span>` : ''}
+                        `;
+                    } else if (opt.hasAttribute('data-stock-formatted') && opt.getAttribute('data-stock-formatted') !== '') {
+                        const fName = opt.value;
+                        const fStock = opt.getAttribute('data-stock-formatted');
+                        const st = getFuelStyle(fName);
+                        item.innerHTML = `
+                            <div class="item-left" style="flex:1; min-width:0; overflow:hidden;">
+                                <div style="display:flex; flex-direction:column; gap:2px;">
+                                    <div style="font-size:0.88rem; font-weight:700; color:${st.color}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                        ${fName}
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:6px;">
+                                        <span style="font-size:0.8rem; font-weight:600; color:var(--text-color, #0f172a);">Stock disponible: ${fStock} ${st.unit}</span>
                                     </div>
                                 </div>
                             </div>
@@ -1242,7 +1365,7 @@
         initCustomDispatchSelect('fuel_type_select', true, 'Buscar tipo de combustible...');
         initCustomDispatchSelect('vehicle_id', true, 'Buscar por área, placa, unidad o tipo...', false, 20, false, true);
         initCustomDispatchSelect('driver_name', true, 'Buscar o escribir conductor...', true, 40, true);
-        initCustomDispatchSelect('destination', false);
+        initCustomDispatchSelect('destination', true, 'Buscar área o subgerencia...');
 
         // Auto-sugerir combustible y área cuando se selecciona un vehículo
         const vehicleSelectEl = document.getElementById('vehicle_id');
@@ -1252,13 +1375,20 @@
                 if (opt) {
                     const fuelName = opt.getAttribute('data-fuel-type');
                     if (fuelName && fuelTypeSelect) {
-                        for (let i = 0; i < fuelTypeSelect.options.length; i++) {
-                            const ftVal = (fuelTypeSelect.options[i].value || '').toLowerCase();
-                            const fNameClean = fuelName.toLowerCase();
-                            if (ftVal && (ftVal === fNameClean || fNameClean.includes(ftVal) || ftVal.includes(fNameClean))) {
-                                fuelTypeSelect.selectedIndex = i;
-                                fuelTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                                break;
+                        const vehicleFuels = fuelName.split('/').map(s => s.trim().toLowerCase()).filter(Boolean);
+                        const currentFuelVal = (fuelTypeSelect.value || '').toLowerCase();
+                        
+                        // Si el combustible ya seleccionado en el formulario coincide con alguno de los que admite el vehículo, no lo sobreescribimos
+                        const alreadyCompatible = currentFuelVal && vehicleFuels.some(vf => currentFuelVal === vf || vf.includes(currentFuelVal) || currentFuelVal.includes(vf));
+                        
+                        if (!alreadyCompatible && vehicleFuels.length > 0) {
+                            for (let i = 0; i < fuelTypeSelect.options.length; i++) {
+                                const ftVal = (fuelTypeSelect.options[i].value || '').toLowerCase();
+                                if (ftVal && vehicleFuels.some(vf => ftVal === vf || vf.includes(ftVal) || ftVal.includes(vf))) {
+                                    fuelTypeSelect.selectedIndex = i;
+                                    fuelTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                    break;
+                                }
                             }
                         }
                     }

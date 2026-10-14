@@ -454,9 +454,8 @@
             </div>
 
             <div style="flex: 1.3; min-width: 180px;">
-                <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Tipo de Combustible *</label>
-                <select name="fuel_type_id" id="select_fuel_type" required class="form-control-styled">
-                    <option value="" disabled selected hidden>Seleccione combustible...</option>
+                <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Combustible(s) Admitido(s) *</label>
+                <select name="fuel_type_ids[]" id="select_fuel_type" multiple required class="form-control-styled">
                     <?php foreach ($fuelTypes as $fuel): ?>
                         <option value="<?= $fuel['id'] ?>"><?= htmlspecialchars($fuel['name']) ?> [<?= htmlspecialchars(\App\Models\Catalog::getFuelUnit($fuel['name'])) ?>]</option>
                     <?php endforeach; ?>
@@ -650,10 +649,31 @@
                                 <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
                                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                         <span class="vehicle-plate-badge"><?= htmlspecialchars($v['plate']) ?></span>
-                                        <span class="vehicle-unit-badge"><?= htmlspecialchars($v['unit_code']) ?></span>
-                                        <span class="vehicle-fuel-badge" style="font-size: 0.76rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: <?= (str_contains(strtolower($v['fuel_type_name'] ?? ''), 'gnv')) ? '#dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe;' : '#f1f5f9; color: #334155; border: 1px solid #e2e8f0;' ?>;">
-                                            Combustible: <?= htmlspecialchars($v['fuel_type_name'] ?? 'Sin combustible') ?>
-                                        </span>
+                                        <?php if (!empty($v['unit_code'])): ?>
+                                            <span class="vehicle-unit-badge"><?= htmlspecialchars($v['unit_code']) ?></span>
+                                        <?php endif; ?>
+                                        <?php 
+                                        $rawFuels = $v['fuel_type_name'] ?? 'Sin combustible';
+                                        $fuelParts = array_filter(array_map('trim', explode('/', $rawFuels)));
+                                        if (empty($fuelParts)) $fuelParts = ['Sin combustible'];
+                                        foreach ($fuelParts as $fp):
+                                            $fLower = strtolower($fp);
+                                            if (str_contains($fLower, 'gnv') || str_contains($fLower, 'gas natural')) {
+                                                $bBg = '#dbeafe'; $bCol = '#1d4ed8'; $bBrd = '#bfdbfe';
+                                            } elseif (str_contains($fLower, 'glp')) {
+                                                $bBg = '#fef3c7'; $bCol = '#b45309'; $bBrd = '#fde68a';
+                                            } elseif (str_contains($fLower, 'gasolina') || str_contains($fLower, 'gasohol')) {
+                                                $bBg = '#ffedd5'; $bCol = '#c2410c'; $bBrd = '#fed7aa';
+                                            } elseif (str_contains($fLower, 'diesel')) {
+                                                $bBg = '#ecfdf5'; $bCol = '#047857'; $bBrd = '#a7f3d0';
+                                            } else {
+                                                $bBg = '#f1f5f9'; $bCol = '#334155'; $bBrd = '#e2e8f0';
+                                            }
+                                        ?>
+                                            <span class="vehicle-fuel-badge" style="font-size: 0.76rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: <?= $bBg ?>; color: <?= $bCol ?>; border: 1px solid <?= $bBrd ?>;">
+                                                <?= htmlspecialchars($fp) ?>
+                                            </span>
+                                        <?php endforeach; ?>
                                     </div>
                                     <div class="vehicle-meta-tag">
                                         Tipo: <?= htmlspecialchars($v['vehicle_type_name'] ?? 'Sin tipo') ?> · Área: <?= htmlspecialchars($v['area_name'] ?? 'Sin área') ?>
@@ -752,6 +772,109 @@
 
         container.appendChild(trigger);
         container.appendChild(menu);
+
+        if (selectEl.hasAttribute('multiple')) {
+            function updateMultiUI() {
+                const selectedOpts = Array.from(selectEl.selectedOptions || []);
+                if (selectedOpts.length === 0) {
+                    trigger.innerHTML = `
+                        <div class="custom-select-selected-content">
+                            <span class="custom-select-label-text" style="color: var(--text-muted, #94a3b8);">Seleccionar combustible(s)...</span>
+                        </div>
+                        <span class="custom-select-chevron">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </span>
+                    `;
+                } else if (selectedOpts.length === 1) {
+                    const cleanName = selectedOpts[0].text.replace(/\s*\[.*?\]/, '').trim();
+                    trigger.innerHTML = `
+                        <div class="custom-select-selected-content">
+                            <span class="custom-select-label-text" style="color: var(--text-color, #0f172a); font-weight: 600;">${cleanName}</span>
+                        </div>
+                        <span class="custom-select-chevron">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </span>
+                    `;
+                } else {
+                    const names = selectedOpts.map(o => o.text.replace(/\s*\[.*?\]/, '').trim());
+                    trigger.innerHTML = `
+                        <div class="custom-select-selected-content" style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
+                            <span class="custom-select-label-text" style="color: #2563eb; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${names.join(' + ')}</span>
+                            <span style="font-size: 0.73rem; background: #dbeafe; color: #1d4ed8; padding: 2px 6px; border-radius: 4px; font-weight: 800; flex-shrink: 0;">${selectedOpts.length} sel.</span>
+                        </div>
+                        <span class="custom-select-chevron">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </span>
+                    `;
+                }
+
+                menu.innerHTML = '';
+                Array.from(selectEl.options).forEach((opt, idx) => {
+                    if (opt.value === '' || opt.disabled) return;
+                    const isChecked = opt.selected;
+
+                    const item = document.createElement('div');
+                    item.className = `custom-select-item ${isChecked ? 'selected' : ''}`;
+                    item.style.cssText = 'display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px 14px; user-select: none;';
+                    item.innerHTML = `
+                        <input type="checkbox" style="accent-color: #2563eb; width: 16px; height: 16px; cursor: pointer; pointer-events: none;" ${isChecked ? 'checked' : ''}>
+                        <span class="item-title" style="flex: 1; font-size: 0.88rem; font-weight: 600; color: ${isChecked ? '#2563eb' : 'var(--text-color, #0f172a)'};">${opt.text}</span>
+                    `;
+
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        opt.selected = !opt.selected;
+                        selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                        updateMultiUI();
+                    });
+                    menu.appendChild(item);
+                });
+
+                // Barra de cierre al pie
+                const footer = document.createElement('div');
+                footer.style.cssText = 'padding: 8px 12px; border-top: 1px solid var(--border-color, #e2e8f0); display: flex; justify-content: space-between; align-items: center; background: var(--bg-hover, #f8fafc);';
+                footer.innerHTML = `
+                    <span style="font-size: 0.78rem; color: #64748b; font-weight: 600;">${selectedOpts.length} combustible(s)</span>
+                    <button type="button" style="background: #2563eb; color: #ffffff; border: none; border-radius: 6px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Listo</button>
+                `;
+                footer.querySelector('button').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    container.classList.remove('open');
+                });
+                menu.appendChild(footer);
+            }
+
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.custom-select-container.open').forEach(c => {
+                    if (c !== container) c.classList.remove('open');
+                });
+                container.classList.toggle('open');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!container.contains(e.target)) {
+                    container.classList.remove('open');
+                }
+            });
+
+            selectEl.addEventListener('change', () => {
+                updateMultiUI();
+                const selectedOpts = Array.from(selectEl.selectedOptions || []);
+                if (selectedOpts.length > 0) {
+                    const triggerEl = container.querySelector('.custom-select-trigger');
+                    if (triggerEl) {
+                        triggerEl.style.borderColor = '';
+                        triggerEl.style.boxShadow = '';
+                    }
+                    const vBanner = document.getElementById('vehicleFormErrorBanner');
+                    if (vBanner) vBanner.style.display = 'none';
+                }
+            });
+
+            updateMultiUI();
+            return;
+        }
 
         function updateUI() {
             const selectedOpt = selectEl.options[selectEl.selectedIndex] || selectEl.options[0];
@@ -918,8 +1041,9 @@
                     }
                 }
 
-                // 5. Tipo de Combustible
-                if (!fuelTypeSelect || !fuelTypeSelect.value) {
+                // 5. Tipo(s) de Combustible
+                const selectedFuels = Array.from(fuelTypeSelect ? fuelTypeSelect.selectedOptions : []);
+                if (!fuelTypeSelect || selectedFuels.length === 0) {
                     isValid = false;
                     if (fuelTypeSelect) {
                         const container = fuelTypeSelect.closest('.custom-select-container');
@@ -936,7 +1060,7 @@
                     e.preventDefault();
                     if (errorBanner) {
                         errorBanner.style.display = 'block';
-                        errorBanner.innerHTML = `${uiIcon('alert')} <strong>Campos obligatorios requeridos:</strong> Debes completar Código de Unidad, Placa, Tipo de Vehículo, Área Asignada y Tipo de Combustible.`;
+                        errorBanner.innerHTML = `${uiIcon('alert')} <strong>Campos obligatorios requeridos:</strong> Debes completar Código de Unidad, Placa, Tipo de Vehículo, Área Asignada y al menos un Tipo de Combustible.`;
                     }
                     if (firstInvalidEl) {
                         firstInvalidEl.focus();

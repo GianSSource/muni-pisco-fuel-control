@@ -189,15 +189,13 @@ Esto reducirá los tiempos de búsqueda de varios segundos a tan solo milisegund
 
 ## Estado de Funcionalidades: Selector Múltiple de Combustible en Unidades
 
-### Estado Actual: **INHABILITADO (Pendiente de Activación)**
+### Estado Actual: **HABILITADO / IMPLEMENTADO**
 
-> **Resumen:** Se evaluó y documentó la funcionalidad para permitir que el selector **"Tipo de Combustible"** en el formulario de **Registrar Vehículo / Unidad** (`Catálogos`) admita selección múltiple (para unidades bi-combustibles o híbridas, tales como *Gasolina + GNV* o *Gasolina + GLP*). Por requerimiento operativo actual, **esta funcionalidad se mantiene inhabilitada**, conservando el selector en modo de selección única (`1 vehículo = 1 tipo de combustible principal`).
+> **Resumen:** Se encuentra habilitada la funcionalidad para que el selector **"Combustible(s) Admitido(s)"** en el formulario de **Registrar Vehículo / Unidad** (`Catálogos`) admita selección múltiple (para unidades bi-combustibles o híbridas, tales como *Gasolina + GNV* o *Gasolina + GLP*). La arquitectura opera con la tabla puente `vehicle_fuel_types` y conserva retrocompatibilidad total con `vehicles.fuel_type_id`.
 
 ---
 
-### Análisis Técnico y Arquitectura de la Solución (Para Activación Futura)
-
-Si más adelante se decide habilitar el registro de unidades bi-combustibles o multi-combustibles, se debe aplicar la siguiente implementación modular:
+### Arquitectura Técnica Implementada:
 
 #### 1. Base de Datos (Relación Muchos a Muchos)
 Actualmente, la tabla `vehicles` cuenta con una columna única `fuel_type_id INT UNSIGNED NULL`. Para soportar múltiples combustibles sin romper compatibilidad con instalaciones anteriores:
