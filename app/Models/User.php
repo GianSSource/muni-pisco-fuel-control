@@ -29,33 +29,9 @@ final class User
                 'password_hash' => $hash,
                 'role' => $role,
             ]);
-        } catch (Throwable $e1) {
-            // Intentar inserciÃ³n en users sin columna role si fallara por esquema antiguo
-            try {
-                $db = Database::getConnection();
-                $sql = 'INSERT INTO users (name, email, password_hash) VALUES (:name, :email, :password_hash)';
-                $stmt = $db->prepare($sql);
-                return $stmt->execute([
-                    'name' => $name,
-                    'email' => $email,
-                    'password_hash' => $hash,
-                ]);
-            } catch (Throwable $e2) {
-                // Fallback secundario seguro a tabla 'usuarios'
-                try {
-                    $db = Database::getConnection();
-                    $sql = 'INSERT INTO usuarios (nombre, email, password_hash, rol, activo) VALUES (:name, :email, :password_hash, :role, 1)';
-                    $stmt = $db->prepare($sql);
-                    return $stmt->execute([
-                        'name' => $name,
-                        'email' => $email,
-                        'password_hash' => $hash,
-                        'role' => $role,
-                    ]);
-                } catch (Throwable $e3) {
-                    return false;
-                }
-            }
+        } catch (Throwable $e) {
+            error_log('User::create: ' . $e->getMessage());
+            return false;
         }
     }
 
@@ -67,22 +43,9 @@ final class User
             $stmt->execute(['email' => $email]);
             $user = $stmt->fetch();
 
-            if ($user) {
-                return $user;
-            }
-        } catch (\Throwable $e) {
-            error_log($e->getMessage());
-            // Fallback
-        }
-
-        try {
-            $db = Database::getConnection();
-            $stmt = $db->prepare('SELECT id, nombre AS name, email, password_hash, COALESCE(rol, "operador") AS role FROM usuarios WHERE email = :email LIMIT 1');
-            $stmt->execute(['email' => $email]);
-            $user = $stmt->fetch();
-
             return $user ?: null;
         } catch (Throwable $e) {
+            error_log('User::findByEmail: ' . $e->getMessage());
             return null;
         }
     }
@@ -161,12 +124,8 @@ final class User
             $stmt = Database::getConnection()->prepare('DELETE FROM users WHERE id = :id');
             return $stmt->execute(['id' => $id]);
         } catch (Throwable $e) {
-            try {
-                $stmt = Database::getConnection()->prepare('DELETE FROM usuarios WHERE id = :id');
-                return $stmt->execute(['id' => $id]);
-            } catch (Throwable $e2) {
-                return false;
-            }
+            error_log('User::delete: ' . $e->getMessage());
+            return false;
         }
     }
 
@@ -207,23 +166,9 @@ final class User
                 $stmt->execute(['email' => trim((string) $idOrEmail)]);
             }
             $row = $stmt->fetch();
-            if ($row) {
-                return $row;
-            }
-        } catch (\Throwable $e) {}
-
-        try {
-            $db = Database::getConnection();
-            if (is_int($idOrEmail) || ctype_digit((string) $idOrEmail)) {
-                $stmt = $db->prepare('SELECT id, nombre AS name, email, password_hash, COALESCE(rol, "operador") AS role, 1 AS is_active FROM usuarios WHERE id = :id LIMIT 1');
-                $stmt->execute(['id' => (int) $idOrEmail]);
-            } else {
-                $stmt = $db->prepare('SELECT id, nombre AS name, email, password_hash, COALESCE(rol, "operador") AS role, 1 AS is_active FROM usuarios WHERE email = :email LIMIT 1');
-                $stmt->execute(['email' => trim((string) $idOrEmail)]);
-            }
-            $row = $stmt->fetch();
             return $row ?: null;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            error_log('User::findWithPassword: ' . $e->getMessage());
             return null;
         }
     }

@@ -98,9 +98,11 @@ final class ReportController extends Controller
         $deliveries = $fuelModel->getFilteredDeliveries($startDate, $endDate, $vehicle, $driver, $area);
         $deliveries = array_reverse($deliveries);
 
+        $userName = $_SESSION['user']['name'] ?? 'Supervisor';
+
         $pdf = new PdfReport();
         $pdf->title('REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE');
-        $pdf->subtitle('Fecha de impresion: ' . date('d/m/Y H:i'));
+        $pdf->subtitle('Fecha de impresión: ' . date('d/m/Y H:i') . ' | Generado por: ' . $userName);
 
         $filterText = 'Filtros: ';
         $filterText .= "Desde: " . date('d/m/Y', strtotime($startDate)) . " ";
@@ -175,6 +177,8 @@ final class ReportController extends Controller
             $pdf->summaryBox('TOTAL DESPACHADO: ' . number_format($totalLiquido, 2) . ' GALONES (' . count($deliveries) . ' ENTREGAS)');
         }
 
+        $this->logExport('PDF', $filterText);
+
         $pdf->output('reporte-entregas-' . date('Ymd-His') . '.pdf');
     }
 
@@ -225,11 +229,13 @@ final class ReportController extends Controller
             $filterDesc .= " | Conductor: $driver";
         }
         
+        $userName = $_SESSION['user']['name'] ?? 'Supervisor';
+
         $sheet->setCellValue('A1', 'REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE');
         $sheet->mergeCells('A1:H1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0F172A'));
         
-        $sheet->setCellValue('A2', 'Fecha de exportación: ' . date('d/m/Y H:i:s') . ' | ' . $filterDesc);
+        $sheet->setCellValue('A2', 'Fecha de exportación: ' . date('d/m/Y H:i:s') . ' | Generado por: ' . $userName . ' | ' . $filterDesc);
         $sheet->mergeCells('A2:H2');
         $sheet->getStyle('A2')->getFont()->setSize(10)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF64748B'));
 
@@ -357,6 +363,8 @@ final class ReportController extends Controller
         header('Content-Disposition: attachment;filename="' . $filename . '"');
         header('Cache-Control: max-age=0');
         
+        $this->logExport('EXCEL', $filterDesc);
+
         $writer = new Xlsx($spreadsheet);
         $writer->save('php://output');
         exit;
@@ -414,11 +422,13 @@ final class ReportController extends Controller
         // Para que Excel lea correctamente los caracteres especiales (UTF-8 BOM)
         echo "\xEF\xBB\xBF";
 
+        $userName = $_SESSION['user']['name'] ?? 'Supervisor';
+
         $output = fopen('php://output', 'w');
         
         // Escribir título y filtros
         fputcsv($output, ['REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE'], ';');
-        fputcsv($output, ['Fecha de exportación: ' . date('d/m/Y H:i:s') . ' | ' . $filterDesc], ';');
+        fputcsv($output, ['Fecha de exportación: ' . date('d/m/Y H:i:s') . ' | Generado por: ' . $userName . ' | ' . $filterDesc], ';');
         fputcsv($output, [], ';'); // Fila vacía
 
         // Cabeceras — columna UNIDAD separada para claridad
@@ -470,6 +480,27 @@ final class ReportController extends Controller
         }
 
         fclose($output);
+        $this->logExport('CSV', $filterDesc);
         exit;
+    }
+
+    /**
+     * Registra en la base de datos la exportación del reporte con usuario, formato, filtros e IP.
+     */
+    private function logExport(string $format, string $details): void
+    {
+        try {
+            $db = \App\Core\Database::getConnection();
+            $stmt = $db->prepare('INSERT INTO audit_report_logs (user_id, user_name, format, filters_applied, ip_address, created_at) VALUES (:uid, :uname, :fmt, :details, :ip, NOW())');
+            $stmt->execute([
+                'uid'     => $_SESSION['user']['id'] ?? null,
+                'uname'   => $_SESSION['user']['name'] ?? 'Supervisor',
+                'fmt'     => $format,
+                'details' => mb_substr($details, 0, 255),
+                'ip'      => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
+            ]);
+        } catch (\Throwable $e) {
+            error_log('Audit log error: ' . $e->getMessage());
+        }
     }
 }

@@ -907,7 +907,7 @@
             .then(res => {
                 if (res.status === 'success') {
                     currentPage = res.page;
-                    renderTableResults(res.data, res.count, res.total_gallons);
+                    renderTableResults(res);
                     renderPagination(res.page, res.totalPages);
                 }
             })
@@ -947,18 +947,36 @@
         }
     }
 
-    function renderTableResults(deliveries, count, totalGallons) {
-        document.getElementById("resCount").textContent = count;
+    function renderTableResults(res) {
+        const deliveries = res.data || [];
+        const count = res.count ?? 0;
+        const totalGallons = res.total_gallons ?? '0.00';
+        const liquidGallons = res.liquid_gallons ?? totalGallons;
+        const gnvTotal = res.gnv_total ?? '0.00';
+        const liquidCount = res.liquid_count ?? count;
+
+        const countEl = document.getElementById("resCount");
+        if (countEl) countEl.textContent = count;
+
         const fuelTypeFilter = (document.getElementById("filterFuelType")?.value || '').trim();
         const isGnvFilter = fuelTypeFilter.toUpperCase().includes('GNV') || fuelTypeFilter.toUpperCase().includes('GAS NATURAL');
-        const filterUnitSuffix = isGnvFilter ? ' m³' : ' Gal';
-        if (document.getElementById("resTotalLabel")) {
-            document.getElementById("resTotalLabel").textContent = isGnvFilter ? 'Total Volumen Filtrado' : 'Total Galones Filtrados';
+        const filterUnitSuffix = isGnvFilter ? 'm³' : 'Gal';
+
+        const totalGalEl = document.getElementById("resTotalGallons");
+        if (totalGalEl) {
+            totalGalEl.innerHTML = `${escapeHtml(String(liquidGallons))} <span style="font-size:1rem; font-weight:600;">${filterUnitSuffix}</span>`;
         }
-        document.getElementById("resTotalGallons").textContent = `${totalGallons}${filterUnitSuffix}`;
+
+        const totalGnvEl = document.getElementById("resTotalGnv");
+        if (totalGnvEl) {
+            totalGnvEl.innerHTML = `${escapeHtml(String(gnvTotal))} <span style="font-size:1rem; font-weight:600;">m³</span>`;
+        }
         
-        const avg = count > 0 ? (parseFloat(totalGallons.replace(/,/g, '')) / count).toFixed(2) : '0.00';
-        document.getElementById("resAvgGallons").textContent = `${avg}${filterUnitSuffix}`;
+        const avg = liquidCount > 0 ? (parseFloat(String(liquidGallons).replace(/,/g, '')) / liquidCount).toFixed(2) : '0.00';
+        const avgEl = document.getElementById("resAvgGallons");
+        if (avgEl) {
+            avgEl.innerHTML = `${avg} <span style="font-size:1rem; font-weight:600;">${filterUnitSuffix}</span>`;
+        }
 
         const tbody = document.getElementById("deliveriesTableBody");
         tbody.innerHTML = "";
@@ -981,11 +999,14 @@
 
             const isGnv = (d.fuel_type || '').toUpperCase().includes('GNV') || (d.fuel_type || '').toUpperCase().includes('GAS NATURAL');
             const unitBadge = isGnv ? 'm³' : 'Gal';
-            const gallonsFormatted = parseFloat(d.gallons).toFixed(2);
-            const dateObj = new Date(String(d.created_at || '').replace(' ', 'T'));
-            const dateStr = !isNaN(dateObj) 
-                ? `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`
-                : d.created_at;
+            const gallonsFormatted = parseFloat(d.gallons || 0).toFixed(2);
+            
+            // Formato de fecha consistente DD/MM/YYYY HH:mm sin desfases ni saltos
+            let dateStr = d.created_at || '';
+            const matchDate = String(d.created_at || '').match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+            if (matchDate) {
+                dateStr = `${matchDate[3]}/${matchDate[2]}/${matchDate[1]} ${matchDate[4]}:${matchDate[5]}`;
+            }
 
             let obsHtml = `<span style="font-size: 0.85rem; color: var(--muted);">-</span>`;
             const obsText = (d.notes || '').trim();
@@ -999,7 +1020,7 @@
 
             tr.innerHTML = `
                 <td><span class="receipt-tag">${escapeHtml(d.receipt_number)}</span></td>
-                <td><span class="text-muted">${escapeHtml(dateStr)}</span></td>
+                <td><span class="text-muted" style="white-space: nowrap;">${escapeHtml(dateStr)}</span></td>
                 <td><strong>${escapeHtml(d.vehicle_plate)}</strong></td>
                 <td>${escapeHtml(d.driver_name)}</td>
                 <td><span class="fuel-type-pill">${escapeHtml(d.fuel_type || 'Diesel B5')}</span></td>
@@ -1007,11 +1028,25 @@
                 <td>${obsHtml}</td>
                 <td><span class="quantity-highlight">${gallonsFormatted} ${unitBadge}</span></td>
 
-                <td>
-                    <button type="button" class="button secondary small-btn" onclick="event.stopPropagation(); openDetailModal(${JSON.stringify(d).replace(/"/g, '&quot;')})">Ver Detalle</button>
-                    <a href="<?= BASE_URL ?>despachos/imprimir?id=${d.id}" target="_blank" onclick="event.stopPropagation();" style="padding: 4px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-left: 6px;">
-                        ${uiIcon('print')} Imprimir
-                    </a>
+                <td style="white-space: nowrap;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <button type="button"
+                            style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; background: transparent; border: 1px solid var(--line, #334155); color: var(--ink); border-radius: 7px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s;"
+                            onmouseover="this.style.background='var(--hover-bg, rgba(255,255,255,.07))'"
+                            onmouseout="this.style.background='transparent'"
+                            onclick="event.stopPropagation(); openDetailModal(${JSON.stringify(d).replace(/"/g, '&quot;')})">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            Ver Detalle
+                        </button>
+                        <a href="<?= BASE_URL ?>despachos/imprimir?id=${d.id}" target="_blank"
+                            onclick="event.stopPropagation();"
+                            title="Imprimir vale"
+                            style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #2563eb; color: #ffffff; border-radius: 7px; text-decoration: none; flex-shrink: 0; transition: background .15s;"
+                            onmouseover="this.style.background='#1d4ed8'"
+                            onmouseout="this.style.background='#2563eb'">
+                            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        </a>
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);

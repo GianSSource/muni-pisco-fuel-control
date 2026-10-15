@@ -130,6 +130,7 @@
             opacity: 0;
             transform: translateY(-6px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -404,7 +405,9 @@
     <section class="page-head"
         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
         <div>
-            <h1 class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-download"></use></svg>Buscador e Historial de Ingresos de Combustible</h1>
+            <h1 class="icon-with-text"><svg class="ui-icon">
+                    <use href="<?= BASE_URL ?>assets/icons.svg#icon-download"></use>
+                </svg>Buscador e Historial de Ingresos de Combustible</h1>
             <p class="subtitle" style="color: var(--text-muted, #64748b);">Gestión y control de abastecimientos y
                 recargas de inventario municipal</p>
         </div>
@@ -415,14 +418,16 @@
                 </svg>
                 Registrar Nuevo Ingreso
             </a>
-            <a class="btn-secondary-dark" href="<?= BASE_URL ?>dashboard">← Volver al Dashboard</a>
+
         </div>
     </section>
 
     <?php if (!empty($success)): ?>
         <div
             style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-weight: 600;">
-            <span class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-check"></use></svg><?= htmlspecialchars($success) ?></span>
+            <span class="icon-with-text"><svg class="ui-icon">
+                    <use href="<?= BASE_URL ?>assets/icons.svg#icon-check"></use>
+                </svg><?= htmlspecialchars($success) ?></span>
         </div>
     <?php endif; ?>
 
@@ -490,89 +495,111 @@
     ?>
     <section class="stats-grid"
         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; position: relative; z-index: 50;">
-        
+
         <?php if ($hasLiquid || !$hasGnv): ?>
-        <!-- Card 1: Total Líquidos Ingresados con Dropdown de Desglose Histórico -->
-        <div class="stat-card" style="border-left: 3px solid #2563eb !important; position: relative;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
-                <span class="stat-label"><?= $hasGnv ? 'Total Líquidos Ingresados' : 'Total Histórico Ingresado' ?></span>
-                
-                <?php if (!empty($liquidBreakdown)): ?>
-                <div style="position: relative;">
-                    <button type="button" id="liquidDropdownBtn" class="stat-dropdown-trigger" onclick="toggleLiquidDropdown(event)" title="Ver histórico desglosado por combustible">
-                        <span>Por tipo</span>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s;"><path d="m6 9 6 6 6-6"/></svg>
-                    </button>
+            <!-- Card 1: Total Líquidos Ingresados con Dropdown de Desglose Histórico -->
+            <div class="stat-card" style="border-left: 3px solid #2563eb !important; position: relative;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+                    <span
+                        class="stat-label"><?= $hasGnv ? 'Total Líquidos Ingresados' : 'Total Histórico Ingresado' ?></span>
 
-                    <!-- Menú Desplegable Flotante -->
-                    <div id="liquidDropdownMenu" class="stat-dropdown-menu" style="display: none;" onclick="event.stopPropagation()">
-                        <div class="stat-dropdown-header">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <span style="font-weight: 700; font-size: 0.82rem; color: var(--text-color, #0f172a);">Histórico por Combustible</span>
-                                <span style="font-size: 0.72rem; color: var(--text-muted, #64748b); font-weight: 600;"><?= count($liquidBreakdown) ?> tipos</span>
+                    <?php if (!empty($liquidBreakdown)): ?>
+                        <div style="position: relative;">
+                            <button type="button" id="liquidDropdownBtn" class="stat-dropdown-trigger"
+                                onclick="toggleLiquidDropdown(event)" title="Ver histórico desglosado por combustible">
+                                <span>Por tipo</span>
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                    style="transition: transform 0.2s;">
+                                    <path d="m6 9 6 6 6-6" />
+                                </svg>
+                            </button>
+
+                            <!-- Menú Desplegable Flotante -->
+                            <div id="liquidDropdownMenu" class="stat-dropdown-menu" style="display: none;"
+                                onclick="event.stopPropagation()">
+                                <div class="stat-dropdown-header">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <span
+                                            style="font-weight: 700; font-size: 0.82rem; color: var(--text-color, #0f172a);">Histórico
+                                            por Combustible</span>
+                                        <span
+                                            style="font-size: 0.72rem; color: var(--text-muted, #64748b); font-weight: 600;"><?= count($liquidBreakdown) ?>
+                                            tipos</span>
+                                    </div>
+                                </div>
+                                <div class="stat-dropdown-body">
+                                    <?php foreach ($liquidBreakdown as $bName => $bData): ?>
+                                        <div class="stat-dropdown-item"
+                                            style="display: flex; align-items: center; justify-content: space-between; padding: 10px 4px;">
+                                            <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-color, #0f172a);">
+                                                <?= htmlspecialchars($bName) ?>
+                                            </span>
+                                            <span style="font-size: 0.88rem; font-weight: 800; color: #2563eb;">
+                                                <?= number_format($bData['entered'], 2) ?> Gal
+                                            </span>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                                <div class="stat-dropdown-footer">
+                                    <span>Total acumulado: <strong
+                                            style="color: #2563eb;"><?= number_format($totalLiquidGallons, 2) ?>
+                                            Gal</strong></span>
+                                </div>
                             </div>
                         </div>
-                        <div class="stat-dropdown-body">
-                            <?php foreach ($liquidBreakdown as $bName => $bData): ?>
-                            <div class="stat-dropdown-item" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 4px;">
-                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-color, #0f172a);">
-                                    <?= htmlspecialchars($bName) ?>
-                                </span>
-                                <span style="font-size: 0.88rem; font-weight: 800; color: #2563eb;">
-                                    <?= number_format($bData['entered'], 2) ?> Gal
-                                </span>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <div class="stat-dropdown-footer">
-                            <span>Total acumulado: <strong style="color: #2563eb;"><?= number_format($totalLiquidGallons, 2) ?> Gal</strong></span>
-                        </div>
-                    </div>
+                    <?php else: ?>
+                        <span
+                            style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(37, 99, 235, 0.12); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.25);">Gal</span>
+                    <?php endif; ?>
                 </div>
-                <?php else: ?>
-                <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(37, 99, 235, 0.12); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.25);">Gal</span>
-                <?php endif; ?>
+
+                <div class="stat-value" style="color: #2563eb;"><?= number_format($totalLiquidGallons, 2) ?> Gal</div>
+
+                <div style="font-size: 0.8rem; color: var(--text-muted, #64748b); font-weight: 600; margin-top: 6px;">
+                    <?= count($liquidBreakdown) ?> tipo(s) de combustible
+                </div>
             </div>
 
-            <div class="stat-value" style="color: #2563eb;"><?= number_format($totalLiquidGallons, 2) ?> Gal</div>
-            
-            <div style="font-size: 0.8rem; color: var(--text-muted, #64748b); font-weight: 600; margin-top: 6px;">
-                <?= count($liquidBreakdown) ?> tipo(s) de combustible
+            <!-- Card 2: Stock Remanente (Líquidos) -->
+            <div class="stat-card" style="border-left: 3px solid #10b981 !important;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+                    <span
+                        class="stat-label"><?= $hasGnv ? 'Stock Remanente (Líquidos)' : 'Stock Remanente en Lotes' ?></span>
+                    <span
+                        style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25);">Disponible</span>
+                </div>
+                <div class="stat-value" style="color: #10b981;"><?= number_format($totalLiquidRemaining, 2) ?> Gal</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted, #64748b); font-weight: 600; margin-top: 6px;">
+                    Saldo en <strong style="color: #10b981;"><?= $activeLiquidLots ?> lote(s)</strong> activos
+                </div>
             </div>
-        </div>
-
-        <!-- Card 2: Stock Remanente (Líquidos) -->
-        <div class="stat-card" style="border-left: 3px solid #10b981 !important;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
-                <span class="stat-label"><?= $hasGnv ? 'Stock Remanente (Líquidos)' : 'Stock Remanente en Lotes' ?></span>
-                <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25);">Disponible</span>
-            </div>
-            <div class="stat-value" style="color: #10b981;"><?= number_format($totalLiquidRemaining, 2) ?> Gal</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted, #64748b); font-weight: 600; margin-top: 6px;">
-                Saldo en <strong style="color: #10b981;"><?= $activeLiquidLots ?> lote(s)</strong> activos
-            </div>
-        </div>
         <?php endif; ?>
 
         <!-- Card 3: Total GNV Ingresado (Condicional si hay GNV) -->
         <?php if ($hasGnv && $totalGnvQuantity > 0): ?>
-        <div class="stat-card" style="border-left: 3px solid #0284c7 !important;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
-                <span class="stat-label">Total GNV Ingresado</span>
-                <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(2, 132, 199, 0.12); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.25);">m³</span>
+            <div class="stat-card" style="border-left: 3px solid #0284c7 !important;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+                    <span class="stat-label">Total GNV Ingresado</span>
+                    <span
+                        style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(2, 132, 199, 0.12); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.25);">m³</span>
+                </div>
+                <div class="stat-value" style="color: #0284c7;"><?= number_format($totalGnvQuantity, 2) ?> m³</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted, #64748b); font-weight: 600; margin-top: 6px;">
+                    Remanente: <strong
+                        style="color: <?= $totalGnvRemaining > 0 ? '#0284c7' : '#ef4444' ?>;"><?= number_format($totalGnvRemaining, 2) ?>
+                        m³</strong>
+                </div>
             </div>
-            <div class="stat-value" style="color: #0284c7;"><?= number_format($totalGnvQuantity, 2) ?> m³</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted, #64748b); font-weight: 600; margin-top: 6px;">
-                Remanente: <strong style="color: <?= $totalGnvRemaining > 0 ? '#0284c7' : '#ef4444' ?>;"><?= number_format($totalGnvRemaining, 2) ?> m³</strong>
-            </div>
-        </div>
         <?php endif; ?>
 
         <!-- Card 4: Lotes con Stock Activo -->
         <div class="stat-card" style="border-left: 3px solid #8b5cf6 !important;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
                 <span class="stat-label">Lotes con Stock Activo</span>
-                <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(139, 92, 246, 0.12); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.25);">En uso</span>
+                <span
+                    style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(139, 92, 246, 0.12); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.25);">En
+                    uso</span>
             </div>
             <div class="stat-value" style="color: #8b5cf6;"><?= $activeLots ?> Lotes</div>
             <div style="font-size: 0.8rem; color: var(--text-muted, #64748b); font-weight: 600; margin-top: 6px;">
@@ -582,42 +609,52 @@
     </section>
 
     <!-- Formulario / Panel de Búsqueda y Filtros Multicriterio -->
-    <section class="search-filter-card" style="margin-bottom: 24px; background: var(--card-bg, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 16px;">
+    <section class="search-filter-card"
+        style="margin-bottom: 24px; background: var(--card-bg, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 16px;">
         <!-- Barra de Búsqueda Principal General -->
         <div class="main-search-bar" style="display: flex; gap: 12px; align-items: center;">
-            <div class="search-input-group" style="position: relative; flex: 1; display: flex; align-items: center; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; background: var(--input-bg, #ffffff); transition: border-color 0.2s;">
-                <svg class="search-icon" style="position: absolute; left: 14px; color: var(--text-muted, #64748b); pointer-events: none;" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input 
-                    type="text" 
-                    id="incomeSearchInput" 
-                    class="search-input-dark" 
+            <div class="search-input-group"
+                style="position: relative; flex: 1; display: flex; align-items: center; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; background: var(--input-bg, #ffffff); transition: border-color 0.2s;">
+                <svg class="search-icon"
+                    style="position: absolute; left: 14px; color: var(--text-muted, #64748b); pointer-events: none;"
+                    width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="incomeSearchInput" class="search-input-dark"
                     style="border: none; background: transparent; flex: 1; padding: 12px 10px 12px 42px; outline: none; color: var(--text-color, #0f172a);"
-                    placeholder="Buscar por N° Recibo, Proveedor, Tipo de Combustible, Fecha..." 
-                    autocomplete="off"
-                    maxlength="60"
-                    oninput="this.value = this.value.replace(/[^a-zA-Z0-9\-_/ñÑáéíóúÁÉÍÓÚ\s.,]/g, '')"
-                >
-                <button type="button" class="clear-search-btn" id="clearGlobalBtn" style="display:none; position: absolute; right: 10px; background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+                    placeholder="Buscar por N° Recibo, Proveedor, Tipo de Combustible, Fecha..." autocomplete="off"
+                    maxlength="60" oninput="this.value = this.value.replace(/[^a-zA-Z0-9\-_/ñÑáéíóúÁÉÍÓÚ\s.,]/g, '')">
+                <button type="button" class="clear-search-btn" id="clearGlobalBtn"
+                    style="display:none; position: absolute; right: 10px; background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
             </div>
 
             <button type="button" id="toggleFiltersBtn" class="button secondary icon-btn">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
                 Filtros Avanzados
             </button>
         </div>
 
         <!-- Panel Plegable de Filtros por Características Específicas -->
-        <div id="advancedFiltersPanel" class="advanced-filters-panel" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color, #e2e8f0);">
-            <div class="filters-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+        <div id="advancedFiltersPanel" class="advanced-filters-panel"
+            style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color, #e2e8f0);">
+            <div class="filters-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
                 <!-- Proveedor -->
                 <div class="filter-field">
-                    <label for="filterSupplier" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Proveedor / Grifo</label>
-                    <select id="filterSupplier" class="filter-select" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                    <label for="filterSupplier"
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Proveedor
+                        / Grifo</label>
+                    <select id="filterSupplier" class="filter-select"
+                        style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
                         <option value="">-- Todos --</option>
-                        <?php 
+                        <?php
                         $suppliers = [];
                         if (!empty($incomes)) {
-                            $suppliers = array_unique(array_map(function($i){ return $i['supplier']; }, $incomes));
+                            $suppliers = array_unique(array_map(function ($i) {
+                                return $i['supplier']; }, $incomes));
                             sort($suppliers);
                         }
                         foreach ($suppliers as $s): ?>
@@ -628,13 +665,17 @@
 
                 <!-- Tipo de Combustible -->
                 <div class="filter-field">
-                    <label for="filterFuelType" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Tipo Combustible</label>
-                    <select id="filterFuelType" class="filter-select" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                    <label for="filterFuelType"
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Tipo
+                        Combustible</label>
+                    <select id="filterFuelType" class="filter-select"
+                        style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
                         <option value="">-- Todos --</option>
-                        <?php 
+                        <?php
                         $fuels = [];
                         if (!empty($incomes)) {
-                            $fuels = array_unique(array_map(function($i){ return $i['fuel_type'] ?? 'Diesel B5 S-50'; }, $incomes));
+                            $fuels = array_unique(array_map(function ($i) {
+                                return $i['fuel_type'] ?? 'Diesel B5 S-50'; }, $incomes));
                             sort($fuels);
                         }
                         foreach ($fuels as $f): ?>
@@ -642,11 +683,14 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
-                
+
                 <!-- Estado -->
                 <div class="filter-field">
-                    <label for="filterStatus" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Estado del Lote</label>
-                    <select id="filterStatus" class="filter-select" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                    <label for="filterStatus"
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Estado
+                        del Lote</label>
+                    <select id="filterStatus" class="filter-select"
+                        style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
                         <option value="">-- Todos --</option>
                         <option value="Disponible">Disponible (con stock)</option>
                         <option value="Agotado">Agotado (sin stock)</option>
@@ -655,29 +699,51 @@
 
                 <!-- Fecha Desde -->
                 <div class="filter-field">
-                    <label for="filterDateFrom" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Fecha Desde</label>
+                    <label for="filterDateFrom"
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Fecha
+                        Desde</label>
                     <div style="position: relative;">
-                        <input type="date" id="filterDateFrom" class="filter-input" style="width: 100%; height: 38px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; padding: 0 36px 0 12px;">
-                        <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--text-muted,#64748b);">
-                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <input type="date" id="filterDateFrom" class="filter-input"
+                            style="width: 100%; height: 38px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; padding: 0 36px 0 12px;">
+                        <span
+                            style="position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--text-muted,#64748b);">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                                <line x1="8" y1="2" x2="8" y2="6" />
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
                         </span>
                     </div>
                 </div>
 
                 <!-- Fecha Hasta -->
                 <div class="filter-field">
-                    <label for="filterDateTo" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Fecha Hasta</label>
+                    <label for="filterDateTo"
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Fecha
+                        Hasta</label>
                     <div style="position: relative;">
-                        <input type="date" id="filterDateTo" class="filter-input" style="width: 100%; height: 38px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; padding: 0 36px 0 12px;">
-                        <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--text-muted,#64748b);">
-                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <input type="date" id="filterDateTo" class="filter-input"
+                            style="width: 100%; height: 38px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; padding: 0 36px 0 12px;">
+                        <span
+                            style="position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--text-muted,#64748b);">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                                <line x1="8" y1="2" x2="8" y2="6" />
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
                         </span>
                     </div>
                 </div>
             </div>
 
             <div class="filters-actions" style="margin-top: 16px; text-align: right;">
-                <button type="button" class="button secondary small-btn" id="clearAllFiltersBtn" style="padding: 6px 12px; border-radius: 6px; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer;">Limpiar Todos los Filtros</button>
+                <button type="button" class="button secondary small-btn" id="clearAllFiltersBtn"
+                    style="padding: 6px 12px; border-radius: 6px; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer;">Limpiar
+                    Todos los Filtros</button>
             </div>
         </div>
     </section>
@@ -727,11 +793,10 @@
                             $rawFuel = strtolower(trim($inc['fuel_type'] ?? 'Diesel B5 S-50'));
                             $rawStatus = $isAvailable ? 'disponible' : 'agotado';
                             ?>
-                            <tr class="income-row" style="cursor: pointer;" onclick="openIncomeModal(<?= htmlspecialchars(json_encode($inc)) ?>)"
-                                data-date="<?= $rawDate ?>" 
-                                data-supplier="<?= htmlspecialchars($rawSupplier) ?>"
-                                data-fuel="<?= htmlspecialchars($rawFuel) ?>"
-                                data-status="<?= $rawStatus ?>">
+                            <tr class="income-row" style="cursor: pointer;"
+                                onclick="openIncomeModal(<?= htmlspecialchars(json_encode($inc)) ?>)"
+                                data-date="<?= $rawDate ?>" data-supplier="<?= htmlspecialchars($rawSupplier) ?>"
+                                data-fuel="<?= htmlspecialchars($rawFuel) ?>" data-status="<?= $rawStatus ?>">
                                 <td>
                                     <span class="receipt-tag">
                                         <?= htmlspecialchars($inc['receipt_number']) ?>
@@ -749,10 +814,12 @@
                                     </span>
                                 </td>
                                 <td style="font-weight: 700; color: #2563eb;">
-                                    <?= number_format((float) $inc['gallons'], 2) ?> <?= htmlspecialchars(\App\Models\Catalog::getFuelUnit($inc['fuel_type'] ?? '', true)) ?>
+                                    <?= number_format((float) $inc['gallons'], 2) ?>
+                                    <?= htmlspecialchars(\App\Models\Catalog::getFuelUnit($inc['fuel_type'] ?? '', true)) ?>
                                 </td>
                                 <td style="font-weight: 800; color: <?= $isAvailable ? '#10b981' : '#ef4444' ?>;">
-                                    <?= number_format($rem, 2) ?> <?= htmlspecialchars(\App\Models\Catalog::getFuelUnit($inc['fuel_type'] ?? '', true)) ?>
+                                    <?= number_format($rem, 2) ?>
+                                    <?= htmlspecialchars(\App\Models\Catalog::getFuelUnit($inc['fuel_type'] ?? '', true)) ?>
                                 </td>
                                 <td>
                                     <?php
@@ -769,7 +836,9 @@
                                             </span>
                                             <button type="button" class="info-obs-btn" title="Ver observación completa"
                                                 onclick="event.stopPropagation(); showObsModal(<?= htmlspecialchars(json_encode($obs)) ?>)">
-                                                <svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-info"></use></svg> INFO
+                                                <svg class="ui-icon">
+                                                    <use href="<?= BASE_URL ?>assets/icons.svg#icon-info"></use>
+                                                </svg> INFO
                                             </button>
                                         </div>
                                     <?php else: ?>
@@ -788,7 +857,11 @@
                                         onmouseover="this.style.background='var(--hover-bg, rgba(255,255,255,.07))'"
                                         onmouseout="this.style.background='transparent'"
                                         onclick="event.stopPropagation(); openIncomeModal(<?= htmlspecialchars(json_encode($inc)) ?>)">
-                                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                            <circle cx="12" cy="12" r="3" />
+                                        </svg>
                                         Ver Detalle
                                     </button>
                                 </td>
@@ -803,7 +876,9 @@
                     <?php endif; ?>
                     <tr id="noResultsRow" style="display: none;">
                         <td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted, #64748b);">
-                            <span class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-search"></use></svg>No se encontraron ingresos que coincidan con la búsqueda.</span>
+                            <span class="icon-with-text"><svg class="ui-icon">
+                                    <use href="<?= BASE_URL ?>assets/icons.svg#icon-search"></use>
+                                </svg>No se encontraron ingresos que coincidan con la búsqueda.</span>
                         </td>
                     </tr>
                 </tbody>
@@ -831,7 +906,9 @@
 <div id="incomeModal" class="modal-overlay" onclick="closeIncomeModal(event)">
     <div class="modal-card" onclick="event.stopPropagation()">
         <div class="modal-header">
-            <h3 class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use></svg>Detalle del Ingreso de Combustible</h3>
+            <h3 class="icon-with-text"><svg class="ui-icon">
+                    <use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use>
+                </svg>Detalle del Ingreso de Combustible</h3>
         </div>
         <div class="modal-body" id="incomeModalBody">
             <!-- Inyectado por JavaScript -->
@@ -846,7 +923,9 @@
 <div id="obsInfoModal" class="modal-overlay" onclick="closeObsModal(event)">
     <div class="modal-card" style="max-width: 480px;" onclick="event.stopPropagation()">
         <div class="modal-header">
-            <h3 class="icon-with-text"><svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-note"></use></svg>Observación Completa</h3>
+            <h3 class="icon-with-text"><svg class="ui-icon">
+                    <use href="<?= BASE_URL ?>assets/icons.svg#icon-note"></use>
+                </svg>Observación Completa</h3>
         </div>
         <div class="modal-body">
             <div style="background: var(--bg-body, rgba(255,255,255,0.05)); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color, #cbd5e1); font-size: 0.95rem; line-height: 1.5; color: var(--text-color, inherit); word-wrap: break-word;"
@@ -1083,8 +1162,8 @@
         function renderTrigger() {
             const selected = selectEl.options[selectEl.selectedIndex];
             const isPlaceholder = !selected || selected.value === '';
-            const labelText   = isPlaceholder ? getPlaceholderText() : selected.text;
-            const labelColor  = isPlaceholder
+            const labelText = isPlaceholder ? getPlaceholderText() : selected.text;
+            const labelColor = isPlaceholder
                 ? 'var(--text-muted, #94a3b8)'
                 : 'var(--text-color, #0f172a)';
 
@@ -1125,7 +1204,7 @@
         function renderMenu() {
             menu.innerHTML = '';
             Array.from(selectEl.options).forEach((opt, idx) => {
-                const isSelected  = idx === selectEl.selectedIndex;
+                const isSelected = idx === selectEl.selectedIndex;
                 const isPlaceholder = opt.value === '';
 
                 const item = document.createElement('div');
@@ -1197,7 +1276,7 @@
 
         const invoiceText = inc.invoice_number && inc.invoice_number.trim() !== '' ? inc.invoice_number : 'No registrada';
         const notesText = inc.notes && inc.notes.trim() !== '' && inc.notes !== '-' ? inc.notes : 'Sin observaciones';
-        
+
         const rem = parseFloat(inc.gallons_remaining || 0);
         const isAvailable = rem > 0;
         const statusText = isAvailable ? 'Disponible' : 'Agotado';
@@ -1238,12 +1317,12 @@
 
                     <div class="modal-field highlight-field" style="background: rgba(37, 99, 235, 0.05);">
                         <span class="lbl icon-with-text">${uiIcon('fuel')}Cantidad Inicial:</span>
-                        <strong class="qty-val">${parseFloat(inc.gallons).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${unitLabel}</strong>
+                        <strong class="qty-val">${parseFloat(inc.gallons).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${unitLabel}</strong>
                     </div>
                     
                     <div class="modal-field highlight-field" style="background: rgba(16, 185, 129, 0.05);">
                         <span class="lbl icon-with-text">${uiIcon('fuel')}Stock Remanente:</span>
-                        <strong class="qty-val" style="color: ${statusColor};">${rem.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${unitLabel}</strong>
+                        <strong class="qty-val" style="color: ${statusColor};">${rem.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${unitLabel}</strong>
                     </div>
                 </div>
             </div>
