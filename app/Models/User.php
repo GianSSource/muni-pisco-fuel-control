@@ -19,22 +19,7 @@ final class User
 
         try {
             $db = Database::getConnection();
-
-            // Auto-creaciÃ³n de la tabla 'users' si no existiera en la base de datos activa
-            $db->exec('CREATE TABLE IF NOT EXISTS users (
-                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(120) NOT NULL,
-                email VARCHAR(160) NOT NULL UNIQUE,
-                password_hash VARCHAR(255) NOT NULL,
-                role VARCHAR(40) NOT NULL DEFAULT "operador",
-                is_active TINYINT(1) NOT NULL DEFAULT 1,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB');
-
-            // Agrega la columna is_active si la tabla ya existe sin ella
-            try {
-                $db->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1');
-            } catch (\Throwable $ignore) {}
+            self::ensureSchema($db);
 
             $sql = 'INSERT INTO users (name, email, password_hash, role) VALUES (:name, :email, :password_hash, :role)';
             $stmt = $db->prepare($sql);
@@ -124,14 +109,19 @@ final class User
         if (self::$schemaMigrated) {
             return;
         }
-        try {
-            $db->exec('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1');
-            $db->exec('ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at DATETIME NULL DEFAULT NULL');
-        } catch (\Throwable $e) {
-            try { $db->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1'); } catch (\Throwable $ignore) {}
-            try { $db->exec('ALTER TABLE users ADD COLUMN last_login_at DATETIME NULL DEFAULT NULL'); } catch (\Throwable $ignore) {}
-        }
         self::$schemaMigrated = true;
+        try {
+            $stmt = $db->query("SHOW COLUMNS FROM users LIKE 'is_active'");
+            if (!$stmt || !$stmt->fetch()) {
+                $db->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1');
+            }
+            $stmt2 = $db->query("SHOW COLUMNS FROM users LIKE 'last_login_at'");
+            if (!$stmt2 || !$stmt2->fetch()) {
+                $db->exec('ALTER TABLE users ADD COLUMN last_login_at DATETIME NULL DEFAULT NULL');
+            }
+        } catch (\Throwable $e) {
+            error_log('ensureSchema: ' . $e->getMessage());
+        }
     }
 
     public function getAll(): array

@@ -17,63 +17,58 @@ final class Vehicle
         if (self::$tableEnsured) {
             return;
         }
+        self::$tableEnsured = true;
 
         try {
             $db = Database::getConnection();
-            $db->exec("CREATE TABLE IF NOT EXISTS vehicles (
-                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                unit_code VARCHAR(10) NOT NULL UNIQUE,
-                plate VARCHAR(7) NOT NULL UNIQUE,
-                area_id INT UNSIGNED NULL,
-                vehicle_type_id INT UNSIGNED NULL,
-                status ENUM('activo', 'inactivo') NOT NULL DEFAULT 'activo',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_vehicles_status (status)
-            ) ENGINE=InnoDB;");
-
-            // Por si la tabla ya existía sin la columna (instalaciones previas)            try {
-                $db->exec("ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS vehicle_type_id INT UNSIGNED NULL AFTER area_id");
-            } catch (\Throwable $e) {
-                // Si la columna ya existe, ignorar silenciosamente
+            $checkTable = $db->query("SHOW TABLES LIKE 'vehicles'")->fetch();
+            if (!$checkTable) {
+                $db->exec("CREATE TABLE IF NOT EXISTS vehicles (
+                    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    unit_code VARCHAR(10) NOT NULL UNIQUE,
+                    plate VARCHAR(7) NOT NULL UNIQUE,
+                    area_id INT UNSIGNED NULL,
+                    vehicle_type_id INT UNSIGNED NULL,
+                    status ENUM('activo', 'inactivo') NOT NULL DEFAULT 'activo',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_vehicles_status (status)
+                ) ENGINE=InnoDB;");
             }
 
-            try {
-                $db->exec("ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS fuel_type_id INT UNSIGNED NULL AFTER vehicle_type_id");
-            } catch (\Throwable $e) {
-                // Si la columna ya existe, ignorar silenciosamente
+            $checkCol = $db->query("SHOW COLUMNS FROM vehicles LIKE 'vehicle_type_id'")->fetch();
+            if (!$checkCol) {
+                try {
+                    $db->exec("ALTER TABLE vehicles ADD COLUMN vehicle_type_id INT UNSIGNED NULL AFTER area_id");
+                } catch (\Throwable $e) {}
             }
 
-            try {
-                $db->exec("ALTER TABLE vehicles MODIFY unit_code VARCHAR(10) NOT NULL");
-            } catch (\Throwable $e) {
-            error_log($e->getMessage());}            try {
-                $db->exec("ALTER TABLE vehicles MODIFY plate VARCHAR(7) NOT NULL");
-            } catch (\Throwable $e) {
-                error_log($e->getMessage());
+            $checkFuelCol = $db->query("SHOW COLUMNS FROM vehicles LIKE 'fuel_type_id'")->fetch();
+            if (!$checkFuelCol) {
+                try {
+                    $db->exec("ALTER TABLE vehicles ADD COLUMN fuel_type_id INT UNSIGNED NULL AFTER vehicle_type_id");
+                } catch (\Throwable $e) {}
             }
 
             // Tabla pivot para soporte de múltiples tipos de combustible por vehículo (ej. Gasolina + GNV)
-            try {
-                $db->exec("CREATE TABLE IF NOT EXISTS vehicle_fuel_types (
-                    vehicle_id INT UNSIGNED NOT NULL,
-                    fuel_type_id INT UNSIGNED NOT NULL,
-                    PRIMARY KEY (vehicle_id, fuel_type_id),
-                    INDEX idx_vft_fuel (fuel_type_id),
-                    CONSTRAINT fk_vft_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id) ON DELETE CASCADE ON UPDATE CASCADE,
-                    CONSTRAINT fk_vft_fuel FOREIGN KEY (fuel_type_id) REFERENCES system_catalogs (id) ON DELETE CASCADE ON UPDATE CASCADE
-                ) ENGINE=InnoDB");
+            $checkPivot = $db->query("SHOW TABLES LIKE 'vehicle_fuel_types'")->fetch();
+            if (!$checkPivot) {
+                try {
+                    $db->exec("CREATE TABLE IF NOT EXISTS vehicle_fuel_types (
+                        vehicle_id INT UNSIGNED NOT NULL,
+                        fuel_type_id INT UNSIGNED NOT NULL,
+                        PRIMARY KEY (vehicle_id, fuel_type_id),
+                        INDEX idx_vft_fuel (fuel_type_id),
+                        CONSTRAINT fk_vft_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id) ON DELETE CASCADE ON UPDATE CASCADE,
+                        CONSTRAINT fk_vft_fuel FOREIGN KEY (fuel_type_id) REFERENCES system_catalogs (id) ON DELETE CASCADE ON UPDATE CASCADE
+                    ) ENGINE=InnoDB");
 
-                // Migrar registros existentes con combustible único a la tabla pivot
-                $db->exec("INSERT IGNORE INTO vehicle_fuel_types (vehicle_id, fuel_type_id)
-                           SELECT id, fuel_type_id FROM vehicles
-                           WHERE fuel_type_id IS NOT NULL AND fuel_type_id > 0");
-            } catch (\Throwable $e) {
-                // Si ya existe o falla por restricciones previas, ignorar silenciosamente
+                    $db->exec("INSERT IGNORE INTO vehicle_fuel_types (vehicle_id, fuel_type_id)
+                               SELECT id, fuel_type_id FROM vehicles
+                               WHERE fuel_type_id IS NOT NULL AND fuel_type_id > 0");
+                } catch (\Throwable $e) {}
             }
-
-            self::$tableEnsured = true;
         } catch (\Throwable $e) {
-            error_log($e->getMessage());
+            error_log('Vehicle ensureTableExists: ' . $e->getMessage());
         }
     }
 
@@ -193,9 +188,13 @@ final class Vehicle
 
         $primaryFuelId = !empty($fuelIds) ? $fuelIds[0] : null;
 
+        $ownsTransaction = false;
         try {
             $db = Database::getConnection();
-            $db->beginTransaction();
+            if (!$db->inTransaction()) {
+                $db->beginTransaction();
+                $ownsTransaction = true;
+            }
 
             $stmt = $db->prepare("INSERT INTO vehicles (unit_code, plate, area_id, vehicle_type_id, fuel_type_id, status) VALUES (:unit_code, :plate, :area_id, :vehicle_type_id, :fuel_type_id, 'activo')");
             $ok = $stmt->execute([
@@ -207,7 +206,9 @@ final class Vehicle
             ]);
 
             if (!$ok) {
-                $db->rollBack();
+                if ($ownsTransaction && $db->inTransaction()) {
+                    $db->rollBack();
+                }
                 return false;
             }
 
@@ -223,11 +224,14 @@ final class Vehicle
                 }
             }
 
-            $db->commit();
+            if ($ownsTransaction && $db->inTransaction()) {
+                $db->commit();
+            }
             return true;
         } catch (Throwable $e) {
+            error_log('Vehicle::create error: ' . $e->getMessage());
             try {
-                if (isset($db) && $db->inTransaction()) {
+                if ($ownsTransaction && isset($db) && $db->inTransaction()) {
                     $db->rollBack();
                 }
             } catch (Throwable $ignore) {}

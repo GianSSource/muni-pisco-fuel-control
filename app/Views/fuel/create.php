@@ -1140,9 +1140,6 @@
         const authPassword = document.getElementById('auth_password_input')?.value;
         if (authPassword && authPassword.trim() !== '') {
             sessionStorage.setItem('despacho_completado', '1');
-            setTimeout(() => {
-                limpiarFormulario(false);
-            }, 100);
             return true;
         }
 

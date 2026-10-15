@@ -226,11 +226,11 @@ final class ReportController extends Controller
         }
         
         $sheet->setCellValue('A1', 'REPORTE DE ENTREGAS Y CONSUMO DE COMBUSTIBLE');
-        $sheet->mergeCells('A1:G1');
+        $sheet->mergeCells('A1:H1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0F172A'));
         
         $sheet->setCellValue('A2', 'Fecha de exportación: ' . date('d/m/Y H:i:s') . ' | ' . $filterDesc);
-        $sheet->mergeCells('A2:G2');
+        $sheet->mergeCells('A2:H2');
         $sheet->getStyle('A2')->getFont()->setSize(10)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF64748B'));
 
         $headers = ['N° RECIBO / VALE', 'FECHA Y HORA', 'VEHÍCULO / PLACA', 'CONDUCTOR / RESPONSABLE', 'DESTINO / ÁREA', 'CANTIDAD', 'UNIDAD', 'OBSERVACIONES'];
@@ -248,8 +248,6 @@ final class ReportController extends Controller
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
         ];
         $sheet->getStyle('A4:H4')->applyFromArray($headerStyle);
-        $sheet->mergeCells('A1:H1');
-        $sheet->mergeCells('A2:H2');
 
         $row = 5;
         $totalLiquido = 0.0;
