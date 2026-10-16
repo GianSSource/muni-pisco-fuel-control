@@ -337,45 +337,150 @@
     function showEventDetails(ev) {
         const titleEl = document.getElementById('modalTitle');
         const bodyEl = document.getElementById('modalBody');
+        const closeBtn = document.querySelector('#eventModal .modal-close-btn');
 
         const isIncome = ev.type === 'income';
-        titleEl.textContent = isIncome ? 'Ingreso de Stock de Combustible' : 'Despacho de Combustible';
 
-        let fuelType = ev.vehicle;
-        let receiptNum = ev.title;
         if (isIncome) {
-            const match = ev.title.match(/\((.*?)\)/);
-            if (match) {
-                fuelType = match[1];
+            titleEl.className = 'icon-with-text';
+            titleEl.innerHTML = `${uiIcon('fuel')}Detalle del Ingreso de Combustible`;
+            if (closeBtn) closeBtn.style.display = 'none';
+
+            const createdDate = ev.created_at || ev.date_time || (ev.date ? (ev.date + (ev.time ? ' ' + ev.time : '')) : '');
+            const dateObj = new Date(String(createdDate).replace(' ', 'T'));
+            const dateStr = !isNaN(dateObj.getTime()) ? dateObj.toLocaleString('es-PE') : createdDate;
+
+            let receiptNum = ev.receipt_number;
+            if (!receiptNum && ev.title) {
                 receiptNum = ev.title.replace(/\s*\(.*?\)/, '').replace(/^Ingreso Lote\s+/i, '');
-            } else {
-                fuelType = '-';
             }
+
+            let fuelType = ev.fuel_type;
+            if (!fuelType && ev.title) {
+                const match = ev.title.match(/\((.*?)\)/);
+                if (match) fuelType = match[1];
+            }
+            if (!fuelType) fuelType = 'Diesel B5 S-50';
+
+            const supplier = ev.supplier || ev.driver || 'Proveedor General';
+            const invoiceText = ev.invoice_number && ev.invoice_number.trim() !== '' ? ev.invoice_number : 'No registrada';
+            const notesText = ev.notes && ev.notes.trim() !== '' && ev.notes !== '-' ? ev.notes : 'Sin observaciones';
+
+            const rem = parseFloat(ev.gallons_remaining !== undefined ? ev.gallons_remaining : 0);
+            const isAvailable = rem > 0;
+            const statusText = isAvailable ? 'Disponible' : 'Agotado';
+            const statusColor = isAvailable ? '#10b981' : '#ef4444';
+            const isGnv = (fuelType || '').toLowerCase().includes('gnv') || (fuelType || '').toLowerCase().includes('gas natural');
+            const unitLabel = isGnv ? 'm³' : 'Galones';
+
+            bodyEl.innerHTML = `
+                <div class="modal-detail-card">
+                    <div class="modal-badge-row">
+                        <span class="modal-date-tag icon-with-text">${uiIcon('calendar')}Fecha y Hora: <strong>${escapeHtml(dateStr)}</strong></span>
+                    </div>
+                    
+                    <h4 style="margin-top: 10px; font-size: 1.15rem; color: var(--primary);">N° Recibo / Lote: ${escapeHtml(receiptNum)}</h4>
+
+                    <div class="modal-grid">
+                        <div class="modal-field">
+                            <span class="lbl icon-with-text">${uiIcon('truck')}Proveedor / Grifo:</span>
+                            <strong>${escapeHtml(supplier)}</strong>
+                        </div>
+                        <div class="modal-field">
+                            <span class="lbl icon-with-text">${uiIcon('fuel')}Tipo de Combustible:</span>
+                            <strong style="color: var(--primary);">${escapeHtml(fuelType)}</strong>
+                        </div>
+                        <div class="modal-field">
+                            <span class="lbl icon-with-text">${uiIcon('note')}N° de Factura:</span>
+                            <strong>${escapeHtml(invoiceText)}</strong>
+                        </div>
+                        <div class="modal-field">
+                            <span class="lbl icon-with-text">${uiIcon('info')}Estado:</span>
+                            <strong style="color: ${statusColor};">${statusText}</strong>
+                        </div>
+                        
+                        <div class="modal-field" style="grid-column: span 2; background: var(--bg-body); padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--border-color, var(--line)); margin-top: 4px; overflow-wrap: break-word; word-break: break-word; hyphens: auto;">
+                            <span class="lbl icon-with-text">${uiIcon('note')}Observaciones:</span>
+                            <span style="color: var(--ink); font-style: italic; font-weight: 500; font-size: 0.92em; margin-top: 4px; display: block; word-break: break-word; white-space: pre-wrap;">${escapeHtml(notesText)}</span>
+                        </div>
+
+                        <div class="modal-field highlight-field" style="background: rgba(37, 99, 235, 0.05);">
+                            <span class="lbl icon-with-text">${uiIcon('fuel')}Cantidad Inicial:</span>
+                            <strong class="qty-val">${parseFloat(ev.gallons).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${unitLabel}</strong>
+                        </div>
+                        
+                        <div class="modal-field highlight-field" style="background: rgba(16, 185, 129, 0.05);">
+                            <span class="lbl icon-with-text">${uiIcon('fuel')}Stock Remanente:</span>
+                            <strong class="qty-val" style="color: ${statusColor};">${rem.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${unitLabel}</strong>
+                        </div>
+                    </div>
+                </div>
+            `;
         } else {
-            // Limpiar la palabra "Despacho " y la placa entre paréntesis
-            receiptNum = ev.title.replace(/^Despacho\s+/i, '').replace(/\s*\(.*?\)/, '');
+            titleEl.className = 'icon-with-text';
+            titleEl.innerHTML = `${uiIcon('fuel')}Detalle del Despacho de Combustible`;
+            if (closeBtn) closeBtn.style.display = 'none';
+
+            let receiptNum = ev.receipt_number || ev.title.replace(/^Despacho\s+/i, '').replace(/\s*\(.*?\)/, '');
+            const actualFuel = ev.fuel_type || 'Diesel B5 S-50';
+            const isGnv = (actualFuel || '').toLowerCase().includes('gnv') || (actualFuel || '').toLowerCase().includes('gas natural');
+            const unitLabel = isGnv ? 'm³' : 'Galones';
+
+            const createdDate = ev.created_at || ev.date_time || (ev.date ? (ev.date + (ev.time ? ' ' + ev.time : '')) : '');
+            const dateObj = new Date(String(createdDate).replace(' ', 'T'));
+            const dateStr = !isNaN(dateObj.getTime()) ? dateObj.toLocaleString('es-PE') : (ev.date + (ev.time ? ' ' + ev.time : ''));
+
+            const notesText = ev.notes && ev.notes.trim() !== '' && ev.notes !== '-' ? ev.notes : 'Sin observaciones';
+            const rawId = String(ev.id || '').replace(/^fuel_/, '');
+
+            bodyEl.innerHTML = `
+                <div class="modal-detail-card">
+                    <div class="modal-badge-row">
+                        <span class="modal-date-tag icon-with-text">${uiIcon('calendar')}Fecha y Hora: <strong>${escapeHtml(dateStr)}</strong></span>
+                    </div>
+                    
+                    <h4 style="margin-top: 10px; font-size: 1.15rem; color: var(--primary);">Vale N°: ${escapeHtml(receiptNum)}</h4>
+
+                    <div class="modal-grid">
+                        <div class="modal-field">
+                            <span class="lbl icon-with-text">${uiIcon('vehicle')}Vehículo / Placa:</span>
+                            <strong>${escapeHtml(ev.vehicle || '-')}</strong>
+                        </div>
+                        <div class="modal-field">
+                            <span class="lbl icon-with-text">${uiIcon('user')}Conductor / Responsable:</span>
+                            <strong>${escapeHtml(ev.driver || '-')}</strong>
+                        </div>
+                        <div class="modal-field">
+                            <span class="lbl icon-with-text">${uiIcon('fuel')}Tipo de Combustible:</span>
+                            <strong style="color: var(--primary);">${escapeHtml(actualFuel)}</strong>
+                        </div>
+                        <div class="modal-field">
+                            <span class="lbl icon-with-text">${uiIcon('pin')}Destino / Área:</span>
+                            <span>${escapeHtml(ev.destination || 'Despacho General')}</span>
+                        </div>
+                        
+                        <div class="modal-field" style="grid-column: span 2; background: var(--bg-body); padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--border-color, var(--line)); margin-top: 4px; overflow-wrap: break-word; word-break: break-word; hyphens: auto;">
+                            <span class="lbl icon-with-text">${uiIcon('note')}Observaciones:</span>
+                            <span style="color: var(--ink); font-style: italic; font-weight: 500; font-size: 0.92em; margin-top: 4px; display: block; word-break: break-word; white-space: pre-wrap;">${escapeHtml(notesText)}</span>
+                        </div>
+
+                        <div class="modal-field highlight-field">
+                            <span class="lbl icon-with-text">${uiIcon('fuel')}Cantidad Despachada:</span>
+                            <strong class="qty-val">${fmtGal(ev.gallons)} ${unitLabel}</strong>
+                        </div>
+                    </div>
+
+                    ${rawId ? `
+                    <div style="margin-top: 20px; text-align: right;">
+                        <a href="<?= BASE_URL ?>despachos/imprimir?id=${rawId}" target="_blank" style="padding: 10px 20px; background: #2563eb; color: #ffffff; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                            ${uiIcon('print')} Imprimir Vale Oficial
+                        </a>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
         }
 
-        const actualFuel = ev.fuel_type || (isIncome ? fuelType : '');
-
-        let html = `
-            <div class="modal-detail-card">
-                <div class="modal-badge-row">
-                    <span class="badge ${ev.badge_class}">${ev.badge}</span>
-                    <span class="modal-date-tag">Fecha: <strong>${escapeHtml(ev.date)}</strong> ${ev.time ? escapeHtml(ev.time) : ''}</span>
-                </div>
-                <h4>${escapeHtml(ev.title)}</h4>
-                <div class="modal-grid">
-                    <div class="modal-field"><span class="lbl">${isIncome ? 'N° Lote/Ingreso:' : 'N° Vale:'}</span> <strong>${escapeHtml(receiptNum)}</strong></div>
-                    <div class="modal-field"><span class="lbl">${isIncome ? 'Tipo Combustible:' : 'Vehículo / Placa:'}</span> <strong>${escapeHtml(fuelType)}</strong></div>
-                    <div class="modal-field"><span class="lbl">${isIncome ? 'Proveedor / Grifo:' : 'Conductor:'}</span> <span>${escapeHtml(ev.driver)}</span></div>
-                    <div class="modal-field"><span class="lbl">${isIncome ? 'Almacén / Destino:' : 'Destino / Área:'}</span> <span>${escapeHtml(ev.destination)}</span></div>
-                    <div class="modal-field highlight-field"><span class="lbl">${isIncome ? 'Cantidad Ingresada:' : 'Cantidad Despachada:'}</span> <strong class="qty-val">${fmtGal(ev.gallons)} ${getFuelUnitFull(actualFuel, ev.title)}</strong></div>
-                </div>
-            </div>
-        `;
-
-        bodyEl.innerHTML = html;
         document.getElementById('eventModal').classList.add('active');
         document.body.style.overflow = 'hidden';
     }
@@ -383,7 +488,10 @@
     function showDayEventsModal(dateStr, events) {
         const titleEl = document.getElementById('modalTitle');
         const bodyEl = document.getElementById('modalBody');
+        const closeBtn = document.querySelector('#eventModal .modal-close-btn');
+        if (closeBtn) closeBtn.style.display = '';
 
+        titleEl.className = '';
         titleEl.textContent = `Entregas y Despachos - ${dateStr}`;
 
         let html = `<div class="modal-day-list">`;
@@ -407,8 +515,22 @@
         document.body.style.overflow = 'hidden';
     }
 
-    function closeEventModal() {
+    function closeEventModal(e) {
+        if (e && e.target && e.target !== document.getElementById('eventModal') && !e.target.classList.contains('button') && !e.target.classList.contains('modal-close-btn')) {
+            return;
+        }
         document.getElementById('eventModal').classList.remove('active');
         document.body.style.overflow = '';
+        const closeBtn = document.querySelector('#eventModal .modal-close-btn');
+        if (closeBtn) closeBtn.style.display = '';
     }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('eventModal');
+            if (modal && modal.classList.contains('active')) {
+                closeEventModal();
+            }
+        }
+    });
 </script>

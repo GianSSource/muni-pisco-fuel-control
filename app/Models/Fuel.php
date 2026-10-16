@@ -1083,10 +1083,13 @@ final class Fuel
             // 1. Obtener Despachos
             $sqlDeliveries = 'SELECT 
                                 fd.id,
+                                fd.receipt_number,
                                 fd.receipt_number AS title,
                                 DATE(fd.created_at) AS date,
                                 fd.created_at AS date_time,
+                                fd.created_at,
                                 fd.gallons,
+                                fd.notes,
                                 COALESCE(fd.fuel_type, fi.fuel_type, "Diesel B5 S-50") AS fuel_type,
                                 fd.vehicle_plate AS vehicle,
                                 fd.driver_name AS driver,
@@ -1113,8 +1116,11 @@ final class Fuel
                     'id' => 'fuel_' . $row['id'],
                     'type' => 'fuel',
                     'title' => 'Despacho ' . $row['title'] . ' (' . $row['vehicle'] . ')',
+                    'receipt_number' => $row['receipt_number'] ?? $row['title'],
+                    'notes' => $row['notes'] ?? '',
                     'date' => $row['date'],
                     'date_time' => $row['date_time'],
+                    'created_at' => $row['created_at'] ?? $row['date_time'],
                     'time' => date('H:i', strtotime($row['date_time'])),
                     'gallons' => (float) $row['gallons'],
                     'fuel_type' => $row['fuel_type'] ?? '',
@@ -1129,10 +1135,15 @@ final class Fuel
             // 2. Obtener Ingresos de Lotes/Stock
             $sqlIncomes = 'SELECT 
                             fi.id,
+                            fi.receipt_number,
                             fi.receipt_number AS title,
                             DATE(fi.created_at) AS date,
                             fi.created_at AS date_time,
+                            fi.created_at,
                             fi.gallons,
+                            fi.gallons_remaining,
+                            fi.invoice_number,
+                            fi.notes,
                             COALESCE(fi.fuel_type, "Combustible") AS fuel_type,
                             COALESCE(fi.supplier, "Proveedor General") AS supplier
                         FROM fuel_incomes fi'
@@ -1154,14 +1165,20 @@ final class Fuel
                 $events[] = [
                     'id' => 'income_' . $row['id'],
                     'type' => 'income',
-                    'title' => 'Ingreso Lote ' . $row['title'] . ' (' . $row['fuel_type'] . ')',
+                    'title' => 'Ingreso Lote ' . $row['receipt_number'] . ' (' . $row['fuel_type'] . ')',
+                    'receipt_number' => $row['receipt_number'],
+                    'invoice_number' => $row['invoice_number'] ?? '',
+                    'notes' => $row['notes'] ?? '',
+                    'gallons_remaining' => (float) ($row['gallons_remaining'] ?? 0),
                     'date' => $row['date'],
                     'date_time' => $row['date_time'],
+                    'created_at' => $row['created_at'] ?? $row['date_time'],
                     'time' => date('H:i', strtotime($row['date_time'])),
                     'gallons' => (float) $row['gallons'],
                     'fuel_type' => $row['fuel_type'] ?? '',
                     'vehicle' => 'Stock Lote',
                     'driver' => $row['supplier'],
+                    'supplier' => $row['supplier'],
                     'destination' => 'Almacén Central',
                     'badge' => 'Ingreso de Stock',
                     'badge_class' => 'badge-stock'
