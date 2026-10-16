@@ -459,23 +459,26 @@
         </article>
 
         <?php if (!empty($hasGnv) && $hasGnv): ?>
-        <!-- 6. GNV Ingresado (solo visible si hay ingresos GNV) -->
-        <article class="stat-card" style="border-left: 3px solid #0284c7;">
-            <div class="stat-header">
-                <span class="stat-icon icon-gnv">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                        <path d="M12 22c5.523 0 9-3.582 9-8 0-3-1.5-5.5-4-7 .5 2-1 4-3 4-1.5 0-2.5-1-2.5-2.5C11.5 7 10 5.5 8 5c1 2.5-.5 5-2 6.5C4.5 13 4 14.5 4 16c0 3.314 3.582 6 8 6z"/>
-                    </svg>
-                </span>
-                <span class="badge badge-gnv">GNV</span>
-            </div>
-            <div class="stat-body">
-                <strong><?= number_format((float) $gnvIngresado, 2) ?> <small>m³</small></strong>
-                <span>Total GNV ingresado</span>
-                <span style="font-size: 0.98rem; margin-top: 4px;"><strong style="font-weight: 700; color: var(--text-color, #1e293b); font-size: 0.98rem;"><?= number_format((float) $gnvRemaining, 2) ?> m³</strong> disponibles</span>
-            </div>
-        </article>
+            <!-- 6. GNV Ingresado (solo visible si hay ingresos GNV) -->
+            <article class="stat-card" style="border-left: 3px solid #0284c7;">
+                <div class="stat-header">
+                    <span class="stat-icon icon-gnv">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <path
+                                d="M12 22c5.523 0 9-3.582 9-8 0-3-1.5-5.5-4-7 .5 2-1 4-3 4-1.5 0-2.5-1-2.5-2.5C11.5 7 10 5.5 8 5c1 2.5-.5 5-2 6.5C4.5 13 4 14.5 4 16c0 3.314 3.582 6 8 6z" />
+                        </svg>
+                    </span>
+                    <span class="badge badge-gnv">GNV</span>
+                </div>
+                <div class="stat-body">
+                    <strong><?= number_format((float) $gnvIngresado, 2) ?> <small>m³</small></strong>
+                    <span>Total GNV ingresado</span>
+                    <span style="font-size: 0.98rem; margin-top: 4px;"><strong
+                            style="font-weight: 700; color: var(--text-color, #1e293b); font-size: 0.98rem;"><?= number_format((float) ($gnvDespachado ?? max(0, $gnvIngresado - $gnvRemaining)), 2) ?>
+                            m³</strong> despachados</span>
+                </div>
+            </article>
         <?php endif; ?>
     </section>
 
@@ -483,7 +486,8 @@
     <section class="visuals-grid"
         style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px;">
         <article class="chart-container-card">
-            <div class="card-header-flex chart-header-wrap" style="gap: 12px; align-items: center; justify-content: space-between;">
+            <div class="card-header-flex chart-header-wrap"
+                style="gap: 12px; align-items: center; justify-content: space-between;">
                 <div>
                     <h2 id="chartTitle">Combustible Despachado Semanal</h2>
                     <p class="section-desc" id="chartSubtitle">Volumen diario consumido (últimos 7 días)</p>
@@ -494,10 +498,11 @@
                         <button type="button" class="energy-btn active" data-energy="all"
                             onclick="switchEnergyFilter(event, 'all')" title="Ver todos los tipos">Todos</button>
                         <button type="button" class="energy-btn" data-energy="liquid"
-                            onclick="switchEnergyFilter(event, 'liquid')" title="Solo combustibles líquidos (Gal)">Líquidos (Gal)</button>
+                            onclick="switchEnergyFilter(event, 'liquid')"
+                            title="Solo combustibles líquidos (Gal)">Líquidos (Gal)</button>
                         <?php if (!empty($hasGnv)): ?>
-                        <button type="button" class="energy-btn" data-energy="gnv"
-                            onclick="switchEnergyFilter(event, 'gnv')" title="Solo Gas Natural (m³)">GNV (m³)</button>
+                            <button type="button" class="energy-btn" data-energy="gnv"
+                                onclick="switchEnergyFilter(event, 'gnv')" title="Solo Gas Natural (m³)">GNV (m³)</button>
                         <?php endif; ?>
                     </div>
                     <!-- Selector de Vista Temporal / Criterio -->
@@ -606,9 +611,12 @@
             </div>
 
             <!-- Bloque Combustibles Líquidos -->
-            <div class="native-stock-chart" style="margin-bottom: <?= (!empty($hasGnv) || $totalGnvStock > 0) ? '14px' : '0' ?>;">
-                <div class="native-stock-total" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #64748b);">Líquidos en Tanques</span>
+            <div class="native-stock-chart"
+                style="margin-bottom: <?= (!empty($hasGnv) || $totalGnvStock > 0) ? '14px' : '0' ?>;">
+                <div class="native-stock-total"
+                    style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #64748b);">Líquidos en
+                        Tanques</span>
                     <strong style="color: #2563eb;"><?= number_format($totalLiquidStock, 2) ?> Gal</strong>
                 </div>
                 <?php if ($totalLiquidStock > 0): ?>
@@ -633,37 +641,46 @@
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <p class="empty-state" style="font-size: 0.85rem; margin: 6px 0;">Sin stock de combustibles líquidos.</p>
+                    <p class="empty-state" style="font-size: 0.85rem; margin: 6px 0;">Sin stock de combustibles líquidos.
+                    </p>
                 <?php endif; ?>
             </div>
 
             <!-- Bloque Separado GNV (Gas Natural) -->
             <?php if (!empty($hasGnv) || $totalGnvStock > 0 || !empty($gnvStockItems)): ?>
-            <?php 
-                $gnvDisplayStock = $totalGnvStock > 0 ? $totalGnvStock : (float)($gnvRemaining ?? 0);
+                <?php
+                $gnvDisplayStock = $totalGnvStock > 0 ? $totalGnvStock : (float) ($gnvRemaining ?? 0);
                 $hasMultipleGnv = count($gnvStockItems) > 1;
-            ?>
-            <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 12px; margin-top: auto;">
-                <div style="display: flex; justify-content: space-between; align-items: center;<?= $hasMultipleGnv ? ' margin-bottom: 8px;' : '' ?>">
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
-                        <span style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #047857;">Gas Natural (GNV)</span>
+                ?>
+                <div
+                    style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 12px; margin-top: auto;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center;<?= $hasMultipleGnv ? ' margin-bottom: 8px;' : '' ?>">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span
+                                style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+                            <span
+                                style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #047857;">Gas
+                                Natural (GNV)</span>
+                        </div>
+                        <span
+                            style="font-size: 0.88rem; font-weight: 800; color: #059669; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 6px;">
+                            <?= number_format($gnvDisplayStock, 2) ?> m³
+                        </span>
                     </div>
-                    <span style="font-size: 0.88rem; font-weight: 800; color: #059669; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 6px;">
-                        <?= number_format($gnvDisplayStock, 2) ?> m³
-                    </span>
+                    <?php if ($hasMultipleGnv): ?>
+                        <div style="padding-top: 6px; border-top: 1px dashed rgba(16, 185, 129, 0.25);">
+                            <?php foreach ($gnvStockItems as $gnvItem): ?>
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-top: 4px;">
+                                    <span
+                                        style="color: var(--text-muted, #64748b);"><?= htmlspecialchars($gnvItem['label']) ?></span>
+                                    <strong style="color: #047857;"><?= number_format($gnvItem['value'], 2) ?> m³</strong>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
-                <?php if ($hasMultipleGnv): ?>
-                    <div style="padding-top: 6px; border-top: 1px dashed rgba(16, 185, 129, 0.25);">
-                        <?php foreach ($gnvStockItems as $gnvItem): ?>
-                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-top: 4px;">
-                                <span style="color: var(--text-muted, #64748b);"><?= htmlspecialchars($gnvItem['label']) ?></span>
-                                <strong style="color: #047857;"><?= number_format($gnvItem['value'], 2) ?> m³</strong>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
             <?php endif; ?>
         </article>
     </section>
@@ -725,7 +742,8 @@
                                 ?>
                                 <span class="icon-with-text"><svg class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use>
-                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?> <?= $evUnit ?> - <svg class="ui-icon">
+                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?>         <?= $evUnit ?> - <svg
+                                        class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-user"></use>
                                     </svg>
                                     <?= htmlspecialchars($ev['driver'] ?? $ev['title'] ?? 'Responsable') ?></span>
@@ -768,7 +786,8 @@
                                 ?>
                                 <span class="icon-with-text"><svg class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-download"></use>
-                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?> <?= $evUnit ?> - <svg class="ui-icon">
+                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?>         <?= $evUnit ?> - <svg
+                                        class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-store"></use>
                                     </svg>
                                     <?= htmlspecialchars($ev['driver'] ?? 'Proveedor') ?></span>
@@ -802,10 +821,10 @@
             <div class="table-header-right">
                 <form action="<?= BASE_URL ?>despachos" method="GET" class="dash-search-form" onsubmit="return false;">
                     <div class="dash-search-input-wrap">
-                        <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor"
-                            stroke-width="2" viewBox="0 0 24 24">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                            class="search-icon" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
                         </svg>
                         <input type="text" id="dashSearchInput" name="q" placeholder="Buscar vale, placa, conductor..."
                             class="dash-search-input" maxlength="30"
@@ -834,7 +853,8 @@
                 <tbody>
                     <?php if (!empty($ultimasEntregas)): ?>
                         <?php foreach ($ultimasEntregas as $entrega): ?>
-                            <tr>
+                            <tr class="delivery-row" style="cursor:pointer;"
+                                onclick="dashOpenDetailModal(<?= htmlspecialchars(json_encode($entrega), ENT_QUOTES, 'UTF-8') ?>)">
                                 <td>
                                     <span class="receipt-tag"><?= htmlspecialchars($entrega['receipt_number']) ?></span>
                                 </td>
@@ -866,16 +886,27 @@
                                 </td>
                                 <td>
                                     <?php $dUnit = \App\Models\Catalog::getFuelUnit($entrega['fuel_type'] ?? '', true); ?>
-                                    <span class="quantity-highlight"><?= number_format((float) $entrega['gallons'], 2) ?> <?= $dUnit ?></span>
+                                    <span class="quantity-highlight"><?= number_format((float) $entrega['gallons'], 2) ?>
+                                        <?= $dUnit ?></span>
                                 </td>
                                 <td>
-                                    <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $entrega['id'] ?>" target="_blank"
-                                        title="Imprimir vale"
-                                        style="padding: 5px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
-                                        <svg class="ui-icon">
-                                            <use href="<?= BASE_URL ?>assets/icons.svg#icon-print"></use>
-                                        </svg>
-                                    </a>
+                                    <div style="display:inline-flex; gap:6px; align-items:center;">
+                                        <button type="button"
+                                            onclick="event.stopPropagation(); dashOpenDetailModal(<?= htmlspecialchars(json_encode($entrega), ENT_QUOTES, 'UTF-8') ?>)"
+                                            title="Ver detalle"
+                                            style="padding: 5px; background: #0f766e; color: #ffffff; border-radius: 6px; border:none; cursor:pointer; display: inline-flex; align-items: center; justify-content: center;">
+                                            <svg class="ui-icon">
+                                                <use href="<?= BASE_URL ?>assets/icons.svg#icon-eye"></use>
+                                            </svg>
+                                        </button>
+                                        <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $entrega['id'] ?>" target="_blank"
+                                            onclick="event.stopPropagation()" title="Imprimir vale"
+                                            style="padding: 5px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+                                            <svg class="ui-icon">
+                                                <use href="<?= BASE_URL ?>assets/icons.svg#icon-print"></use>
+                                            </svg>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -909,6 +940,27 @@
         </div>
     </div>
 
+</div>
+
+<!-- Modal Detalle del Despacho (Dashboard) -->
+<div id="dashDispatchModal" class="modal-overlay" onclick="dashCloseDetailModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3 class="icon-with-text">
+                <svg class="ui-icon">
+                    <use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use>
+                </svg>
+                Detalle del Despacho de Combustible
+            </h3>
+            <button class="modal-close-btn" onclick="dashCloseDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="dashDispatchModalBody">
+            <!-- Inyectado por JavaScript -->
+        </div>
+        <div class="modal-footer">
+            <button class="button secondary" onclick="dashCloseDetailModal()">Cerrar</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1446,6 +1498,92 @@
 
     function closeObsModal(e) {
         document.getElementById("obsInfoModal").classList.remove("active");
+    }
+
+    // ── Modal de detalle de despacho en Dashboard ─────────────────────────────
+    function dashEscapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function dashUiIcon(name) {
+        return `<svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-${dashEscapeHtml(name)}"></use></svg>`;
+    }
+
+    function dashOpenDetailModal(d) {
+        const body = document.getElementById("dashDispatchModalBody");
+        const dateObj = new Date(String(d.created_at || '').replace(' ', 'T'));
+        const dateStr = !isNaN(dateObj) ? dateObj.toLocaleString('es-PE') : d.created_at;
+
+        const vehicleUnitText = d.vehicle_unit_code && d.vehicle_unit_code !== '-' ? ` (${dashEscapeHtml(d.vehicle_unit_code)})` : '';
+        const vehicleTypeText = d.vehicle_type_name || 'Vehículo Municipal';
+        const registeredByText = d.registered_by || 'Administrador';
+        const notesText = d.notes && d.notes.trim() !== '' ? d.notes : 'Sin observaciones';
+
+        body.innerHTML = `
+            <div class="modal-detail-card">
+                <div class="modal-badge-row">
+                    <span class="modal-date-tag icon-with-text">${dashUiIcon('calendar')}Fecha y Hora: <strong>${dashEscapeHtml(dateStr)}</strong></span>
+                </div>
+
+                <h4 style="margin-top: 10px; font-size: 1.15rem; color: var(--primary);">Vale N°: ${dashEscapeHtml(d.receipt_number)}</h4>
+
+                <div class="modal-grid">
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('vehicle')}Vehículo / Placa:</span>
+                        <strong>${dashEscapeHtml(d.vehicle_plate)}${vehicleUnitText}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('truck')}Tipo de Vehículo:</span>
+                        <strong>${dashEscapeHtml(vehicleTypeText)}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('user')}Conductor / Responsable:</span>
+                        <strong>${dashEscapeHtml(d.driver_name)}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('fuel')}Tipo de Combustible:</span>
+                        <strong style="color: var(--primary);">${dashEscapeHtml(d.fuel_type || 'Diesel B5 S-50')}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('pin')}Destino / Área:</span>
+                        <span>${dashEscapeHtml(d.destination || 'Despacho General')}</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('user')}Registrado por:</span>
+                        <span>${dashEscapeHtml(registeredByText)}</span>
+                    </div>
+
+                    <div class="modal-field" style="grid-column: span 2; background: var(--bg-body); padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--border-color, var(--line)); margin-top: 4px; overflow-wrap: break-word; word-break: break-word; hyphens: auto;">
+                        <span class="lbl icon-with-text">${dashUiIcon('note')}Observaciones:</span>
+                        <span style="color: var(--ink); font-style: italic; font-weight: 500; font-size: 0.92em; margin-top: 4px; display: block; word-break: break-word; white-space: pre-wrap;">${dashEscapeHtml(notesText)}</span>
+                    </div>
+
+                    <div class="modal-field highlight-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('fuel')}Cantidad Despachada:</span>
+                        <strong class="qty-val">${parseFloat(d.gallons).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${((d.fuel_type || '').toUpperCase().includes('GNV') || (d.fuel_type || '').toUpperCase().includes('GAS NATURAL')) ? 'm³' : 'Galones'}</strong>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="<?= BASE_URL ?>despachos/imprimir?id=${d.id}" target="_blank" style="padding: 10px 20px; background: #2563eb; color: #ffffff; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        ${dashUiIcon('print')} Imprimir Vale Oficial
+                    </a>
+                </div>
+            </div>
+        `;
+
+        document.getElementById("dashDispatchModal").classList.add("active");
+        document.addEventListener('keydown', _dashModalEscHandler);
+    }
+
+    function _dashModalEscHandler(e) {
+        if (e.key === 'Escape') dashCloseDetailModal();
+    }
+
+    function dashCloseDetailModal(e) {
+        document.getElementById("dashDispatchModal").classList.remove("active");
+        document.removeEventListener('keydown', _dashModalEscHandler);
     }
 
     // Usa la hora local del equipo que abre el panel (formato de 24 horas).
