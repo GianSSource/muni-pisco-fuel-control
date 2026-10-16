@@ -1092,10 +1092,18 @@ final class Fuel
                                 fd.notes,
                                 COALESCE(fd.fuel_type, fi.fuel_type, "Diesel B5 S-50") AS fuel_type,
                                 fd.vehicle_plate AS vehicle,
+                                fd.vehicle_plate,
                                 fd.driver_name AS driver,
-                                COALESCE(fd.destination, "Despacho General") AS destination
+                                fd.driver_name,
+                                COALESCE(fd.destination, "Despacho General") AS destination,
+                                COALESCE(v.unit_code, "-") AS vehicle_unit_code,
+                                COALESCE(vt.name, "Vehículo Municipal") AS vehicle_type_name,
+                                COALESCE(u.name, "Administrador") AS registered_by
                             FROM fuel_deliveries fd
                             LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
+                            LEFT JOIN users u ON u.id = fd.user_id
+                            LEFT JOIN vehicles v ON ((fd.vehicle_id IS NOT NULL AND fd.vehicle_id > 0 AND v.id = fd.vehicle_id) OR v.plate = fd.vehicle_plate OR UPPER(REPLACE(v.plate, "-", "")) = UPPER(REPLACE(fd.vehicle_plate, "-", "")))
+                            LEFT JOIN system_catalogs vt ON vt.id = v.vehicle_type_id
                             WHERE fd.status <> "Anulado"'
                             . ($days !== null ? ' AND fd.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL :days DAY)' : '')
                             . ' ORDER BY fd.created_at DESC'
@@ -1114,9 +1122,14 @@ final class Fuel
             foreach ($rawDeliveries as $row) {
                 $events[] = [
                     'id' => 'fuel_' . $row['id'],
+                    'raw_id' => $row['id'],
                     'type' => 'fuel',
                     'title' => 'Despacho ' . $row['title'] . ' (' . $row['vehicle'] . ')',
                     'receipt_number' => $row['receipt_number'] ?? $row['title'],
+                    'vehicle_plate' => $row['vehicle_plate'] ?? $row['vehicle'],
+                    'vehicle_unit_code' => $row['vehicle_unit_code'] ?? '-',
+                    'vehicle_type_name' => $row['vehicle_type_name'] ?? 'Vehículo Municipal',
+                    'registered_by' => $row['registered_by'] ?? 'Administrador',
                     'notes' => $row['notes'] ?? '',
                     'date' => $row['date'],
                     'date_time' => $row['date_time'],
@@ -1126,6 +1139,7 @@ final class Fuel
                     'fuel_type' => $row['fuel_type'] ?? '',
                     'vehicle' => $row['vehicle'],
                     'driver' => $row['driver'],
+                    'driver_name' => $row['driver_name'] ?? $row['driver'],
                     'destination' => $row['destination'],
                     'badge' => 'Despacho Combustible',
                     'badge_class' => 'badge-fuel'
@@ -1145,8 +1159,10 @@ final class Fuel
                             fi.invoice_number,
                             fi.notes,
                             COALESCE(fi.fuel_type, "Combustible") AS fuel_type,
-                            COALESCE(fi.supplier, "Proveedor General") AS supplier
-                        FROM fuel_incomes fi'
+                            COALESCE(fi.supplier, "Proveedor General") AS supplier,
+                            COALESCE(u.name, "Administrador") AS registered_by
+                        FROM fuel_incomes fi
+                        LEFT JOIN users u ON u.id = fi.user_id'
                         . ($days !== null ? ' WHERE fi.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL :days DAY)' : '')
                         . ' ORDER BY fi.created_at DESC'
                         . ($limit !== null ? ' LIMIT :limit' : '');
@@ -1179,6 +1195,7 @@ final class Fuel
                     'vehicle' => 'Stock Lote',
                     'driver' => $row['supplier'],
                     'supplier' => $row['supplier'],
+                    'registered_by' => $row['registered_by'] ?? 'Administrador',
                     'destination' => 'Almacén Central',
                     'badge' => 'Ingreso de Stock',
                     'badge_class' => 'badge-stock'

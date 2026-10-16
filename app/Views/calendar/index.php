@@ -363,6 +363,7 @@
             if (!fuelType) fuelType = 'Diesel B5 S-50';
 
             const supplier = ev.supplier || ev.driver || 'Proveedor General';
+            const registeredByText = ev.registered_by || 'Administrador';
             const invoiceText = ev.invoice_number && ev.invoice_number.trim() !== '' ? ev.invoice_number : 'No registrada';
             const notesText = ev.notes && ev.notes.trim() !== '' && ev.notes !== '-' ? ev.notes : 'Sin observaciones';
 
@@ -398,6 +399,10 @@
                             <span class="lbl icon-with-text">${uiIcon('info')}Estado:</span>
                             <strong style="color: ${statusColor};">${statusText}</strong>
                         </div>
+                        <div class="modal-field" style="grid-column: span 2;">
+                            <span class="lbl icon-with-text">${uiIcon('user')}Registrado por:</span>
+                            <span>${escapeHtml(registeredByText)}</span>
+                        </div>
                         
                         <div class="modal-field" style="grid-column: span 2; background: var(--bg-body); padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--border-color, var(--line)); margin-top: 4px; overflow-wrap: break-word; word-break: break-word; hyphens: auto;">
                             <span class="lbl icon-with-text">${uiIcon('note')}Observaciones:</span>
@@ -428,10 +433,15 @@
 
             const createdDate = ev.created_at || ev.date_time || (ev.date ? (ev.date + (ev.time ? ' ' + ev.time : '')) : '');
             const dateObj = new Date(String(createdDate).replace(' ', 'T'));
-            const dateStr = !isNaN(dateObj.getTime()) ? dateObj.toLocaleString('es-PE') : (ev.date + (ev.time ? ' ' + ev.time : ''));
+            const dateStr = !isNaN(dateObj.getTime()) ? dateObj.toLocaleString('es-PE') : createdDate;
 
+            const vehiclePlate = ev.vehicle_plate || ev.vehicle || '-';
+            const vehicleUnitText = ev.vehicle_unit_code && ev.vehicle_unit_code !== '-' ? ` (${escapeHtml(ev.vehicle_unit_code)})` : '';
+            const vehicleTypeText = ev.vehicle_type_name || 'Vehículo Municipal';
+            const driverName = ev.driver_name || ev.driver || '-';
+            const registeredByText = ev.registered_by || 'Administrador';
             const notesText = ev.notes && ev.notes.trim() !== '' && ev.notes !== '-' ? ev.notes : 'Sin observaciones';
-            const rawId = String(ev.id || '').replace(/^fuel_/, '');
+            const rawId = ev.raw_id || String(ev.id || '').replace(/^fuel_/, '');
 
             bodyEl.innerHTML = `
                 <div class="modal-detail-card">
@@ -444,11 +454,15 @@
                     <div class="modal-grid">
                         <div class="modal-field">
                             <span class="lbl icon-with-text">${uiIcon('vehicle')}Vehículo / Placa:</span>
-                            <strong>${escapeHtml(ev.vehicle || '-')}</strong>
+                            <strong>${escapeHtml(vehiclePlate)}${vehicleUnitText}</strong>
+                        </div>
+                        <div class="modal-field">
+                            <span class="lbl icon-with-text">${uiIcon('truck')}Tipo de Vehículo:</span>
+                            <strong>${escapeHtml(vehicleTypeText)}</strong>
                         </div>
                         <div class="modal-field">
                             <span class="lbl icon-with-text">${uiIcon('user')}Conductor / Responsable:</span>
-                            <strong>${escapeHtml(ev.driver || '-')}</strong>
+                            <strong>${escapeHtml(driverName)}</strong>
                         </div>
                         <div class="modal-field">
                             <span class="lbl icon-with-text">${uiIcon('fuel')}Tipo de Combustible:</span>
@@ -458,6 +472,10 @@
                             <span class="lbl icon-with-text">${uiIcon('pin')}Destino / Área:</span>
                             <span>${escapeHtml(ev.destination || 'Despacho General')}</span>
                         </div>
+                        <div class="modal-field">
+                            <span class="lbl icon-with-text">${uiIcon('user')}Registrado por:</span>
+                            <span>${escapeHtml(registeredByText)}</span>
+                        </div>
                         
                         <div class="modal-field" style="grid-column: span 2; background: var(--bg-body); padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--border-color, var(--line)); margin-top: 4px; overflow-wrap: break-word; word-break: break-word; hyphens: auto;">
                             <span class="lbl icon-with-text">${uiIcon('note')}Observaciones:</span>
@@ -466,7 +484,7 @@
 
                         <div class="modal-field highlight-field">
                             <span class="lbl icon-with-text">${uiIcon('fuel')}Cantidad Despachada:</span>
-                            <strong class="qty-val">${fmtGal(ev.gallons)} ${unitLabel}</strong>
+                            <strong class="qty-val">${parseFloat(ev.gallons).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${unitLabel}</strong>
                         </div>
                     </div>
 

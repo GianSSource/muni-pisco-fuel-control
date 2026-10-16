@@ -18,7 +18,10 @@ final class IncomeController extends Controller
         $incomes = [];
         try {
             $db = Database::getConnection();
-            $stmt = $db->query('SELECT * FROM fuel_incomes ORDER BY created_at DESC');
+            $stmt = $db->query('SELECT fi.*, COALESCE(u.name, "Administrador") AS registered_by 
+                                FROM fuel_incomes fi 
+                                LEFT JOIN users u ON u.id = fi.user_id 
+                                ORDER BY fi.created_at DESC');
             $incomes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Throwable $e) {
         }

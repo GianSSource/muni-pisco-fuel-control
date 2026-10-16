@@ -1274,6 +1274,7 @@
         const dateObj = new Date(String(inc.created_at || '').replace(' ', 'T'));
         const dateStr = !isNaN(dateObj) ? dateObj.toLocaleString('es-PE') : inc.created_at;
 
+        const registeredByText = inc.registered_by || 'Administrador';
         const invoiceText = inc.invoice_number && inc.invoice_number.trim() !== '' ? inc.invoice_number : 'No registrada';
         const notesText = inc.notes && inc.notes.trim() !== '' && inc.notes !== '-' ? inc.notes : 'Sin observaciones';
 
@@ -1308,6 +1309,10 @@
                     <div class="modal-field">
                         <span class="lbl icon-with-text">${uiIcon('info')}Estado:</span>
                         <strong style="color: ${statusColor};">${statusText}</strong>
+                    </div>
+                    <div class="modal-field" style="grid-column: span 2;">
+                        <span class="lbl icon-with-text">${uiIcon('user')}Registrado por:</span>
+                        <span>${escapeHtml(registeredByText)}</span>
                     </div>
                     
                     <div class="modal-field" style="grid-column: span 2; background: var(--bg-body); padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--border-color, var(--line)); margin-top: 4px; overflow-wrap: break-word; word-break: break-word; hyphens: auto;">
