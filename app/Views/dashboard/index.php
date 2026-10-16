@@ -622,7 +622,7 @@
                                 <div class="native-stock-row-header">
                                     <strong
                                         title="<?= htmlspecialchars($stockItem['label']) ?>"><?= htmlspecialchars($stockItem['label']) ?></strong>
-                                    <span class="native-stock-row-value"><?= number_format($percentage, 1) ?>%</span>
+                                    <span class="native-stock-row-value"><?= number_format($percentage, 2) ?>%</span>
                                 </div>
                                 <div class="native-stock-track" aria-hidden="true">
                                     <span class="native-stock-fill"
@@ -930,15 +930,15 @@
         return document.documentElement.getAttribute('data-theme') === 'dark';
     }
 
-    function formatNumber(value, decimals = 1) {
+    function formatNumber(value, decimals = 2) {
         return Number(value || 0).toLocaleString('es-PE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
     }
 
-    function formatGallons(value, decimals = 1) {
+    function formatGallons(value, decimals = 2) {
         return `${formatNumber(value, decimals)} Gal`;
     }
 
-    function formatGnv(value, decimals = 1) {
+    function formatGnv(value, decimals = 2) {
         return `${formatNumber(value, decimals)} m³`;
     }
 
@@ -1119,7 +1119,7 @@
                         show: true, position: 'top', distance: 6, color: theme.text, fontSize: 10, fontWeight: 600,
                         formatter: ({ dataIndex, value }) => {
                             const u = data[dataIndex]?.unit || (data[dataIndex]?.is_gnv ? 'm³' : 'Gal');
-                            return `${formatNumber(value, 1)} ${u}`;
+                            return `${formatNumber(value, 2)} ${u}`;
                         }
                     },
                     emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
@@ -1185,7 +1185,7 @@
                     })),
                     label: {
                         show: true, position: horizontal ? 'right' : 'top', distance: 6, color: theme.text, fontSize: 10, fontWeight: 600,
-                        formatter: ({ value }) => value > 0 ? `${formatNumber(value, 1)} ${unit}` : ''
+                        formatter: ({ value }) => value > 0 ? `${formatNumber(value, 2)} ${unit}` : ''
                     },
                     emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
                 }]
@@ -1240,7 +1240,7 @@
             },
             series: [
                 {
-                    name: 'Líquidos (Gal)', type: 'bar', barMaxWidth: horizontal ? 18 : 28,
+                    name: 'Líquidos (Gal)', type: 'bar', barMaxWidth: horizontal ? 18 : 26, barGap: '30%',
                     data: rawData.map(d => Number(d.liquid_gallons || 0)),
                     itemStyle: {
                         borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
@@ -1250,12 +1250,28 @@
                         ])
                     },
                     label: {
-                        show: !horizontal, position: 'top', distance: 6, color: theme.text, fontSize: 9, fontWeight: 600,
-                        formatter: ({ value }) => value > 0 ? `${formatNumber(value, 1)} Gal` : ''
+                        show: !horizontal, position: 'top', distance: 5,
+                        formatter: ({ value }) => value > 0 ? `{val|${formatNumber(value, 2)}}\n{unit|Gal}` : '',
+                        rich: {
+                            val: {
+                                color: theme.text,
+                                fontSize: 8.5,
+                                fontWeight: 700,
+                                lineHeight: 11,
+                                align: 'center'
+                            },
+                            unit: {
+                                color: theme.muted,
+                                fontSize: 7.5,
+                                fontWeight: 600,
+                                lineHeight: 10,
+                                align: 'center'
+                            }
+                        }
                     }
                 },
                 {
-                    name: 'GNV (m³)', type: 'bar', barMaxWidth: horizontal ? 18 : 28,
+                    name: 'GNV (m³)', type: 'bar', barMaxWidth: horizontal ? 18 : 26,
                     data: rawData.map(d => Number(d.gnv_m3 || 0)),
                     itemStyle: {
                         borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
@@ -1265,8 +1281,24 @@
                         ])
                     },
                     label: {
-                        show: !horizontal, position: 'top', distance: 6, color: theme.text, fontSize: 9, fontWeight: 600,
-                        formatter: ({ value }) => value > 0 ? `${formatNumber(value, 1)} m³` : ''
+                        show: !horizontal, position: 'top', distance: 5,
+                        formatter: ({ value }) => value > 0 ? `{val|${formatNumber(value, 2)}}\n{unit|m³}` : '',
+                        rich: {
+                            val: {
+                                color: theme.text,
+                                fontSize: 8.5,
+                                fontWeight: 700,
+                                lineHeight: 11,
+                                align: 'center'
+                            },
+                            unit: {
+                                color: theme.muted,
+                                fontSize: 7.5,
+                                fontWeight: 600,
+                                lineHeight: 10,
+                                align: 'center'
+                            }
+                        }
                     }
                 }
             ]
