@@ -473,7 +473,7 @@
             <div class="stat-body">
                 <strong><?= number_format((float) $gnvIngresado, 2) ?> <small>m³</small></strong>
                 <span>Total GNV ingresado</span>
-                <span style="font-size: 0.98rem; margin-top: 4px;"><strong style="font-weight: 700; color: var(--text-color, #1e293b); font-size: 0.98rem;"><?= number_format((float) $gnvRemaining, 2) ?> m³</strong> disponibles</span>
+                <span style="font-size: 0.98rem; margin-top: 4px;"><strong style="font-weight: 700; color: var(--text-color, #1e293b); font-size: 0.98rem;"><?= number_format((float) ($gnvDespachado ?? max(0, $gnvIngresado - $gnvRemaining)), 2) ?> m³</strong> despachados</span>
             </div>
         </article>
         <?php endif; ?>
@@ -834,7 +834,8 @@
                 <tbody>
                     <?php if (!empty($ultimasEntregas)): ?>
                         <?php foreach ($ultimasEntregas as $entrega): ?>
-                            <tr>
+                            <tr class="delivery-row" style="cursor:pointer;"
+                                onclick="dashOpenDetailModal(<?= htmlspecialchars(json_encode($entrega), ENT_QUOTES, 'UTF-8') ?>)">
                                 <td>
                                     <span class="receipt-tag"><?= htmlspecialchars($entrega['receipt_number']) ?></span>
                                 </td>
@@ -869,13 +870,22 @@
                                     <span class="quantity-highlight"><?= number_format((float) $entrega['gallons'], 2) ?> <?= $dUnit ?></span>
                                 </td>
                                 <td>
-                                    <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $entrega['id'] ?>" target="_blank"
-                                        title="Imprimir vale"
-                                        style="padding: 5px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
-                                        <svg class="ui-icon">
-                                            <use href="<?= BASE_URL ?>assets/icons.svg#icon-print"></use>
-                                        </svg>
-                                    </a>
+                                    <div style="display:inline-flex; gap:6px; align-items:center;">
+                                        <button type="button"
+                                            onclick="event.stopPropagation(); dashOpenDetailModal(<?= htmlspecialchars(json_encode($entrega), ENT_QUOTES, 'UTF-8') ?>)"
+                                            title="Ver detalle"
+                                            style="padding: 5px; background: #0f766e; color: #ffffff; border-radius: 6px; border:none; cursor:pointer; display: inline-flex; align-items: center; justify-content: center;">
+                                            <svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-eye"></use></svg>
+                                        </button>
+                                        <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $entrega['id'] ?>" target="_blank"
+                                            onclick="event.stopPropagation()"
+                                            title="Imprimir vale"
+                                            style="padding: 5px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+                                            <svg class="ui-icon">
+                                                <use href="<?= BASE_URL ?>assets/icons.svg#icon-print"></use>
+                                            </svg>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -909,6 +919,25 @@
         </div>
     </div>
 
+</div>
+
+<!-- Modal Detalle del Despacho (Dashboard) -->
+<div id="dashDispatchModal" class="modal-overlay" onclick="dashCloseDetailModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3 class="icon-with-text">
+                <svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use></svg>
+                Detalle del Despacho de Combustible
+            </h3>
+            <button class="modal-close-btn" onclick="dashCloseDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="dashDispatchModalBody">
+            <!-- Inyectado por JavaScript -->
+        </div>
+        <div class="modal-footer">
+            <button class="button secondary" onclick="dashCloseDetailModal()">Cerrar</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1446,6 +1475,92 @@
 
     function closeObsModal(e) {
         document.getElementById("obsInfoModal").classList.remove("active");
+    }
+
+    // ── Modal de detalle de despacho en Dashboard ─────────────────────────────
+    function dashEscapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function dashUiIcon(name) {
+        return `<svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-${dashEscapeHtml(name)}"></use></svg>`;
+    }
+
+    function dashOpenDetailModal(d) {
+        const body = document.getElementById("dashDispatchModalBody");
+        const dateObj = new Date(String(d.created_at || '').replace(' ', 'T'));
+        const dateStr = !isNaN(dateObj) ? dateObj.toLocaleString('es-PE') : d.created_at;
+
+        const vehicleUnitText = d.vehicle_unit_code && d.vehicle_unit_code !== '-' ? ` (${dashEscapeHtml(d.vehicle_unit_code)})` : '';
+        const vehicleTypeText = d.vehicle_type_name || 'Vehículo Municipal';
+        const registeredByText = d.registered_by || 'Administrador';
+        const notesText = d.notes && d.notes.trim() !== '' ? d.notes : 'Sin observaciones';
+
+        body.innerHTML = `
+            <div class="modal-detail-card">
+                <div class="modal-badge-row">
+                    <span class="modal-date-tag icon-with-text">${dashUiIcon('calendar')}Fecha y Hora: <strong>${dashEscapeHtml(dateStr)}</strong></span>
+                </div>
+
+                <h4 style="margin-top: 10px; font-size: 1.15rem; color: var(--primary);">Vale N°: ${dashEscapeHtml(d.receipt_number)}</h4>
+
+                <div class="modal-grid">
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('vehicle')}Vehículo / Placa:</span>
+                        <strong>${dashEscapeHtml(d.vehicle_plate)}${vehicleUnitText}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('truck')}Tipo de Vehículo:</span>
+                        <strong>${dashEscapeHtml(vehicleTypeText)}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('user')}Conductor / Responsable:</span>
+                        <strong>${dashEscapeHtml(d.driver_name)}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('fuel')}Tipo de Combustible:</span>
+                        <strong style="color: var(--primary);">${dashEscapeHtml(d.fuel_type || 'Diesel B5 S-50')}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('pin')}Destino / Área:</span>
+                        <span>${dashEscapeHtml(d.destination || 'Despacho General')}</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('user')}Registrado por:</span>
+                        <span>${dashEscapeHtml(registeredByText)}</span>
+                    </div>
+
+                    <div class="modal-field" style="grid-column: span 2; background: var(--bg-body); padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--border-color, var(--line)); margin-top: 4px; overflow-wrap: break-word; word-break: break-word; hyphens: auto;">
+                        <span class="lbl icon-with-text">${dashUiIcon('note')}Observaciones:</span>
+                        <span style="color: var(--ink); font-style: italic; font-weight: 500; font-size: 0.92em; margin-top: 4px; display: block; word-break: break-word; white-space: pre-wrap;">${dashEscapeHtml(notesText)}</span>
+                    </div>
+
+                    <div class="modal-field highlight-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('fuel')}Cantidad Despachada:</span>
+                        <strong class="qty-val">${parseFloat(d.gallons).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${((d.fuel_type || '').toUpperCase().includes('GNV') || (d.fuel_type || '').toUpperCase().includes('GAS NATURAL')) ? 'm³' : 'Galones'}</strong>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="<?= BASE_URL ?>despachos/imprimir?id=${d.id}" target="_blank" style="padding: 10px 20px; background: #2563eb; color: #ffffff; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        ${dashUiIcon('print')} Imprimir Vale Oficial
+                    </a>
+                </div>
+            </div>
+        `;
+
+        document.getElementById("dashDispatchModal").classList.add("active");
+        document.addEventListener('keydown', _dashModalEscHandler);
+    }
+
+    function _dashModalEscHandler(e) {
+        if (e.key === 'Escape') dashCloseDetailModal();
+    }
+
+    function dashCloseDetailModal(e) {
+        document.getElementById("dashDispatchModal").classList.remove("active");
+        document.removeEventListener('keydown', _dashModalEscHandler);
     }
 
     // Usa la hora local del equipo que abre el panel (formato de 24 horas).

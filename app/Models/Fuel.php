@@ -210,9 +210,10 @@ final class Fuel
      */
     public function getGnvMetrics(): array
     {
-        $totalGnvIngresado = 0.0;
-        $totalGnvRemaining = 0.0;
-        $gnvDespachos      = 0;
+        $totalGnvIngresado  = 0.0;
+        $totalGnvRemaining  = 0.0;
+        $totalGnvDespachado = 0.0;
+        $gnvDespachos       = 0;
 
         try {
             $db = Database::getConnection();
@@ -227,25 +228,33 @@ final class Fuel
             $totalGnvIngresado = (float) ($row['total']    ?? 0);
             $totalGnvRemaining = (float) ($row['remaining'] ?? 0);
 
-            // Despachos realizados con lotes de GNV
+            // Despachos realizados con lotes de GNV (conteo y volumen total despachado)
             $stmt = $db->query(
-                "SELECT COUNT(*) AS total
+                "SELECT COUNT(*) AS total, COALESCE(SUM(fd.gallons), 0) AS total_dispatched
                  FROM fuel_deliveries fd
                  LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
                  WHERE fd.status <> 'Anulado'
                    AND (LOWER(COALESCE(fd.fuel_type, fi.fuel_type, '')) LIKE '%gnv%'
                         OR LOWER(COALESCE(fd.fuel_type, fi.fuel_type, '')) LIKE '%gas natural%')"
             );
-            $gnvDespachos = (int) ($stmt->fetch(\PDO::FETCH_ASSOC)['total'] ?? 0);
+            $delRow = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $gnvDespachos = (int) ($delRow['total'] ?? 0);
+            $totalGnvDespachado = (float) ($delRow['total_dispatched'] ?? 0);
+
+            // Fallback si la suma directa es 0 pero hay diferencia entre ingresado y restante
+            if ($totalGnvDespachado <= 0 && ($totalGnvIngresado - $totalGnvRemaining) > 0) {
+                $totalGnvDespachado = round($totalGnvIngresado - $totalGnvRemaining, 2);
+            }
         } catch (\Throwable $e) {
             error_log('[GNV Metrics] ' . $e->getMessage());
         }
 
         return [
-            'totalGnvIngresado' => $totalGnvIngresado,
-            'totalGnvRemaining' => $totalGnvRemaining,
-            'gnvDespachos'      => $gnvDespachos,
-            'hasGnv'            => $totalGnvIngresado > 0,
+            'totalGnvIngresado'  => $totalGnvIngresado,
+            'totalGnvRemaining'  => $totalGnvRemaining,
+            'totalGnvDespachado' => $totalGnvDespachado,
+            'gnvDespachos'       => $gnvDespachos,
+            'hasGnv'             => $totalGnvIngresado > 0,
         ];
     }
 
@@ -263,9 +272,19 @@ final class Fuel
                     COALESCE(fd.destination, "Despacho General") AS destination, 
                     fd.notes,
                     fd.status, 
-                    fd.created_at 
+                    fd.created_at,
+                    COALESCE(v.unit_code, "-") AS vehicle_unit_code,
+                    COALESCE(vt.name, "Vehículo Municipal") AS vehicle_type_name,
+                    COALESCE(u.name, "Administrador") AS registered_by
                 FROM fuel_deliveries fd
                 LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
+                LEFT JOIN users u ON u.id = fd.user_id
+                LEFT JOIN vehicles v ON (
+                    (fd.vehicle_id IS NOT NULL AND fd.vehicle_id > 0 AND v.id = fd.vehicle_id)
+                    OR v.plate = fd.vehicle_plate
+                    OR UPPER(REPLACE(v.plate, "-", "")) = UPPER(REPLACE(fd.vehicle_plate, "-", ""))
+                )
+                LEFT JOIN system_catalogs vt ON vt.id = v.vehicle_type_id
                 ORDER BY fd.created_at DESC 
                 LIMIT :limit';
             $stmt = $db->prepare($sql);

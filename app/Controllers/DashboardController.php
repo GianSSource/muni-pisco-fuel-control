@@ -62,6 +62,7 @@ final class DashboardController extends Controller
             'gnvIngresado'      => $gnvMetrics['totalGnvIngresado'],
             'gnvRemaining'      => $gnvMetrics['totalGnvRemaining'],
             'gnvDespachos'      => $gnvMetrics['gnvDespachos'],
+            'gnvDespachado'     => $gnvMetrics['totalGnvDespachado'],
             'hasGnv'            => $gnvMetrics['hasGnv'],
             'calendarEvents'    => $calendarEvents,
             'uniquePlates' => $uniquePlates,
