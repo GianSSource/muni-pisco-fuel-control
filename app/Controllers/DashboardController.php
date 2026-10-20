@@ -59,6 +59,7 @@ final class DashboardController extends Controller
             'areaFuel' => $areaFuel,
             'typeFuel' => $typeFuel,
             'stockByFuelType'   => $stockByFuelType,
+            'liquidFuelTypes'   => $fuelModel->getLiquidFuelTypes(),
             'gnvIngresado'      => $gnvMetrics['totalGnvIngresado'],
             'gnvRemaining'      => $gnvMetrics['totalGnvRemaining'],
             'gnvDespachos'      => $gnvMetrics['gnvDespachos'],

@@ -568,6 +568,30 @@
         border: 1px solid rgba(148, 163, 184, 0.25);
     }
 
+    /* Gasohol — verde lima para diferenciarlo claramente de Gasolina */
+    .v-badge-gasohol {
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid rgba(21, 128, 61, 0.3);
+    }
+    [data-theme="dark"] .v-badge-gasohol {
+        background: rgba(21, 128, 61, 0.15);
+        color: #4ade80;
+        border: 1px solid rgba(74, 222, 128, 0.3);
+    }
+
+    /* Combustible personalizado (cualquier tipo no reconocido) — morado */
+    .v-badge-custom {
+        background: #faf5ff;
+        color: #7e22ce;
+        border: 1px solid rgba(126, 34, 206, 0.25);
+    }
+    [data-theme="dark"] .v-badge-custom {
+        background: rgba(126, 34, 206, 0.12);
+        color: #c084fc;
+        border: 1px solid rgba(192, 132, 252, 0.3);
+    }
+
     /* Footer del Menú */
     .v-select-footer {
         display: flex;
@@ -1456,13 +1480,18 @@
                 .trim();
         }
 
-        // Obtiene la categoría principal de un combustible (gnv, glp, diesel, gasolina)
+        // Obtiene la categoría principal de un combustible (gnv, glp, diesel, gasolina, gasohol, etc.)
+        // IMPORTANTE: gasohol es una categoría propia distinta de gasolina
         function getFuelCategory(str) {
             const n = normalizeFuelText(str);
             if (n.includes('gnv') || n.includes('gas natural')) return 'gnv';
             if (n.includes('glp')) return 'glp';
             if (n.includes('diesel')) return 'diesel';
-            if (n.includes('gasolina') || n.includes('gasohol')) return 'gasolina';
+            // gasohol ANTES de gasolina para evitar que 'gasolina'.includes('gasohol') == false
+            // pero 'gasohol'.includes('gasolina') == false. Se mantienen como categorías distintas.
+            if (n.includes('gasohol')) return 'gasohol';
+            if (n.includes('gasolina')) return 'gasolina';
+            // Para cualquier otro combustible personalizado, devolver su nombre normalizado
             return n;
         }
 
@@ -1482,13 +1511,23 @@
                 const partNorm = normalizeFuelText(part);
                 const partCat = getFuelCategory(part);
 
-                // 1. Coincidencia por categoría canónica (ej. 'gnv' === 'gnv', 'diesel' === 'diesel')
+                // 1. Coincidencia exacta normalizada (máxima prioridad)
+                if (targetNorm && partNorm && targetNorm === partNorm) {
+                    return true;
+                }
+
+                // 2. Coincidencia por categoría canónica (ej. 'gnv' === 'gnv', 'diesel' === 'diesel')
+                // Solo si ambas categorías son conocidas Y distintas de la categoría genérica
                 if (targetCat && partCat && targetCat === partCat) {
                     return true;
                 }
 
-                // 2. Coincidencia textual directa o contenida (ej. "Gasohol Regular" y "Gasolina")
-                if (partNorm && targetNorm && (partNorm.includes(targetNorm) || targetNorm.includes(partNorm))) {
+                // 3. Coincidencia textual contenida (ej. "Diesel B5" contiene "diesel")
+                // Se excluye si uno contiene al otro pero pertenecen a categorías distintas
+                // para evitar que 'gasohol' sea aceptado para vehículos 'gasolina' o viceversa
+                if (partNorm && targetNorm &&
+                    (partNorm.includes(targetNorm) || targetNorm.includes(partNorm)) &&
+                    targetCat === partCat) {
                     return true;
                 }
             }
@@ -1982,7 +2021,11 @@
                     if (lower.includes('diesel') || lower.includes('diésel')) {
                         label = 'Diésel';
                         badgeClass = 'v-badge-diesel';
-                    } else if (lower.includes('gasolina') || lower.includes('gasohol')) {
+                    } else if (lower.includes('gasohol')) {
+                        // gasohol antes de gasolina para no ser capturado por 'gasolina'
+                        label = p; // preservar el nombre original (ej: 'Gasohol', 'Gasohol 90')
+                        badgeClass = 'v-badge-gasohol';
+                    } else if (lower.includes('gasolina')) {
                         label = 'Gasolina';
                         badgeClass = 'v-badge-gasolina';
                     } else if (lower.includes('gnv') || lower.includes('gas natural')) {
@@ -1991,6 +2034,10 @@
                     } else if (lower.includes('glp')) {
                         label = 'GLP';
                         badgeClass = 'v-badge-glp';
+                    } else {
+                        // combustible personalizado: mostrar el nombre tal como está
+                        label = p;
+                        badgeClass = 'v-badge-custom';
                     }
 
                     if (!seen.has(label)) {

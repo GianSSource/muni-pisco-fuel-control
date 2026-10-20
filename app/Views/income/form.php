@@ -569,7 +569,7 @@
 
         const invoiceInput = document.getElementById('invoice');
         if (invoiceInput) {
-            invoiceInput.value = '';
+            invoiceInput.value = 'F'; // prefijo automático de Factura
             invoiceInput.placeholder = 'F001-00004582';
         }
 
@@ -811,9 +811,22 @@
         const fmt = SUNAT_FORMATS[docType];
         if (!fmt) return;
 
-        invoiceInput.value = '';
         invoiceInput.placeholder = fmt.placeholder;
         if (hintText) hintText.textContent = fmt.hint;
+
+        // Pre-rellenar automáticamente la letra del formato (F, B, T…)
+        // para que el usuario solo tenga que escribir los dígitos
+        if (fmt.prefix) {
+            invoiceInput.value = fmt.prefix;
+            // Mover el cursor al final del prefijo
+            setTimeout(() => {
+                if (document.activeElement === invoiceInput || highlight) {
+                    invoiceInput.setSelectionRange(invoiceInput.value.length, invoiceInput.value.length);
+                }
+            }, 0);
+        } else {
+            invoiceInput.value = '';
+        }
 
         const colors = {
             FACTURA:      '#3b82f6',
@@ -855,6 +868,13 @@
         // Limpiar: solo letras A-Z y dígitos, convertir a mayúsculas
         let raw = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         raw = raw.slice(0, fmt.maxRaw); // máx caracteres sin guión
+
+        // Proteger el prefijo: si el usuario lo borrió, reponerlo automáticamente
+        if (fmt.prefix && !raw.startsWith(fmt.prefix)) {
+            // Quitar cualquier otra letra al inicio que no sea el prefijo esperado
+            raw = fmt.prefix + raw.replace(/^[A-Z]+/, '');
+            raw = raw.slice(0, fmt.maxRaw);
+        }
 
         // Insertar guión en posición de separación serie-correlativo
         let result = '';

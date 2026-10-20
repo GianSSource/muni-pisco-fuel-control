@@ -18,7 +18,8 @@
     }
 
     /* Contenedor de botones (Filtros) */
-    .chart-view-switcher {
+    .chart-view-switcher,
+    .energy-filter-switcher {
         flex-shrink: 0 !important;
         /* Impide que la botonera se comprima o desplaze */
         display: flex !important;
@@ -39,18 +40,21 @@
             gap: 12px !important;
         }
 
-        .chart-view-switcher {
+        .chart-view-switcher,
+        .energy-filter-switcher {
             width: 100% !important;
             max-width: 100%;
             overflow-x: auto;
             scrollbar-width: none;
         }
 
-        .chart-view-switcher::-webkit-scrollbar {
+        .chart-view-switcher::-webkit-scrollbar,
+        .energy-filter-switcher::-webkit-scrollbar {
             display: none;
         }
 
-        .switcher-btn {
+        .switcher-btn,
+        .energy-btn {
             flex: 1 0 auto;
             padding: 6px 9px;
             font-size: 11px;
@@ -494,7 +498,13 @@
                         <button type="button" class="energy-btn active" data-energy="all"
                             onclick="switchEnergyFilter(event, 'all')" title="Ver todos los tipos">Todos</button>
                         <button type="button" class="energy-btn" data-energy="liquid"
-                            onclick="switchEnergyFilter(event, 'liquid')" title="Solo combustibles líquidos (Gal)">Líquidos (Gal)</button>
+                            onclick="switchEnergyFilter(event, 'liquid')" title="Ver todos los combustibles líquidos desglosados (Gal)">Líquidos (Gal)</button>
+                        <?php foreach ($liquidFuelTypes ?? [] as $lType): ?>
+                        <button type="button" class="energy-btn" data-energy="<?= htmlspecialchars($lType) ?>"
+                            onclick="switchEnergyFilter(event, '<?= htmlspecialchars($lType, ENT_QUOTES) ?>')" title="Solo <?= htmlspecialchars($lType) ?> (Gal)">
+                            <?= htmlspecialchars($lType) ?>
+                        </button>
+                        <?php endforeach; ?>
                         <?php if (!empty($hasGnv)): ?>
                         <button type="button" class="energy-btn" data-energy="gnv"
                             onclick="switchEnergyFilter(event, 'gnv')" title="Solo Gas Natural (m³)">GNV (m³)</button>
@@ -946,6 +956,7 @@
     let currentViewKey = 'semanal';
     let currentEnergyKey = 'all';
     const hasGnv = <?= !empty($hasGnv) ? 'true' : 'false' ?>;
+    const liquidFuelTypes = <?= json_encode(array_values($liquidFuelTypes ?? ['Diesel', 'Gasolina']), JSON_UNESCAPED_UNICODE) ?>;
 
     const chartDataSets = {
         semanal: { title: 'Combustible Despachado Semanal', subtitle: 'Volumen diario consumido (últimos 7 días)', colors: ['#2563eb'], lightColors: ['#60a5fa'], data: <?= json_encode($dailyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
@@ -1050,10 +1061,13 @@
 
         if (currentEnergyKey === 'liquid') {
             title += ' (Líquidos)';
-            subtitle += ' - Solo combustibles líquidos (Gal)';
+            subtitle = 'Desglose por combustible líquido (Gal): ' + liquidFuelTypes.join(' • ');
         } else if (currentEnergyKey === 'gnv') {
             title += ' (GNV)';
             subtitle = 'Consumo de Gas Natural Vehicular en metros cúbicos (m³)';
+        } else if (liquidFuelTypes.includes(currentEnergyKey)) {
+            title += ` (${currentEnergyKey})`;
+            subtitle = `Consumo exclusivo de ${currentEnergyKey} en Galones (Gal)`;
         } else {
             if (currentViewKey !== 'tipo') {
                 subtitle += ' - Comparativa Líquidos (Gal) y GNV (m³)';
@@ -1099,6 +1113,8 @@
                 data = rawData.filter(d => !d.is_gnv);
             } else if (currentEnergyKey === 'gnv') {
                 data = rawData.filter(d => d.is_gnv);
+            } else if (liquidFuelTypes.includes(currentEnergyKey)) {
+                data = rawData.filter(d => String(d.label || '').toLowerCase() === currentEnergyKey.toLowerCase());
             }
 
             const tipoColorMap = buildFuelTypeColorMap(data);
@@ -1160,13 +1176,12 @@
         // Vistas Semanal, Mensual, Anual, Área
         const categories = rawData.map(d => d.label);
 
-        // Si filtro es solo Líquidos o solo GNV: una sola serie
-        if (currentEnergyKey === 'liquid' || currentEnergyKey === 'gnv') {
-            const isGnv = currentEnergyKey === 'gnv';
-            const unit = isGnv ? 'm³' : 'Gal';
-            const seriesName = isGnv ? 'GNV (m³)' : 'Líquidos (Gal)';
-            const seriesColor = isGnv ? { c: '#10b981', light: '#6ee7b7' } : { c: '#2563eb', light: '#60a5fa' };
-            const values = rawData.map(d => isGnv ? Number(d.gnv_m3 || 0) : Number(d.liquid_gallons || 0));
+        // Caso 1: Filtro exclusivo de un solo combustible líquido específico (p.ej. Solo Diesel o Solo Gasolina)
+        if (liquidFuelTypes.includes(currentEnergyKey)) {
+            const fuelName = currentEnergyKey;
+            const singleMap = buildFuelTypeColorMap([{ label: fuelName }]);
+            const fColors = getFuelTypeColors(fuelName, singleMap);
+            const values = rawData.map(d => Number(d.liquid_by_type?.[fuelName] || 0));
 
             fuelChartInstance.setOption({
                 animationDuration: 300,
@@ -1178,7 +1193,68 @@
                     trigger: 'axis', axisPointer: { type: 'shadow' },
                     backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
                     textStyle: { color: theme.text },
-                    formatter: (params) => `${params[0]?.axisValueLabel || ''}<br/><strong>${seriesName}: ${formatNumber(params[0]?.value, 2)} ${unit}</strong>`
+                    formatter: (params) => `${params[0]?.axisValueLabel || ''}<br/><strong>${fuelName}: ${formatGallons(params[0]?.value, 2)}</strong>`
+                },
+                xAxis: horizontal ? {
+                    type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
+                    axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} Gal` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { lineStyle: { color: theme.grid } }
+                } : {
+                    type: 'category', data: categories,
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { lineStyle: { color: theme.grid } }
+                },
+                yAxis: horizontal ? {
+                    type: 'category', data: categories,
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { show: false }
+                } : {
+                    type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
+                    axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} Gal` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
+                },
+                series: [{
+                    name: `${fuelName} (Gal)`, type: 'bar', barMaxWidth: horizontal ? 34 : 52,
+                    data: values.map(val => ({
+                        value: val,
+                        itemStyle: {
+                            borderRadius: horizontal ? [0, 6, 6, 0] : [6, 6, 0, 0],
+                            color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
+                                { offset: 0, color: fColors.lightColor },
+                                { offset: 1, color: fColors.color }
+                            ])
+                        }
+                    })),
+                    label: {
+                        show: true, position: horizontal ? 'right' : 'top', distance: 6, color: theme.text, fontSize: 10, fontWeight: 600,
+                        formatter: ({ value }) => value > 0 ? `${formatNumber(value, 2)} Gal` : ''
+                    },
+                    emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
+                }]
+            }, { notMerge: true, lazyUpdate: true });
+            return;
+        }
+
+        // Caso 2: Filtro GNV
+        if (currentEnergyKey === 'gnv') {
+            const unit = 'm³';
+            const seriesName = 'GNV (m³)';
+            const seriesColor = { c: '#10b981', light: '#6ee7b7' };
+            const values = rawData.map(d => Number(d.gnv_m3 || 0));
+
+            fuelChartInstance.setOption({
+                animationDuration: 300,
+                legend: { show: false },
+                grid: horizontal
+                    ? { left: 12, right: 36, top: 24, bottom: 24, containLabel: true }
+                    : { left: 8, right: 14, top: 38, bottom: 12, containLabel: true },
+                tooltip: {
+                    trigger: 'axis', axisPointer: { type: 'shadow' },
+                    backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
+                    textStyle: { color: theme.text },
+                    formatter: (params) => `${params[0]?.axisValueLabel || ''}<br/><strong>${seriesName}: ${formatGnv(params[0]?.value, 2)}</strong>`
                 },
                 xAxis: horizontal ? {
                     type: 'value', min: 0,
@@ -1206,7 +1282,7 @@
                         value: val,
                         itemStyle: {
                             borderRadius: horizontal ? [0, 6, 6, 0] : [6, 6, 0, 0],
-                            color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, horizontal ? 0 : 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
+                            color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
                                 { offset: 0, color: seriesColor.light },
                                 { offset: 1, color: seriesColor.c }
                             ])
@@ -1222,7 +1298,93 @@
             return;
         }
 
-        // Modo TODOS: Doble Serie Comparativa (Líquidos en Gal + GNV en m3)
+        // Caso 3: Filtro Líquidos (Desglose interactivo por Diesel, Gasolina, etc.)
+        if (currentEnergyKey === 'liquid') {
+            const liquidColorMap = buildFuelTypeColorMap(liquidFuelTypes.map(f => ({ label: f })));
+            const seriesList = liquidFuelTypes.map((fuelName) => {
+                const fColors = getFuelTypeColors(fuelName, liquidColorMap);
+                return {
+                    name: `${fuelName} (Gal)`,
+                    type: 'bar',
+                    barMaxWidth: horizontal ? 16 : 26,
+                    barGap: '20%',
+                    data: rawData.map(d => Number(d.liquid_by_type?.[fuelName] || 0)),
+                    itemStyle: {
+                        borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
+                        color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
+                            { offset: 0, color: fColors.lightColor },
+                            { offset: 1, color: fColors.color }
+                        ])
+                    },
+                    label: {
+                        show: !horizontal,
+                        position: 'top',
+                        distance: 5,
+                        formatter: ({ value }) => value > 0 ? `{val|${formatNumber(value, 2)}}\n{unit|Gal}` : '',
+                        rich: {
+                            val: { color: theme.text, fontSize: 8.5, fontWeight: 700, lineHeight: 11, align: 'center' },
+                            unit: { color: theme.muted, fontSize: 7.5, fontWeight: 600, lineHeight: 10, align: 'center' }
+                        }
+                    },
+                    emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
+                };
+            });
+
+            fuelChartInstance.setOption({
+                animationDuration: 300,
+                legend: {
+                    show: true, top: 2, right: 14, itemGap: 14,
+                    textStyle: { color: theme.text, fontSize: 11, fontWeight: 600 }
+                },
+                grid: horizontal
+                    ? { left: 12, right: 36, top: 38, bottom: 24, containLabel: true }
+                    : { left: 8, right: 14, top: 50, bottom: 12, containLabel: true },
+                tooltip: {
+                    trigger: 'axis', axisPointer: { type: 'shadow' },
+                    backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
+                    textStyle: { color: theme.text },
+                    formatter: (params) => {
+                        const idx = params[0]?.dataIndex;
+                        const item = rawData[idx] || {};
+                        let html = `<strong>${params[0]?.axisValueLabel || ''}</strong><br/>`;
+                        let totalLiquido = 0;
+                        liquidFuelTypes.forEach((fName) => {
+                            const val = Number(item.liquid_by_type?.[fName] || 0);
+                            totalLiquido += val;
+                            const fColors = getFuelTypeColors(fName, liquidColorMap);
+                            html += `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${fColors.color};margin-right:6px;"></span>${fName}: <strong>${formatGallons(val, 2)}</strong><br/>`;
+                        });
+                        html += `<div style="margin-top:4px;padding-top:4px;border-top:1px solid ${theme.grid};font-size:0.85em;color:${theme.muted};">Total Líquidos: <strong>${formatGallons(totalLiquido, 2)}</strong></div>`;
+                        return html;
+                    }
+                },
+                xAxis: horizontal ? {
+                    type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
+                    axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} Gal` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { lineStyle: { color: theme.grid } }
+                } : {
+                    type: 'category', data: categories,
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { lineStyle: { color: theme.grid } }
+                },
+                yAxis: horizontal ? {
+                    type: 'category', data: categories,
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { show: false }
+                } : {
+                    type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
+                    axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} Gal` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
+                },
+                series: seriesList
+            }, { notMerge: true, lazyUpdate: true });
+            return;
+        }
+
+        // Caso 4: Modo TODOS (Líquidos en Gal + GNV en m3)
+        // Con desglose detallado en el tooltip
         fuelChartInstance.setOption({
             animationDuration: 300,
             legend: {
@@ -1240,7 +1402,18 @@
                     const idx = params[0]?.dataIndex;
                     const item = rawData[idx] || {};
                     let html = `<strong>${params[0]?.axisValueLabel || ''}</strong><br/>`;
-                    html += `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563eb;margin-right:6px;"></span>Líquidos: <strong>${formatGallons(item.liquid_gallons || 0, 2)}</strong><br/>`;
+                    html += `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563eb;margin-right:6px;"></span>Líquidos: <strong>${formatGallons(item.liquid_gallons || 0, 2)}</strong>`;
+                    if (item.liquid_by_type) {
+                        const breakdown = [];
+                        liquidFuelTypes.forEach((fName) => {
+                            const val = Number(item.liquid_by_type[fName] || 0);
+                            if (val > 0) breakdown.push(`${fName}: ${formatNumber(val, 2)} Gal`);
+                        });
+                        if (breakdown.length > 0) {
+                            html += `<br/><span style="padding-left:14px;font-size:0.82em;color:${theme.muted};">${breakdown.join(' &bull; ')}</span>`;
+                        }
+                    }
+                    html += `<br/>`;
                     if (Number(item.gnv_m3 || 0) > 0 || hasGnv) {
                         html += `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;margin-right:6px;"></span>GNV: <strong>${formatGnv(item.gnv_m3 || 0, 2)}</strong>`;
                     }

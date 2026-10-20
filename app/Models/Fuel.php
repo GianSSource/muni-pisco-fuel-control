@@ -632,21 +632,78 @@ final class Fuel
         }
     }
 
+    public static function isGnvFuel(string $fuelName): bool
+    {
+        $lower = mb_strtolower(trim($fuelName));
+        return str_contains($lower, 'gnv') || str_contains($lower, 'gas natural');
+    }
+
+    public static function normalizeLiquidTypeName(string $fuelName, array $canonicalTypes): string
+    {
+        $trimmed = trim($fuelName);
+        foreach ($canonicalTypes as $type) {
+            if (strcasecmp($type, $trimmed) === 0) {
+                return $type;
+            }
+        }
+        return $trimmed !== '' ? $trimmed : 'Diesel';
+    }
+
+    public function getLiquidFuelTypes(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $sql = 'SELECT DISTINCT name AS fuel_type 
+                    FROM system_catalogs 
+                    WHERE category = "fuel_type" AND status = "activo" 
+                      AND LOWER(name) NOT LIKE "%gnv%" 
+                      AND LOWER(name) NOT LIKE "%gas natural%"
+                    UNION
+                    SELECT DISTINCT COALESCE(NULLIF(TRIM(fuel_type), ""), "Diesel") AS fuel_type 
+                    FROM fuel_deliveries 
+                    WHERE LOWER(COALESCE(fuel_type, "")) NOT LIKE "%gnv%" 
+                      AND LOWER(COALESCE(fuel_type, "")) NOT LIKE "%gas natural%"
+                    UNION
+                    SELECT DISTINCT COALESCE(NULLIF(TRIM(fuel_type), ""), "Diesel") AS fuel_type 
+                    FROM fuel_incomes 
+                    WHERE LOWER(COALESCE(fuel_type, "")) NOT LIKE "%gnv%" 
+                      AND LOWER(COALESCE(fuel_type, "")) NOT LIKE "%gas natural%"';
+
+            $stmt = $db->query($sql);
+            $types = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $types = array_values(array_filter(array_unique(array_map('trim', $types))));
+            if (!empty($types)) {
+                usort($types, static function ($a, $b) {
+                    $aD = stripos($a, 'diesel') !== false;
+                    $bD = stripos($b, 'diesel') !== false;
+                    if ($aD && !$bD) return -1;
+                    if (!$aD && $bD) return 1;
+                    return strcasecmp($a, $b);
+                });
+                return $types;
+            }
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
+        }
+
+        return ['Diesel', 'Gasolina'];
+    }
+
     public function getDailyDispatchedFuel(int $days = 7): array
     {
         try {
             $db = Database::getConnection();
+            $liquidTypes = $this->getLiquidFuelTypes();
 
             $sql = 'SELECT 
                         DATE(fd.created_at) AS date,
-                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS liquid_gallons,
-                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gnv%" OR LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS gnv_m3,
-                        COALESCE(SUM(fd.gallons), 0) AS total_gallons,
+                        COALESCE(fd.fuel_type, fi.fuel_type, "Diesel") AS fuel_name,
+                        COALESCE(SUM(fd.gallons), 0) AS gallons,
                         COUNT(fd.id) AS delivery_count
                     FROM fuel_deliveries fd
                     LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
                     WHERE fd.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL :days DAY) AND fd.status <> "Anulado"
-                    GROUP BY DATE(fd.created_at)
+                    GROUP BY DATE(fd.created_at), fuel_name
                     ORDER BY date ASC';
 
             $stmt = $db->prepare($sql);
@@ -654,16 +711,35 @@ final class Fuel
             $stmt->execute();
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Indexar lo que sí vino de la BD por fecha (Y-m-d)
             $byDate = [];
             foreach ($results as $row) {
-                $byDate[$row['date']] = $row;
+                $d = $row['date'];
+                if (!isset($byDate[$d])) {
+                    $byDate[$d] = [
+                        'liquid_gallons' => 0.0,
+                        'gnv_m3' => 0.0,
+                        'total_gallons' => 0.0,
+                        'delivery_count' => 0,
+                        'liquid_by_type' => array_fill_keys($liquidTypes, 0.0)
+                    ];
+                }
+                $fname = self::normalizeLiquidTypeName((string)$row['fuel_name'], $liquidTypes);
+                $isGnv = self::isGnvFuel($fname);
+                $gals = (float)$row['gallons'];
+                $cnt = (int)$row['delivery_count'];
+
+                $byDate[$d]['total_gallons'] += $gals;
+                $byDate[$d]['delivery_count'] += $cnt;
+                if ($isGnv) {
+                    $byDate[$d]['gnv_m3'] += $gals;
+                } else {
+                    $byDate[$d]['liquid_gallons'] += $gals;
+                    $byDate[$d]['liquid_by_type'][$fname] = ($byDate[$d]['liquid_by_type'][$fname] ?? 0.0) + $gals;
+                }
             }
 
             $months = ['01' => 'Ene', '02' => 'Feb', '03' => 'Mar', '04' => 'Abr', '05' => 'May', '06' => 'Jun', '07' => 'Jul', '08' => 'Ago', '09' => 'Sep', '10' => 'Oct', '11' => 'Nov', '12' => 'Dic'];
 
-            // Completar TODOS los días del rango (aunque no tengan despachos) para
-            // que el eje del gráfico "últimos N días" siempre muestre N barras.
             $mapped = [];
             for ($i = $days - 1; $i >= 0; $i--) {
                 $date = date('Y-m-d', strtotime("-{$i} days"));
@@ -677,7 +753,8 @@ final class Fuel
                     'liquid_gallons' => $row ? (float) $row['liquid_gallons'] : 0.0,
                     'gnv_m3' => $row ? (float) $row['gnv_m3'] : 0.0,
                     'total_gallons' => $row ? (float) $row['total_gallons'] : 0.0,
-                    'delivery_count' => $row ? (int) $row['delivery_count'] : 0
+                    'delivery_count' => $row ? (int) $row['delivery_count'] : 0,
+                    'liquid_by_type' => $row ? $row['liquid_by_type'] : array_fill_keys($liquidTypes, 0.0)
                 ];
             }
 
@@ -717,47 +794,66 @@ final class Fuel
     public function getMonthlyFuelDispatched(): array
     {
         $monthsMap = [
-            1 => 'Enero',
-            2 => 'Febrero',
-            3 => 'Marzo',
-            4 => 'Abril',
-            5 => 'Mayo',
-            6 => 'Junio',
-            7 => 'Julio',
-            8 => 'Agosto',
-            9 => 'Septiembre',
-            10 => 'Octubre',
-            11 => 'Noviembre',
-            12 => 'Diciembre'
+            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
         ];
 
         try {
             $db = Database::getConnection();
+            $liquidTypes = $this->getLiquidFuelTypes();
+
             $sql = 'SELECT 
                         MONTH(fd.created_at) AS month_num,
-                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS liquid_gallons,
-                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gnv%" OR LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS gnv_m3,
-                        COALESCE(SUM(fd.gallons), 0) AS total_gallons,
+                        COALESCE(fd.fuel_type, fi.fuel_type, "Diesel") AS fuel_name,
+                        COALESCE(SUM(fd.gallons), 0) AS gallons,
                         COUNT(fd.id) AS delivery_count
                     FROM fuel_deliveries fd
                     LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
                     WHERE YEAR(fd.created_at) = YEAR(CURRENT_DATE()) AND fd.status <> "Anulado"
-                    GROUP BY MONTH(fd.created_at)
+                    GROUP BY MONTH(fd.created_at), fuel_name
                     ORDER BY month_num ASC';
 
             $stmt = $db->query($sql);
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            if (!empty($results)) {
+            $byMonth = [];
+            foreach ($results as $row) {
+                $m = (int) $row['month_num'];
+                if (!isset($byMonth[$m])) {
+                    $byMonth[$m] = [
+                        'liquid_gallons' => 0.0,
+                        'gnv_m3' => 0.0,
+                        'total_gallons' => 0.0,
+                        'delivery_count' => 0,
+                        'liquid_by_type' => array_fill_keys($liquidTypes, 0.0)
+                    ];
+                }
+                $fname = self::normalizeLiquidTypeName((string)$row['fuel_name'], $liquidTypes);
+                $isGnv = self::isGnvFuel($fname);
+                $gals = (float)$row['gallons'];
+                $cnt = (int)$row['delivery_count'];
+
+                $byMonth[$m]['total_gallons'] += $gals;
+                $byMonth[$m]['delivery_count'] += $cnt;
+                if ($isGnv) {
+                    $byMonth[$m]['gnv_m3'] += $gals;
+                } else {
+                    $byMonth[$m]['liquid_gallons'] += $gals;
+                    $byMonth[$m]['liquid_by_type'][$fname] = ($byMonth[$m]['liquid_by_type'][$fname] ?? 0.0) + $gals;
+                }
+            }
+
+            if (!empty($byMonth)) {
                 $output = [];
-                foreach ($results as $row) {
-                    $mNum = (int) $row['month_num'];
+                foreach ($byMonth as $mNum => $data) {
                     $output[] = [
                         'label' => $monthsMap[$mNum] ?? 'Mes ' . $mNum,
-                        'liquid_gallons' => (float) $row['liquid_gallons'],
-                        'gnv_m3' => (float) $row['gnv_m3'],
-                        'total_gallons' => (float) $row['total_gallons'],
-                        'delivery_count' => (int) $row['delivery_count']
+                        'liquid_gallons' => (float) $data['liquid_gallons'],
+                        'gnv_m3' => (float) $data['gnv_m3'],
+                        'total_gallons' => (float) $data['total_gallons'],
+                        'delivery_count' => (int) $data['delivery_count'],
+                        'liquid_by_type' => $data['liquid_by_type']
                     ];
                 }
                 return $output;
@@ -773,30 +869,59 @@ final class Fuel
     {
         try {
             $db = Database::getConnection();
+            $liquidTypes = $this->getLiquidFuelTypes();
+
             $sql = 'SELECT 
                         YEAR(fd.created_at) AS year_num,
-                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS liquid_gallons,
-                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gnv%" OR LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS gnv_m3,
-                        COALESCE(SUM(fd.gallons), 0) AS total_gallons,
+                        COALESCE(fd.fuel_type, fi.fuel_type, "Diesel") AS fuel_name,
+                        COALESCE(SUM(fd.gallons), 0) AS gallons,
                         COUNT(fd.id) AS delivery_count
                     FROM fuel_deliveries fd
                     LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
                     WHERE fd.status <> "Anulado"
-                    GROUP BY YEAR(fd.created_at)
+                    GROUP BY YEAR(fd.created_at), fuel_name
                     ORDER BY year_num ASC';
 
             $stmt = $db->query($sql);
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            if (!empty($results)) {
+            $byYear = [];
+            foreach ($results as $row) {
+                $y = (int) $row['year_num'];
+                if (!isset($byYear[$y])) {
+                    $byYear[$y] = [
+                        'liquid_gallons' => 0.0,
+                        'gnv_m3' => 0.0,
+                        'total_gallons' => 0.0,
+                        'delivery_count' => 0,
+                        'liquid_by_type' => array_fill_keys($liquidTypes, 0.0)
+                    ];
+                }
+                $fname = self::normalizeLiquidTypeName((string)$row['fuel_name'], $liquidTypes);
+                $isGnv = self::isGnvFuel($fname);
+                $gals = (float)$row['gallons'];
+                $cnt = (int)$row['delivery_count'];
+
+                $byYear[$y]['total_gallons'] += $gals;
+                $byYear[$y]['delivery_count'] += $cnt;
+                if ($isGnv) {
+                    $byYear[$y]['gnv_m3'] += $gals;
+                } else {
+                    $byYear[$y]['liquid_gallons'] += $gals;
+                    $byYear[$y]['liquid_by_type'][$fname] = ($byYear[$y]['liquid_by_type'][$fname] ?? 0.0) + $gals;
+                }
+            }
+
+            if (!empty($byYear)) {
                 $output = [];
-                foreach ($results as $row) {
+                foreach ($byYear as $yNum => $data) {
                     $output[] = [
-                        'label' => 'Año ' . $row['year_num'],
-                        'liquid_gallons' => (float) $row['liquid_gallons'],
-                        'gnv_m3' => (float) $row['gnv_m3'],
-                        'total_gallons' => (float) $row['total_gallons'],
-                        'delivery_count' => (int) $row['delivery_count']
+                        'label' => 'Año ' . $yNum,
+                        'liquid_gallons' => (float) $data['liquid_gallons'],
+                        'gnv_m3' => (float) $data['gnv_m3'],
+                        'total_gallons' => (float) $data['total_gallons'],
+                        'delivery_count' => (int) $data['delivery_count'],
+                        'liquid_by_type' => $data['liquid_by_type']
                     ];
                 }
                 return $output;
@@ -812,44 +937,82 @@ final class Fuel
     {
         try {
             $db = Database::getConnection();
+            $liquidTypes = $this->getLiquidFuelTypes();
+
             $sql = 'SELECT 
                         COALESCE(fd.destination, "Despacho General") AS area_name,
-                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gnv%" AND LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) NOT LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS liquid_gallons,
-                        COALESCE(SUM(CASE WHEN LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gnv%" OR LOWER(COALESCE(fd.fuel_type, fi.fuel_type, "")) LIKE "%gas natural%" THEN fd.gallons ELSE 0 END), 0) AS gnv_m3,
-                        COALESCE(SUM(fd.gallons), 0) AS total_gallons,
+                        COALESCE(fd.fuel_type, fi.fuel_type, "Diesel") AS fuel_name,
+                        COALESCE(SUM(fd.gallons), 0) AS gallons,
                         COUNT(fd.id) AS delivery_count
                     FROM fuel_deliveries fd
                     LEFT JOIN fuel_incomes fi ON fi.id = fd.fuel_income_id
                     WHERE fd.status <> "Anulado"
-                    GROUP BY area_name
-                    ORDER BY total_gallons DESC, area_name ASC';
+                    GROUP BY area_name, fuel_name
+                    ORDER BY area_name ASC';
 
             $stmt = $db->query($sql);
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            if (!empty($results)) {
+            $byArea = [];
+            foreach ($results as $row) {
+                $area = (string) $row['area_name'];
+                if (!isset($byArea[$area])) {
+                    $byArea[$area] = [
+                        'area_name' => $area,
+                        'liquid_gallons' => 0.0,
+                        'gnv_m3' => 0.0,
+                        'total_gallons' => 0.0,
+                        'delivery_count' => 0,
+                        'liquid_by_type' => array_fill_keys($liquidTypes, 0.0)
+                    ];
+                }
+                $fname = self::normalizeLiquidTypeName((string)$row['fuel_name'], $liquidTypes);
+                $isGnv = self::isGnvFuel($fname);
+                $gals = (float)$row['gallons'];
+                $cnt = (int)$row['delivery_count'];
+
+                $byArea[$area]['total_gallons'] += $gals;
+                $byArea[$area]['delivery_count'] += $cnt;
+                if ($isGnv) {
+                    $byArea[$area]['gnv_m3'] += $gals;
+                } else {
+                    $byArea[$area]['liquid_gallons'] += $gals;
+                    $byArea[$area]['liquid_by_type'][$fname] = ($byArea[$area]['liquid_by_type'][$fname] ?? 0.0) + $gals;
+                }
+            }
+
+            if (!empty($byArea)) {
+                uasort($byArea, static fn($a, $b) => $b['total_gallons'] <=> $a['total_gallons']);
+
                 $topLimit = 7;
                 $output = [];
                 $otrosLiquid = 0.0;
                 $otrosGnv = 0.0;
                 $otrosGallons = 0.0;
                 $otrosCount = 0;
+                $otrosLiquidByType = array_fill_keys($liquidTypes, 0.0);
 
-                foreach ($results as $i => $row) {
+                $i = 0;
+                foreach ($byArea as $row) {
                     if ($i < $topLimit) {
                         $output[] = [
                             'label' => $row['area_name'],
                             'liquid_gallons' => (float) $row['liquid_gallons'],
                             'gnv_m3' => (float) $row['gnv_m3'],
                             'total_gallons' => (float) $row['total_gallons'],
-                            'delivery_count' => (int) $row['delivery_count']
+                            'delivery_count' => (int) $row['delivery_count'],
+                            'liquid_by_type' => $row['liquid_by_type']
                         ];
                     } else {
                         $otrosLiquid += (float) $row['liquid_gallons'];
                         $otrosGnv += (float) $row['gnv_m3'];
                         $otrosGallons += (float) $row['total_gallons'];
                         $otrosCount += (int) $row['delivery_count'];
+                        foreach ($row['liquid_by_type'] as $k => $v) {
+                            $otrosLiquidByType[$k] = ($otrosLiquidByType[$k] ?? 0.0) + (float)$v;
+                        }
                     }
+                    $i++;
                 }
 
                 if ($otrosCount > 0) {
@@ -861,7 +1024,8 @@ final class Fuel
                         'liquid_gallons' => $otrosLiquid,
                         'gnv_m3' => $otrosGnv,
                         'total_gallons' => $otrosGallons,
-                        'delivery_count' => $otrosCount
+                        'delivery_count' => $otrosCount,
+                        'liquid_by_type' => $otrosLiquidByType
                     ];
                 }
 
