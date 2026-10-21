@@ -286,6 +286,12 @@
     }
 </style>
 
+<?php
+$fromDashboard = (isset($_GET['from']) && $_GET['from'] === 'dashboard')
+    || (!empty($_SERVER['HTTP_REFERER']) && str_contains($_SERVER['HTTP_REFERER'], '/dashboard') && !str_contains($_SERVER['HTTP_REFERER'], '/ingresos'));
+$backUrl = $fromDashboard ? BASE_URL . 'dashboard' : BASE_URL . 'ingresos';
+$backLabel = $fromDashboard ? '← Volver al Dashboard' : '← Volver a Ingresos';
+?>
 <section class="container" style="max-width: 900px; margin: 40px auto; padding: 24px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
         <div>
@@ -294,8 +300,8 @@
             <p style="color: var(--text-muted, #64748b); margin-top: 4px; font-size: 0.95rem;">Ingresa una nueva recarga
                 o abastecimiento de combustible al stock municipal</p>
         </div>
-        <a href="<?= BASE_URL ?>dashboard" class="btn-cancel-styled" style="font-size: 0.9rem; font-weight: 500;">
-            ← Volver al Dashboard
+        <a href="<?= $backUrl ?>" class="btn-cancel-styled" style="font-size: 0.9rem; font-weight: 500;">
+            <?= $backLabel ?>
         </a>
     </div>
 
@@ -518,7 +524,7 @@
                 Limpiar Campos
             </button>
             <div style="display: flex; gap: 12px;">
-                <a href="<?= BASE_URL ?>dashboard" class="btn-cancel-styled">Cancelar</a>
+                <a href="<?= $backUrl ?>" class="btn-cancel-styled">Cancelar</a>
                 <button type="submit" id="submitBtn" class="btn-submit-styled">Guardar Ingreso</button>
             </div>
         </div>

@@ -327,14 +327,14 @@
         </div>
 
         <div style="display: flex; gap: 10px;">
-            <a class="button secondary" href="<?= BASE_URL ?>despachos/nuevo"
+            <a class="button secondary" href="<?= BASE_URL ?>despachos/nuevo?from=dashboard"
                 style="background: #3b82f6; color: #ffffff; padding: 10px 16px; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M12 5v14M5 12h14"></path>
                 </svg>
                 Registrar Despacho
             </a>
-            <a class="button primary" href="<?= BASE_URL ?>ingresos/nuevo">
+            <a class="button primary" href="<?= BASE_URL ?>ingresos/nuevo?from=dashboard">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M12 5v14M5 12h14"></path>
                 </svg>
@@ -807,21 +807,9 @@
         <div class="table-header">
             <div>
                 <h2>Últimos Despachos de Combustible</h2>
-                <p class="section-desc">Historial reciente con filtro y búsqueda instantánea</p>
+                <p class="section-desc">Historial reciente de despachos realizados</p>
             </div>
             <div class="table-header-right">
-                <form action="<?= BASE_URL ?>despachos" method="GET" class="dash-search-form" onsubmit="return false;">
-                    <div class="dash-search-input-wrap">
-                        <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor"
-                            stroke-width="2" viewBox="0 0 24 24">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        <input type="text" id="dashSearchInput" name="q" placeholder="Buscar vale, placa, conductor..."
-                            class="dash-search-input" maxlength="30"
-                            oninput="this.value = this.value.replace(/[^a-zA-Z0-9\-\s]/g, '')">
-                    </div>
-                </form>
                 <a href="<?= BASE_URL ?>despachos" class="link-more">Buscador Avanzado →</a>
             </div>
         </div>
@@ -1529,14 +1517,6 @@
         }
         window.addEventListener('themeChanged', () => initChart(currentViewKey));
         window.addEventListener('pagehide', disposeCharts, { once: true });
-
-        const dashInput = document.getElementById('dashSearchInput');
-        if (dashInput) dashInput.addEventListener('input', () => {
-            const term = dashInput.value.toLowerCase().trim();
-            document.querySelectorAll('.table-wrap tbody tr').forEach((row) => {
-                row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
-            });
-        });
     });
 
     function switchEnergyFilter(evt, energyKey) {

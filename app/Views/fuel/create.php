@@ -617,6 +617,12 @@
     }
 </style>
 
+<?php
+$fromDashboard = (isset($_GET['from']) && $_GET['from'] === 'dashboard')
+    || (!empty($_SERVER['HTTP_REFERER']) && str_contains($_SERVER['HTTP_REFERER'], '/dashboard') && !str_contains($_SERVER['HTTP_REFERER'], '/despachos'));
+$backUrl = $fromDashboard ? BASE_URL . 'dashboard' : BASE_URL . 'despachos';
+$backLabel = $fromDashboard ? '← Volver al Dashboard' : '← Volver a Despachos';
+?>
 <section class="container" style="max-width: 900px; margin: 40px auto; padding: 24px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
         <div>
@@ -625,8 +631,8 @@
             <p style="color: var(--text-muted, #64748b); margin-top: 4px; font-size: 0.95rem;">Emisión de vale de
                 consumo de combustible para flota vehicular</p>
         </div>
-        <a href="<?= BASE_URL ?>despachos" class="btn-cancel-styled" style="font-size: 0.9rem; font-weight: 500;">
-            ← Volver a Despachos
+        <a href="<?= $backUrl ?>" class="btn-cancel-styled" style="font-size: 0.9rem; font-weight: 500;">
+            <?= $backLabel ?>
         </a>
     </div>
 
@@ -801,7 +807,7 @@
                 Limpiar Campos
             </button>
             <div style="display: flex; gap: 12px;">
-                <a href="<?= BASE_URL ?>despachos" class="btn-cancel-styled">
+                <a href="<?= $backUrl ?>" class="btn-cancel-styled">
                     Cancelar
                 </a>
                 <button type="submit" id="submitBtn" class="btn-submit-styled">
@@ -831,11 +837,7 @@
             <button type="button" onclick="cerrarModalAuth()" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted, #64748b); cursor: pointer; line-height: 1; padding: 4px; border-radius: 6px;" title="Cerrar">&times;</button>
         </div>
 
-        <form id="authValidateForm" autocomplete="off" onsubmit="confirmarIdentidadYDespachar(event)" style="padding: 22px;">
-            <!-- Inputs señuelo para evitar que el navegador muestre su popup de 'Contraseñas guardadas' -->
-            <input type="text" name="fake_username_decoy" style="display:none;" tabindex="-1" autocomplete="off">
-            <input type="password" name="fake_password_decoy" style="display:none;" tabindex="-1" autocomplete="off">
-
+        <div id="authValidateForm" style="padding: 22px;">
             <div style="background: var(--bg-body, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; padding: 12px 14px; margin-bottom: 18px; display: flex; align-items: center; gap: 12px;">
                 <div style="width: 36px; height: 36px; border-radius: 50%; background: #2563eb; color: #fff; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                     <?= strtoupper(substr($_SESSION['user']['name'] ?? 'U', 0, 1)) ?>
@@ -864,7 +866,22 @@
                     Ingrese su Contraseña
                 </label>
                 <div style="position: relative;">
-                    <input type="password" id="authModalPassword" name="auth_confirm_key" class="form-control-styled" placeholder="••••••••••••" maxlength="50" required autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly');" style="padding-right: 42px; width: 100%;">
+                    <input type="text"
+                           id="authModalPassword"
+                           name="auth_confirm_pin_<?= time() ?>"
+                           class="form-control-styled"
+                           placeholder="••••••••••••"
+                           maxlength="50"
+                           autocomplete="one-time-code"
+                           autocorrect="off"
+                           autocapitalize="off"
+                           spellcheck="false"
+                           data-lpignore="true"
+                           data-1p-ignore="true"
+                           data-bwignore="true"
+                           data-form-type="other"
+                           style="-webkit-text-security: disc; -moz-text-security: circle; text-security: disc; padding-right: 42px; width: 100%;"
+                           onkeydown="if(event.key === 'Enter'){ event.preventDefault(); confirmarIdentidadYDespachar(event); }">
                     <button type="button" id="toggleAuthPasswordBtn" onclick="toggleVisibilidadPasswordAuth()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted, #64748b); cursor: pointer; padding: 6px; display: flex; align-items: center; border-radius: 4px;" title="Ver/Ocultar contraseña">
                         <svg id="eyeIconOpen" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -882,11 +899,11 @@
                 <button type="button" class="btn-cancel-styled" onclick="cerrarModalAuth()" style="padding: 9px 16px; font-size: 0.88rem;">
                     Cancelar
                 </button>
-                <button type="submit" id="authConfirmSubmitBtn" class="btn-submit-styled" style="padding: 9px 20px; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 8px;">
+                <button type="button" id="authConfirmSubmitBtn" onclick="confirmarIdentidadYDespachar(event)" class="btn-submit-styled" style="padding: 9px 20px; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 8px;">
                     <span id="authConfirmBtnText">Confirmar y Emitir</span>
                 </button>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
@@ -1183,8 +1200,14 @@
         if (!modal) return;
         if (pwdInput) {
             pwdInput.value = '';
-            pwdInput.type = 'password';
-            pwdInput.setAttribute('readonly', 'readonly');
+            // Máscara de seguridad sin alertar al gestor de contraseñas de Chrome/Edge
+            if ('webkitTextSecurity' in document.documentElement.style || 'textSecurity' in document.documentElement.style) {
+                pwdInput.type = 'text';
+                pwdInput.style.webkitTextSecurity = 'disc';
+                pwdInput.style.textSecurity = 'disc';
+            } else {
+                pwdInput.type = 'password';
+            }
         }
         if (errorBox) errorBox.style.display = 'none';
         if (submitBtn) submitBtn.disabled = false;
@@ -1198,7 +1221,6 @@
         modal.classList.add('active');
         setTimeout(() => {
             if (pwdInput) {
-                pwdInput.removeAttribute('readonly');
                 pwdInput.focus();
             }
         }, 150);
@@ -1218,12 +1240,24 @@
         const eyeClosed = document.getElementById('eyeIconClosed');
         if (!pwd) return;
 
-        if (pwd.type === 'password') {
+        const isCurrentlyMasked = (pwd.type === 'password') || 
+                                 (pwd.style.webkitTextSecurity === 'disc') || 
+                                 (pwd.style.textSecurity === 'disc');
+
+        if (isCurrentlyMasked) {
             pwd.type = 'text';
+            pwd.style.webkitTextSecurity = 'none';
+            pwd.style.textSecurity = 'none';
             if (eyeOpen) eyeOpen.style.display = 'none';
             if (eyeClosed) eyeClosed.style.display = 'block';
         } else {
-            pwd.type = 'password';
+            if ('webkitTextSecurity' in document.documentElement.style || 'textSecurity' in document.documentElement.style) {
+                pwd.type = 'text';
+                pwd.style.webkitTextSecurity = 'disc';
+                pwd.style.textSecurity = 'disc';
+            } else {
+                pwd.type = 'password';
+            }
             if (eyeOpen) eyeOpen.style.display = 'block';
             if (eyeClosed) eyeClosed.style.display = 'none';
         }

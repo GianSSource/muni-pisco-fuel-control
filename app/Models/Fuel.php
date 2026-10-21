@@ -254,7 +254,7 @@ final class Fuel
             'totalGnvRemaining'  => $totalGnvRemaining,
             'totalGnvDespachado' => $totalGnvDespachado,
             'gnvDespachos'       => $gnvDespachos,
-            'hasGnv'             => $totalGnvIngresado > 0,
+            'hasGnv'             => ($totalGnvIngresado > 0 || $totalGnvDespachado > 0 || $gnvDespachos > 0),
         ];
     }
 
