@@ -487,7 +487,8 @@
     <section class="visuals-grid"
         style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px;">
         <article class="chart-container-card">
-            <div class="card-header-flex chart-header-wrap" style="gap: 12px; align-items: center; justify-content: space-between;">
+            <div class="card-header-flex chart-header-wrap"
+                style="gap: 12px; align-items: center; justify-content: space-between;">
                 <div>
                     <h2 id="chartTitle">Combustible Despachado Semanal</h2>
                     <p class="section-desc" id="chartSubtitle">Volumen diario consumido (últimos 7 días)</p>
@@ -506,8 +507,8 @@
                         </button>
                         <?php endforeach; ?>
                         <?php if (!empty($hasGnv)): ?>
-                        <button type="button" class="energy-btn" data-energy="gnv"
-                            onclick="switchEnergyFilter(event, 'gnv')" title="Solo Gas Natural (m³)">GNV (m³)</button>
+                            <button type="button" class="energy-btn" data-energy="gnv"
+                                onclick="switchEnergyFilter(event, 'gnv')" title="Solo Gas Natural (m³)">GNV (m³)</button>
                         <?php endif; ?>
                     </div>
                     <!-- Selector de Vista Temporal / Criterio -->
@@ -616,9 +617,12 @@
             </div>
 
             <!-- Bloque Combustibles Líquidos -->
-            <div class="native-stock-chart" style="margin-bottom: <?= (!empty($hasGnv) || $totalGnvStock > 0) ? '14px' : '0' ?>;">
-                <div class="native-stock-total" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #64748b);">Líquidos en Tanques</span>
+            <div class="native-stock-chart"
+                style="margin-bottom: <?= (!empty($hasGnv) || $totalGnvStock > 0) ? '14px' : '0' ?>;">
+                <div class="native-stock-total"
+                    style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #64748b);">Líquidos en
+                        Tanques</span>
                     <strong style="color: #2563eb;"><?= number_format($totalLiquidStock, 2) ?> Gal</strong>
                 </div>
                 <?php if ($totalLiquidStock > 0): ?>
@@ -643,37 +647,46 @@
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <p class="empty-state" style="font-size: 0.85rem; margin: 6px 0;">Sin stock de combustibles líquidos.</p>
+                    <p class="empty-state" style="font-size: 0.85rem; margin: 6px 0;">Sin stock de combustibles líquidos.
+                    </p>
                 <?php endif; ?>
             </div>
 
             <!-- Bloque Separado GNV (Gas Natural) -->
             <?php if (!empty($hasGnv) || $totalGnvStock > 0 || !empty($gnvStockItems)): ?>
-            <?php 
-                $gnvDisplayStock = $totalGnvStock > 0 ? $totalGnvStock : (float)($gnvRemaining ?? 0);
+                <?php
+                $gnvDisplayStock = $totalGnvStock > 0 ? $totalGnvStock : (float) ($gnvRemaining ?? 0);
                 $hasMultipleGnv = count($gnvStockItems) > 1;
-            ?>
-            <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 12px; margin-top: auto;">
-                <div style="display: flex; justify-content: space-between; align-items: center;<?= $hasMultipleGnv ? ' margin-bottom: 8px;' : '' ?>">
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
-                        <span style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #047857;">Gas Natural (GNV)</span>
+                ?>
+                <div
+                    style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 12px; margin-top: auto;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center;<?= $hasMultipleGnv ? ' margin-bottom: 8px;' : '' ?>">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span
+                                style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+                            <span
+                                style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #047857;">Gas
+                                Natural (GNV)</span>
+                        </div>
+                        <span
+                            style="font-size: 0.88rem; font-weight: 800; color: #059669; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 6px;">
+                            <?= number_format($gnvDisplayStock, 2) ?> m³
+                        </span>
                     </div>
-                    <span style="font-size: 0.88rem; font-weight: 800; color: #059669; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 6px;">
-                        <?= number_format($gnvDisplayStock, 2) ?> m³
-                    </span>
+                    <?php if ($hasMultipleGnv): ?>
+                        <div style="padding-top: 6px; border-top: 1px dashed rgba(16, 185, 129, 0.25);">
+                            <?php foreach ($gnvStockItems as $gnvItem): ?>
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-top: 4px;">
+                                    <span
+                                        style="color: var(--text-muted, #64748b);"><?= htmlspecialchars($gnvItem['label']) ?></span>
+                                    <strong style="color: #047857;"><?= number_format($gnvItem['value'], 2) ?> m³</strong>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
-                <?php if ($hasMultipleGnv): ?>
-                    <div style="padding-top: 6px; border-top: 1px dashed rgba(16, 185, 129, 0.25);">
-                        <?php foreach ($gnvStockItems as $gnvItem): ?>
-                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-top: 4px;">
-                                <span style="color: var(--text-muted, #64748b);"><?= htmlspecialchars($gnvItem['label']) ?></span>
-                                <strong style="color: #047857;"><?= number_format($gnvItem['value'], 2) ?> m³</strong>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
             <?php endif; ?>
         </article>
     </section>
@@ -735,7 +748,8 @@
                                 ?>
                                 <span class="icon-with-text"><svg class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use>
-                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?> <?= $evUnit ?> - <svg class="ui-icon">
+                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?>         <?= $evUnit ?> - <svg
+                                        class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-user"></use>
                                     </svg>
                                     <?= htmlspecialchars($ev['driver'] ?? $ev['title'] ?? 'Responsable') ?></span>
@@ -778,7 +792,8 @@
                                 ?>
                                 <span class="icon-with-text"><svg class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-download"></use>
-                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?> <?= $evUnit ?> - <svg class="ui-icon">
+                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?>         <?= $evUnit ?> - <svg
+                                        class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-store"></use>
                                     </svg>
                                     <?= htmlspecialchars($ev['driver'] ?? 'Proveedor') ?></span>
@@ -865,7 +880,8 @@
                                 </td>
                                 <td>
                                     <?php $dUnit = \App\Models\Catalog::getFuelUnit($entrega['fuel_type'] ?? '', true); ?>
-                                    <span class="quantity-highlight"><?= number_format((float) $entrega['gallons'], 2) ?> <?= $dUnit ?></span>
+                                    <span class="quantity-highlight"><?= number_format((float) $entrega['gallons'], 2) ?>
+                                        <?= $dUnit ?></span>
                                 </td>
                                 <td>
                                     <div style="display:inline-flex; gap:6px; align-items:center;">
