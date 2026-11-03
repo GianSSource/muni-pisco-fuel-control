@@ -35,7 +35,13 @@ final class FuelController extends Controller
 
         $stats = $fuelModel->getDeliveriesStats($filters);
         $totalGallons = $stats['total_gallons'];
+        $liquidGallons = $stats['liquid_gallons'];
+        $gnvTotal = $stats['gnv_total'];
+        $liquidCount = $stats['liquid_count'];
+        $gnvCount = $stats['gnv_count'];
         $count = $stats['count'];
+        $breakdown = $stats['breakdown'];
+        $hasGnv = $gnvTotal > 0 || $gnvCount > 0;
 
         $totalPages = $count > 0 ? (int) ceil($count / $limit) : 1;
         if ($page > $totalPages) {
@@ -68,6 +74,7 @@ final class FuelController extends Controller
 
 
         // Métricas de los resultados filtrados
+        $avgLiquidGallons = $liquidCount > 0 ? $liquidGallons / $liquidCount : 0;
         $avgGallons = $count > 0 ? $totalGallons / $count : 0;
 
         $this->view('fuel/index', [
@@ -79,6 +86,13 @@ final class FuelController extends Controller
             'destinations' => $destinations,
             'fuelTypes' => $fuelTypes,
             'totalGallons' => $totalGallons,
+            'liquidGallons' => $liquidGallons,
+            'gnvTotal' => $gnvTotal,
+            'liquidCount' => $liquidCount,
+            'gnvCount' => $gnvCount,
+            'breakdown' => $breakdown,
+            'hasGnv' => $hasGnv,
+            'avgLiquidGallons' => $avgLiquidGallons,
             'avgGallons' => $avgGallons,
             'count' => $count,
             'page' => $page,
@@ -125,6 +139,12 @@ final class FuelController extends Controller
             'status' => 'success',
             'count' => $stats['count'],
             'total_gallons' => number_format($stats['total_gallons'], 2),
+            'liquid_gallons' => number_format($stats['liquid_gallons'], 2),
+            'gnv_total' => number_format($stats['gnv_total'], 2),
+            'liquid_count' => $stats['liquid_count'],
+            'gnv_count' => $stats['gnv_count'],
+            'has_gnv' => $stats['gnv_total'] > 0 || $stats['gnv_count'] > 0,
+            'breakdown' => $stats['breakdown'],
             'page' => $page,
             'totalPages' => $totalPages,
             'data' => $deliveries
@@ -380,9 +400,40 @@ final class FuelController extends Controller
             $db = \App\Core\Database::getConnection();
             $db->beginTransaction();
 
-            $db->prepare('DELETE FROM fuel_delivery_lot_allocations WHERE delivery_id = :id')
-                ->execute(['id' => $deliveryId]);
+            // 1. Verificar existencia y estado actual del vale con bloqueo FOR UPDATE
+            $stmtCheck = $db->prepare('SELECT id, status, fuel_income_id, gallons FROM fuel_deliveries WHERE id = :id FOR UPDATE');
+            $stmtCheck->execute(['id' => $deliveryId]);
+            $delivery = $stmtCheck->fetch(\PDO::FETCH_ASSOC);
 
+            if (!$delivery) {
+                $db->rollBack();
+                $this->redirect('despachos?error=' . rawurlencode('El vale solicitado no existe.'));
+            }
+
+            if (($delivery['status'] ?? '') === 'Anulado') {
+                $db->rollBack();
+                $this->redirect('despachos?error=' . rawurlencode('Este vale ya ha sido anulado previamente.'));
+            }
+
+            // 2. Eliminar asignaciones por lote (dispara el trigger trg_alloc_after_delete que repone stock)
+            $delAllocStmt = $db->prepare('DELETE FROM fuel_delivery_lot_allocations WHERE delivery_id = :id');
+            $delAllocStmt->execute(['id' => $deliveryId]);
+            $deletedAllocations = $delAllocStmt->rowCount();
+
+            // 3. Soporte para vales legacy: si no tenía registros en fuel_delivery_lot_allocations
+            //    pero tenía fuel_income_id asignado, reponer el stock directamente en fuel_incomes
+            if ($deletedAllocations === 0 && !empty($delivery['fuel_income_id']) && (float) $delivery['gallons'] > 0) {
+                $db->prepare(
+                    'UPDATE fuel_incomes 
+                     SET gallons_remaining = LEAST(gallons, gallons_remaining + :gallons) 
+                     WHERE id = :income_id'
+                )->execute([
+                    'gallons' => (float) $delivery['gallons'],
+                    'income_id' => (int) $delivery['fuel_income_id']
+                ]);
+            }
+
+            // 4. Marcar el vale como Anulado
             $db->prepare('UPDATE fuel_deliveries SET status = "Anulado" WHERE id = :id')
                 ->execute(['id' => $deliveryId]);
 

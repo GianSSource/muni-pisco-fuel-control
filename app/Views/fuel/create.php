@@ -3,15 +3,19 @@
 <style>
     .form-control-styled {
         width: 100%;
-        height: 42px;
-        padding: 10px 12px;
+        height: 48px;
+        min-height: 48px;
+        max-height: 48px;
+        padding: 0 14px;
         border-radius: 8px;
         border: 1px solid var(--border-color, #cbd5e1);
         background: var(--input-bg, #fff);
         color: var(--text-color, inherit);
-        font-size: 0.9rem;
+        font-size: 0.88rem;
+        line-height: 46px;
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
         box-sizing: border-box;
+        display: block;
     }
 
     .form-control-styled:hover {
@@ -24,8 +28,50 @@
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
     }
 
+    /* Grilla de filas y etiquetas estandarizadas para alineación perfecta */
+    .dispatch-form-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 18px;
+        align-items: start;
+    }
+
+    .dispatch-field-label {
+        display: flex;
+        align-items: center;
+        height: 22px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-color, #1e293b);
+        margin-bottom: 6px;
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    [data-theme="dark"] .dispatch-field-label {
+        color: #f1f5f9;
+    }
+
+    .dispatch-helper-text {
+        font-size: 0.74rem;
+        line-height: 1.35;
+        color: var(--text-muted, #64748b);
+        margin: 5px 0 0 2px;
+    }
+
+    [data-theme="dark"] .dispatch-helper-text {
+        color: #94a3b8;
+    }
+
     .btn-submit-styled {
-        padding: 10px 24px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 24px;
         border-radius: 8px;
         background: #3b82f6;
         color: #ffffff;
@@ -34,6 +80,7 @@
         cursor: pointer;
         transition: all 0.2s ease;
         box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+        box-sizing: border-box;
     }
 
     .btn-submit-styled:hover {
@@ -50,13 +97,18 @@
     }
 
     .btn-cancel-styled {
-        padding: 10px 20px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 20px;
         border-radius: 8px;
         border: 1px solid var(--border-color, #cbd5e1);
         color: inherit;
         text-decoration: none;
         font-weight: 600;
         transition: all 0.2s ease;
+        box-sizing: border-box;
     }
 
     .btn-cancel-styled:hover {
@@ -65,18 +117,21 @@
     }
 
     .btn-clear-styled {
+        height: 44px;
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 7px;
-        padding: 10px 18px;
+        padding: 0 18px;
         border-radius: 8px;
         border: 1px solid #f97316;
         background: transparent;
         color: #f97316;
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
+        box-sizing: border-box;
     }
 
     .btn-clear-styled:hover {
@@ -90,8 +145,484 @@
     .btn-clear-styled:active {
         transform: translateY(0);
     }
+
+    /* Altura estandarizada uniforme para selectores simples y multilínea (48px exactos) */
+    .custom-select-trigger {
+        height: 48px !important;
+        min-height: 48px !important;
+        max-height: 48px !important;
+        padding: 0 14px !important;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #cbd5e1);
+        background: var(--input-bg, #fff);
+        color: var(--text-color, inherit);
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        user-select: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .custom-select-trigger:hover {
+        border-color: #94a3b8;
+    }
+
+    .custom-select-trigger:focus,
+    .custom-select-container.open .custom-select-trigger {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+    }
+
+    .custom-select-trigger .custom-select-chevron {
+        margin-left: 10px;
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .custom-select-container.open .custom-select-chevron {
+        transform: rotate(180deg);
+        color: #3b82f6;
+    }
+
+    /* =========================================================
+       SELECTOR DE VEHÍCULO / UNIDAD AGRUPADO POR ÁREA
+       ========================================================= */
+    .vehicle-grouped-select-container {
+        position: relative;
+    }
+
+    .vehicle-grouped-select-container .custom-select-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 48px !important;
+        min-height: 48px !important;
+        max-height: 48px !important;
+        padding: 0 14px !important;
+        cursor: pointer;
+        user-select: none;
+        box-sizing: border-box;
+    }
+
+    .v-trigger-layout {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-width: 0;
+        gap: 8px;
+    }
+
+    .v-trigger-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        overflow: hidden;
+        flex: 1;
+    }
+
+    .v-trigger-left .v-item-plate {
+        white-space: nowrap;
+        flex-shrink: 0;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text-color, #0f172a);
+        letter-spacing: 0.2px;
+        line-height: 1;
+    }
+
+    [data-theme="dark"] .v-trigger-left .v-item-plate {
+        color: #f8fafc;
+    }
+
+    .v-trigger-left .v-item-sub {
+        margin-top: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.74rem;
+        font-weight: 500;
+        color: var(--text-muted, #64748b);
+        line-height: 1;
+    }
+
+    [data-theme="dark"] .v-trigger-left .v-item-sub {
+        color: #94a3b8;
+    }
+
+    .v-trigger-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+
+    .vehicle-grouped-select-container.open .custom-select-trigger {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+    }
+
+    .vehicle-grouped-select-container.open .custom-select-chevron {
+        transform: rotate(180deg);
+        color: #3b82f6;
+    }
+
+    .v-grouped-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: var(--card-bg, #ffffff);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 10px;
+        box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.22), 0 8px 16px -6px rgba(0, 0, 0, 0.12);
+        display: none;
+        overflow: hidden;
+    }
+
+    [data-theme="dark"] .v-grouped-menu {
+        background: #0f172a;
+        border-color: #1e293b;
+        box-shadow: 0 20px 40px -4px rgba(0, 0, 0, 0.6);
+    }
+
+    .vehicle-grouped-select-container.open .v-grouped-menu {
+        display: block;
+    }
+
+    .v-search-box {
+        padding: 8px 10px;
+        background: inherit;
+        border-bottom: 1px solid var(--border-color, #e2e8f0);
+    }
+
+    [data-theme="dark"] .v-search-box {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .v-search-input {
+        width: 100%;
+        padding: 6px 10px;
+        height: 32px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color, #cbd5e1);
+        background: var(--input-bg, #ffffff);
+        color: var(--text-color, #0f172a);
+        font-size: 0.80rem;
+        box-sizing: border-box;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .v-search-input:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+    }
+
+    [data-theme="dark"] .v-search-input {
+        background: #0b1120;
+        border-color: #334155;
+        color: #f8fafc;
+    }
+
+    .v-list-container {
+        max-height: 270px;
+        overflow-y: auto;
+        padding: 3px 5px;
+    }
+
+    .v-list-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    .v-list-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .v-list-container::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.3);
+        border-radius: 4px;
+    }
+    .v-list-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.5);
+    }
+
+    .v-group-wrap {
+        margin-bottom: 6px;
+    }
+
+    .v-group-wrap:last-child {
+        margin-bottom: 2px;
+    }
+
+    .v-group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 8px 3px 8px;
+    }
+
+    .v-group-title {
+        font-size: 0.67rem;
+        font-weight: 700;
+        color: #2563eb;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    [data-theme="dark"] .v-group-title {
+        color: #38bdf8;
+    }
+
+    .v-group-count {
+        font-size: 0.67rem;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    [data-theme="dark"] .v-group-count {
+        color: #94a3b8;
+    }
+
+    .v-group-item {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        text-align: left;
+        padding: 6px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        margin: 1px 0;
+        user-select: none;
+    }
+
+    /* Ocultar elementos filtrados */
+    .v-hidden,
+    .v-group-item.v-hidden,
+    .v-group-wrap.v-hidden {
+        display: none !important;
+    }
+
+    .v-group-item:hover,
+    .v-group-item.is-focused {
+        background: rgba(37, 99, 235, 0.08);
+    }
+
+    [data-theme="dark"] .v-group-item:hover,
+    [data-theme="dark"] .v-group-item.is-focused {
+        background: #1e293b;
+    }
+
+    .v-group-item.selected {
+        background: rgba(37, 99, 235, 0.12);
+    }
+
+    [data-theme="dark"] .v-group-item.selected {
+        background: rgba(59, 130, 246, 0.18);
+    }
+
+    .v-item-top {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        min-width: 0;
+        gap: 8px;
+    }
+
+    .v-item-plate-wrap {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .v-item-plate {
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: var(--text-color, #0f172a);
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+    }
+
+    [data-theme="dark"] .v-item-plate {
+        color: #f8fafc;
+    }
+
+    .v-item-check {
+        color: #2563eb;
+        font-weight: 800;
+        font-size: 0.78rem;
+        line-height: 1;
+    }
+
+    [data-theme="dark"] .v-item-check {
+        color: #38bdf8;
+    }
+
+    .v-item-badges {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px;
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+
+    .v-item-sub {
+        font-size: 0.72rem;
+        font-weight: 500;
+        color: var(--text-muted, #64748b);
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.25;
+        width: 100%;
+        text-align: left !important;
+    }
+
+    [data-theme="dark"] .v-item-sub {
+        color: #94a3b8;
+    }
+
+    /* Badges de Combustible */
+    .v-badge {
+        font-size: 0.65rem;
+        font-weight: 600;
+        height: 18px;
+        padding: 0 6px;
+        border-radius: 3px;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        letter-spacing: 0.1px;
+        box-sizing: border-box;
+    }
+
+    /* Diésel */
+    .v-badge-diesel {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid rgba(4, 120, 87, 0.25);
+    }
+    [data-theme="dark"] .v-badge-diesel {
+        background: #064e3b;
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.25);
+    }
+
+    /* Gasolina */
+    .v-badge-gasolina {
+        background: #fff7ed;
+        color: #c2410c;
+        border: 1px solid rgba(234, 88, 12, 0.25);
+    }
+    [data-theme="dark"] .v-badge-gasolina {
+        background: #451a03;
+        color: #fb923c;
+        border: 1px solid rgba(251, 146, 60, 0.25);
+    }
+
+    /* GNV */
+    .v-badge-gnv {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid rgba(29, 78, 216, 0.25);
+    }
+    [data-theme="dark"] .v-badge-gnv {
+        background: #1e3a8a;
+        color: #60a5fa;
+        border: 1px solid rgba(96, 165, 250, 0.25);
+    }
+
+    /* GLP */
+    .v-badge-glp {
+        background: #fefce8;
+        color: #b45309;
+        border: 1px solid rgba(180, 83, 9, 0.25);
+    }
+    [data-theme="dark"] .v-badge-glp {
+        background: #422006;
+        color: #fde047;
+        border: 1px solid rgba(253, 224, 71, 0.25);
+    }
+
+    /* Otro */
+    .v-badge-otro {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid rgba(100, 116, 139, 0.25);
+    }
+    [data-theme="dark"] .v-badge-otro {
+        background: #1e293b;
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    /* Gasohol — verde lima para diferenciarlo claramente de Gasolina */
+    .v-badge-gasohol {
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid rgba(21, 128, 61, 0.3);
+    }
+    [data-theme="dark"] .v-badge-gasohol {
+        background: rgba(21, 128, 61, 0.15);
+        color: #4ade80;
+        border: 1px solid rgba(74, 222, 128, 0.3);
+    }
+
+    /* Combustible personalizado (cualquier tipo no reconocido) — morado */
+    .v-badge-custom {
+        background: #faf5ff;
+        color: #7e22ce;
+        border: 1px solid rgba(126, 34, 206, 0.25);
+    }
+    [data-theme="dark"] .v-badge-custom {
+        background: rgba(126, 34, 206, 0.12);
+        color: #c084fc;
+        border: 1px solid rgba(192, 132, 252, 0.3);
+    }
+
+    /* Footer del Menú */
+    .v-select-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 10px;
+        border-top: 1px solid var(--border-color, #e2e8f0);
+        font-size: 0.68rem;
+        color: var(--text-muted, #64748b);
+        background: inherit;
+        user-select: none;
+    }
+
+    [data-theme="dark"] .v-select-footer {
+        border-top-color: rgba(255, 255, 255, 0.08);
+        color: #94a3b8;
+    }
+
+    .v-footer-hints {
+        opacity: 0.85;
+        letter-spacing: 0.2px;
+        font-size: 0.68rem;
+    }
 </style>
 
+<?php
+$fromDashboard = (isset($_GET['from']) && $_GET['from'] === 'dashboard')
+    || (!empty($_SERVER['HTTP_REFERER']) && str_contains($_SERVER['HTTP_REFERER'], '/dashboard') && !str_contains($_SERVER['HTTP_REFERER'], '/despachos'));
+$backUrl = $fromDashboard ? BASE_URL . 'dashboard' : BASE_URL . 'despachos';
+$backLabel = $fromDashboard ? '← Volver al Dashboard' : '← Volver a Despachos';
+?>
 <section class="container" style="max-width: 900px; margin: 40px auto; padding: 24px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
         <div>
@@ -100,8 +631,8 @@
             <p style="color: var(--text-muted, #64748b); margin-top: 4px; font-size: 0.95rem;">Emisión de vale de
                 consumo de combustible para flota vehicular</p>
         </div>
-        <a href="<?= BASE_URL ?>despachos" class="btn-cancel-styled" style="font-size: 0.9rem; font-weight: 500;">
-            ← Volver a Despachos
+        <a href="<?= $backUrl ?>" class="btn-cancel-styled" style="font-size: 0.9rem; font-weight: 500;">
+            <?= $backLabel ?>
         </a>
     </div>
 
@@ -122,10 +653,9 @@
             style="display: none; background: rgba(249, 115, 22, 0.10); border: 1px solid #f97316; border-left: 4px solid #f97316; color: #f97316; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-weight: 600; font-size: 0.88rem; line-height: 1.5;">
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px;">
+        <div class="dispatch-form-row">
             <div style="min-width: 0;">
-                <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Tipo de
-                    Combustible (Stock Total)</label>
+                <label class="dispatch-field-label">Tipo de Combustible (Stock Total)</label>
                 <select id="fuel_type_select" name="fuel_type" class="form-control-styled" required
                     <?= empty($fuelGroups) ? 'disabled' : '' ?>>
                     <?php if (!empty($fuelGroups)): ?>
@@ -168,11 +698,25 @@
             </div>
 
             <div style="min-width: 0;">
-                <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Vehículo /
-                    Unidad</label>
+                <label class="dispatch-field-label">Vehículo / Unidad</label>
                 <select name="vehicle_id" id="vehicle_id" class="form-control-styled" required>
                     <option value="">Seleccione un vehículo...</option>
                     <?php if (!empty($vehicles)): ?>
+                        <?php
+                        usort($vehicles, function ($a, $b) {
+                            $areaA = trim($a['area_name'] ?? 'Sin Área');
+                            $areaB = trim($b['area_name'] ?? 'Sin Área');
+                            $isSinA = (stripos($areaA, 'sin área') !== false || stripos($areaA, 'sin area') !== false);
+                            $isSinB = (stripos($areaB, 'sin área') !== false || stripos($areaB, 'sin area') !== false);
+                            if ($isSinA && !$isSinB) return 1;
+                            if (!$isSinA && $isSinB) return -1;
+                            $cmpArea = strcoll($areaA, $areaB);
+                            if ($cmpArea !== 0) return $cmpArea;
+                            $cmpPlate = strnatcasecmp($a['plate'] ?? '', $b['plate'] ?? '');
+                            if ($cmpPlate !== 0) return $cmpPlate;
+                            return strnatcasecmp($a['unit_code'] ?? '', $b['unit_code'] ?? '');
+                        });
+                        ?>
                         <?php foreach ($vehicles as $v): ?>
                             <option value="<?= $v['id'] ?>" data-area="<?= htmlspecialchars($v['area_name'] ?? 'Sin Área') ?>"
                                 data-plate="<?= htmlspecialchars($v['plate'] ?? '') ?>"
@@ -195,10 +739,9 @@
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px;">
+        <div class="dispatch-form-row">
             <div style="min-width: 0;">
-                <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Conductor /
-                    Responsable</label>
+                <label class="dispatch-field-label">Conductor / Responsable</label>
                 <select name="driver_name" id="driver_name" class="form-control-styled" required>
                     <option value="">Seleccione o escriba un conductor...</option>
                     <?php foreach ($drivers as $d): ?>
@@ -206,15 +749,15 @@
                     <?php endforeach; ?>
                 </select>
                 <?php if (empty($drivers)): ?>
-                    <p style="color: #64748b; font-size: 0.8rem; margin: 6px 0 0;">Aún no hay conductores registrados
-                        en despachos anteriores. Escribe el nombre del conductor en el campo y selecciona "Usar
-                        nuevo conductor".</p>
+                    <p class="dispatch-helper-text">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-1px; margin-right:3px; color:#2563eb;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        Escriba el nombre en el campo y seleccione <strong style="color: #2563eb;">"Usar nuevo conductor"</strong>.
+                    </p>
                 <?php endif; ?>
             </div>
 
             <div style="min-width: 0;">
-                <label id="gallonsLabel" style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Cantidad de
-                    Galones (Máx. 15,000.00)</label>
+                <label id="gallonsLabel" class="dispatch-field-label">Cantidad de Galones (Máx. 15,000.00)</label>
                 <input type="text" name="gallons" id="gallons" class="form-control-styled" required
                     placeholder="Ej: 15,000" maxlength="12" autocomplete="off"
                     oninput="limitarGalones(this); verificarCamposIncompletos();"
@@ -228,10 +771,9 @@
         </div>
 
         <!-- Campos Independientes para Área/Destino (Desplegable) y Observaciones -->
-        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div class="dispatch-form-row" style="margin-bottom: 24px;">
             <div style="min-width: 0;">
-                <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Área /
-                    Subgerencia Destino</label>
+                <label class="dispatch-field-label">Área / Subgerencia Destino</label>
                 <select name="destination" id="destination" class="form-control-styled" required
                     <?= empty($areas) ? 'disabled' : '' ?>>
                     <option value="">Seleccione un área...</option>
@@ -248,8 +790,7 @@
             </div>
 
             <div style="min-width: 0;">
-                <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">Observaciones
-                    (Opcional)</label>
+                <label class="dispatch-field-label">Observaciones (Opcional)</label>
                 <input type="text" name="notes" id="notes" class="form-control-styled"
                     placeholder="Ej. Turno noche maximo 50 caracteres" maxlength="50" autocomplete="off"
                     oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s.,\-\/()]/g, '')">
@@ -266,7 +807,7 @@
                 Limpiar Campos
             </button>
             <div style="display: flex; gap: 12px;">
-                <a href="<?= BASE_URL ?>despachos" class="btn-cancel-styled">
+                <a href="<?= $backUrl ?>" class="btn-cancel-styled">
                     Cancelar
                 </a>
                 <button type="submit" id="submitBtn" class="btn-submit-styled">
@@ -296,11 +837,7 @@
             <button type="button" onclick="cerrarModalAuth()" style="background: none; border: none; font-size: 1.4rem; color: var(--text-muted, #64748b); cursor: pointer; line-height: 1; padding: 4px; border-radius: 6px;" title="Cerrar">&times;</button>
         </div>
 
-        <form id="authValidateForm" autocomplete="off" onsubmit="confirmarIdentidadYDespachar(event)" style="padding: 22px;">
-            <!-- Inputs señuelo para evitar que el navegador muestre su popup de 'Contraseñas guardadas' -->
-            <input type="text" name="fake_username_decoy" style="display:none;" tabindex="-1" autocomplete="off">
-            <input type="password" name="fake_password_decoy" style="display:none;" tabindex="-1" autocomplete="off">
-
+        <div id="authValidateForm" style="padding: 22px;">
             <div style="background: var(--bg-body, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; padding: 12px 14px; margin-bottom: 18px; display: flex; align-items: center; gap: 12px;">
                 <div style="width: 36px; height: 36px; border-radius: 50%; background: #2563eb; color: #fff; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                     <?= strtoupper(substr($_SESSION['user']['name'] ?? 'U', 0, 1)) ?>
@@ -329,7 +866,22 @@
                     Ingrese su Contraseña
                 </label>
                 <div style="position: relative;">
-                    <input type="password" id="authModalPassword" name="auth_confirm_key" class="form-control-styled" placeholder="••••••••••••" maxlength="50" required autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly');" style="padding-right: 42px; width: 100%;">
+                    <input type="text"
+                           id="authModalPassword"
+                           name="auth_confirm_pin_<?= time() ?>"
+                           class="form-control-styled"
+                           placeholder="••••••••••••"
+                           maxlength="50"
+                           autocomplete="one-time-code"
+                           autocorrect="off"
+                           autocapitalize="off"
+                           spellcheck="false"
+                           data-lpignore="true"
+                           data-1p-ignore="true"
+                           data-bwignore="true"
+                           data-form-type="other"
+                           style="-webkit-text-security: disc; -moz-text-security: circle; text-security: disc; padding-right: 42px; width: 100%;"
+                           onkeydown="if(event.key === 'Enter'){ event.preventDefault(); confirmarIdentidadYDespachar(event); }">
                     <button type="button" id="toggleAuthPasswordBtn" onclick="toggleVisibilidadPasswordAuth()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted, #64748b); cursor: pointer; padding: 6px; display: flex; align-items: center; border-radius: 4px;" title="Ver/Ocultar contraseña">
                         <svg id="eyeIconOpen" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -347,11 +899,11 @@
                 <button type="button" class="btn-cancel-styled" onclick="cerrarModalAuth()" style="padding: 9px 16px; font-size: 0.88rem;">
                     Cancelar
                 </button>
-                <button type="submit" id="authConfirmSubmitBtn" class="btn-submit-styled" style="padding: 9px 20px; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 8px;">
+                <button type="button" id="authConfirmSubmitBtn" onclick="confirmarIdentidadYDespachar(event)" class="btn-submit-styled" style="padding: 9px 20px; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 8px;">
                     <span id="authConfirmBtnText">Confirmar y Emitir</span>
                 </button>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
@@ -384,6 +936,9 @@
         // Reset buscador y elementos dentro de custom selects
         form.querySelectorAll('.custom-select-search-input').forEach(si => { si.value = ''; });
         form.querySelectorAll('.custom-select-item').forEach(item => { item.style.display = 'flex'; });
+        form.querySelectorAll('.v-group-wrap').forEach(gw => { gw.style.display = 'block'; });
+        form.querySelectorAll('.v-hidden').forEach(el => el.classList.remove('v-hidden'));
+        form.querySelectorAll('.v-fuel-filter-badge').forEach(b => b.remove());
         form.querySelectorAll('.custom-select-create-box').forEach(cb => cb.remove());
         form.querySelectorAll('.custom-select-no-results').forEach(nr => nr.remove());
         form.querySelectorAll('.custom-select-container.open').forEach(c => c.classList.remove('open'));
@@ -626,9 +1181,6 @@
         const authPassword = document.getElementById('auth_password_input')?.value;
         if (authPassword && authPassword.trim() !== '') {
             sessionStorage.setItem('despacho_completado', '1');
-            setTimeout(() => {
-                limpiarFormulario(false);
-            }, 100);
             return true;
         }
 
@@ -648,8 +1200,14 @@
         if (!modal) return;
         if (pwdInput) {
             pwdInput.value = '';
-            pwdInput.type = 'password';
-            pwdInput.setAttribute('readonly', 'readonly');
+            // Máscara de seguridad sin alertar al gestor de contraseñas de Chrome/Edge
+            if ('webkitTextSecurity' in document.documentElement.style || 'textSecurity' in document.documentElement.style) {
+                pwdInput.type = 'text';
+                pwdInput.style.webkitTextSecurity = 'disc';
+                pwdInput.style.textSecurity = 'disc';
+            } else {
+                pwdInput.type = 'password';
+            }
         }
         if (errorBox) errorBox.style.display = 'none';
         if (submitBtn) submitBtn.disabled = false;
@@ -663,7 +1221,6 @@
         modal.classList.add('active');
         setTimeout(() => {
             if (pwdInput) {
-                pwdInput.removeAttribute('readonly');
                 pwdInput.focus();
             }
         }, 150);
@@ -683,12 +1240,24 @@
         const eyeClosed = document.getElementById('eyeIconClosed');
         if (!pwd) return;
 
-        if (pwd.type === 'password') {
+        const isCurrentlyMasked = (pwd.type === 'password') || 
+                                 (pwd.style.webkitTextSecurity === 'disc') || 
+                                 (pwd.style.textSecurity === 'disc');
+
+        if (isCurrentlyMasked) {
             pwd.type = 'text';
+            pwd.style.webkitTextSecurity = 'none';
+            pwd.style.textSecurity = 'none';
             if (eyeOpen) eyeOpen.style.display = 'none';
             if (eyeClosed) eyeClosed.style.display = 'block';
         } else {
-            pwd.type = 'password';
+            if ('webkitTextSecurity' in document.documentElement.style || 'textSecurity' in document.documentElement.style) {
+                pwd.type = 'text';
+                pwd.style.webkitTextSecurity = 'disc';
+                pwd.style.textSecurity = 'disc';
+            } else {
+                pwd.type = 'password';
+            }
             if (eyeOpen) eyeOpen.style.display = 'block';
             if (eyeClosed) eyeClosed.style.display = 'none';
         }
@@ -936,6 +1505,121 @@
             return str.replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
         }
 
+        // Normaliza texto de combustible (minúsculas, sin tildes, sin espacios extras)
+        function normalizeFuelText(str) {
+            return (str || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim();
+        }
+
+        // Obtiene la categoría principal de un combustible (gnv, glp, diesel, gasolina, gasohol, etc.)
+        // IMPORTANTE: gasohol es una categoría propia distinta de gasolina
+        function getFuelCategory(str) {
+            const n = normalizeFuelText(str);
+            if (n.includes('gnv') || n.includes('gas natural')) return 'gnv';
+            if (n.includes('glp')) return 'glp';
+            if (n.includes('diesel')) return 'diesel';
+            // gasohol ANTES de gasolina para evitar que 'gasolina'.includes('gasohol') == false
+            // pero 'gasohol'.includes('gasolina') == false. Se mantienen como categorías distintas.
+            if (n.includes('gasohol')) return 'gasohol';
+            if (n.includes('gasolina')) return 'gasolina';
+            // Para cualquier otro combustible personalizado, devolver su nombre normalizado
+            return n;
+        }
+
+        // Comprueba si el combustible de un vehículo (admite combinados como "Diésel / Gasolina")
+        // es compatible con un tipo de combustible específico
+        function isFuelCompatible(vehicleFuelType, targetFuelType) {
+            if (!targetFuelType) return true;
+            if (!vehicleFuelType) return false;
+
+            const targetNorm = normalizeFuelText(targetFuelType);
+            const targetCat = getFuelCategory(targetFuelType);
+
+            // Desglosa si el vehículo admite varios combustibles separados por '/'
+            const vParts = vehicleFuelType.split('/').map(p => p.trim()).filter(Boolean);
+
+            for (const part of vParts) {
+                const partNorm = normalizeFuelText(part);
+                const partCat = getFuelCategory(part);
+
+                // 1. Coincidencia exacta normalizada (máxima prioridad)
+                if (targetNorm && partNorm && targetNorm === partNorm) {
+                    return true;
+                }
+
+                // 2. Coincidencia por categoría canónica (ej. 'gnv' === 'gnv', 'diesel' === 'diesel')
+                // Solo si ambas categorías son conocidas Y distintas de la categoría genérica
+                if (targetCat && partCat && targetCat === partCat) {
+                    return true;
+                }
+
+                // 3. Coincidencia textual contenida (ej. "Diesel B5" contiene "diesel")
+                // Se excluye si uno contiene al otro pero pertenecen a categorías distintas
+                // para evitar que 'gasohol' sea aceptado para vehículos 'gasolina' o viceversa
+                if (partNorm && targetNorm &&
+                    (partNorm.includes(targetNorm) || targetNorm.includes(partNorm)) &&
+                    targetCat === partCat) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Determina la paleta de colores y metadata por tipo de combustible
+        function getFuelStyle(name) {
+            const n = (name || '').toLowerCase();
+            if (n.includes('gnv') || n.includes('gas natural')) {
+                return {
+                    color: '#1d4ed8',
+                    bg: 'rgba(29, 78, 216, 0.08)',
+                    border: 'rgba(29, 78, 216, 0.25)',
+                    tagBg: '#eff6ff',
+                    category: 'GNV',
+                    unit: 'm³'
+                };
+            } else if (n.includes('glp')) {
+                return {
+                    color: '#b45309',
+                    bg: 'rgba(217, 119, 6, 0.08)',
+                    border: 'rgba(217, 119, 6, 0.25)',
+                    tagBg: '#fffbeb',
+                    category: 'GLP',
+                    unit: 'Gal'
+                };
+            } else if (n.includes('gasolina') || n.includes('gasohol')) {
+                return {
+                    color: '#c2410c',
+                    bg: 'rgba(234, 88, 12, 0.08)',
+                    border: 'rgba(234, 88, 12, 0.25)',
+                    tagBg: '#fff7ed',
+                    category: 'Gasolina',
+                    unit: 'Gal'
+                };
+            } else if (n.includes('diesel')) {
+                return {
+                    color: '#047857',
+                    bg: 'rgba(4, 120, 87, 0.08)',
+                    border: 'rgba(4, 120, 87, 0.25)',
+                    tagBg: '#ecfdf5',
+                    category: 'Diesel',
+                    unit: 'Gal'
+                };
+            } else {
+                return {
+                    color: '#475569',
+                    bg: 'rgba(100, 116, 139, 0.08)',
+                    border: 'rgba(100, 116, 139, 0.25)',
+                    tagBg: '#f8fafc',
+                    category: 'Combustible',
+                    unit: 'Gal'
+                };
+            }
+        }
+
         // Inicializador Visual de Desplegables Personalizados con Búsqueda y Formato Avanzado
         function initCustomDispatchSelect(selector, enableSearch = false, placeholder = "Buscar...", allowCreate = false, maxLength = null, onlyLetters = false, alphanumericOnly = false) {
             const selectEl = typeof selector === 'string' ? (document.getElementById(selector) || document.querySelector(`select[name="${selector}"]`)) : selector;
@@ -976,10 +1660,26 @@
                     const plate = selectedOpt.getAttribute('data-plate');
                     const unit = selectedOpt.getAttribute('data-unit');
                     const type = selectedOpt.getAttribute('data-type');
+                    const fType = selectedOpt.getAttribute('data-fuel-type') || '';
+                    let fBadgeTrigger = '';
+                    if (fType) {
+                        const parts = fType.split('/').map(p => p.trim()).filter(Boolean);
+                        fBadgeTrigger = parts.map(p => {
+                            const st = getFuelStyle(p);
+                            return `<span style="font-size:0.71rem; font-weight:700; background:${st.tagBg}; color:${st.color}; border:1px solid ${st.border}; padding:1px 6px; border-radius:4px; white-space:nowrap;">${p}</span>`;
+                        }).join(' ');
+                    }
                     triggerHTML = `
-                        <div style="display:flex; flex-direction:column; gap:1px; flex:1; min-width:0; overflow:hidden;">
-                            <span style="font-size:0.72rem; font-weight:700; color:#2563eb; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${area}</span>
-                            <span style="font-weight:600; font-size:0.88rem; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${plate} — ${unit} [${type}]</span>
+                        <div style="display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; overflow:hidden;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                                <span style="font-size:0.73rem; font-weight:700; color:#2563eb; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${area}</span>
+                                <span style="font-size:0.70rem; font-weight:600; background:rgba(100,116,139,0.12); color:#475569; padding:1px 6px; border-radius:4px; white-space:nowrap; flex-shrink:0;">${type}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                <span style="font-weight:700; font-size:0.90rem; color:var(--text-color, #0f172a); letter-spacing:0.3px; white-space:nowrap;">${plate}</span>
+                                ${unit ? `<span style="font-weight:600; font-size:0.82rem; color:#64748b; white-space:nowrap;">— ${unit}</span>` : ''}
+                                ${fBadgeTrigger ? `<div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">${fBadgeTrigger}</div>` : ''}
+                            </div>
                         </div>
                     `;
                 } else if (selectedOpt.hasAttribute('data-receipt') && selectedOpt.getAttribute('data-receipt') !== '') {
@@ -987,24 +1687,35 @@
                     const receipt = selectedOpt.getAttribute('data-receipt');
                     const stockFormatted = selectedOpt.getAttribute('data-stock-formatted');
                     const supplier = selectedOpt.getAttribute('data-supplier');
-                    const fTypeUnit = (fType || '').toLowerCase().includes('gnv') || (fType || '').toLowerCase().includes('gas natural') ? 'm³' : 'Gal';
+                    const st = getFuelStyle(fType);
                     triggerHTML = `
-                        <div style="display:flex; flex-direction:column; gap:1px; flex:1; min-width:0; overflow:hidden;">
-                            <span style="font-size:0.72rem; font-weight:700; color:#0284c7; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${fType} — ${receipt}</span>
-                            <span style="font-weight:600; font-size:0.88rem; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">Stock: ${stockFormatted} ${fTypeUnit} (${supplier})</span>
+                        <div style="display:flex; flex-direction:column; justify-content:center; gap:2px; flex:1; min-width:0; overflow:hidden;">
+                            <span style="font-size:0.72rem; font-weight:700; line-height:1.15; color:${st.color}; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${fType} — ${receipt}</span>
+                            <span style="font-weight:600; font-size:0.84rem; line-height:1.2; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">Stock: ${stockFormatted} ${st.unit} (${supplier})</span>
+                        </div>
+                    `;
+                } else if (selectedOpt.hasAttribute('data-stock-formatted') && selectedOpt.getAttribute('data-stock-formatted') !== '') {
+                    const fName = selectedOpt.value;
+                    const fStock = selectedOpt.getAttribute('data-stock-formatted');
+                    const st = getFuelStyle(fName);
+                    triggerHTML = `
+                        <div style="display:flex; flex-direction:column; justify-content:center; gap:2px; flex:1; min-width:0; overflow:hidden;">
+                            <span style="font-size:0.72rem; font-weight:700; line-height:1.15; color:${st.color}; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">${fName}</span>
+                            <span style="font-weight:600; font-size:0.84rem; line-height:1.2; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">Stock disponible: ${fStock} ${st.unit}</span>
                         </div>
                     `;
                 } else {
+                    const isPlaceholder = selectedOpt.value === '';
                     triggerHTML = `
-                        <div class="custom-select-selected-content" style="flex:1; min-width:0; overflow:hidden;">
-                            <span class="custom-select-label-text" style="font-weight:600; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;">${selectedOpt.text}</span>
+                        <div class="custom-select-selected-content" style="flex:1; min-width:0; overflow:hidden; display:flex; align-items:center;">
+                            <span class="custom-select-label-text" style="font-weight:${isPlaceholder ? '500' : '600'}; font-size:0.86rem; color:${isPlaceholder ? 'var(--text-muted, #94a3b8)' : 'var(--text-color, inherit)'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;">${selectedOpt.text}</span>
                         </div>
                     `;
                 }
 
                 trigger.innerHTML = `
                     ${triggerHTML}
-                    <span class="custom-select-chevron" style="flex-shrink:0; margin-left:8px;">
+                    <span class="custom-select-chevron" style="flex-shrink:0; margin-left:8px; display:inline-flex; align-items:center;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                     </span>
                 `;
@@ -1090,16 +1801,31 @@
                         const unit = opt.getAttribute('data-unit');
                         const type = opt.getAttribute('data-type');
                         const fType = opt.getAttribute('data-fuel-type') || '';
-                        const fUnit = opt.getAttribute('data-fuel-unit') || '';
-                        const fBadge = fType ? `<span style="font-size:0.75rem; background:${fType.toLowerCase().includes('gnv') ? '#dbeafe; color:#1d4ed8; border:1px solid #bfdbfe;' : '#f1f5f9; color:#334155; border:1px solid #e2e8f0;'}; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:4px;">${fType} [${fUnit}]</span>` : '';
+                        let fBadge = '';
+                        if (fType) {
+                            const parts = fType.split('/').map(p => p.trim()).filter(Boolean);
+                            fBadge = parts.map(p => {
+                                const st = getFuelStyle(p);
+                                return `<span style="font-size:0.71rem; font-weight:700; padding:1px 7px; border-radius:4px; background:${st.tagBg}; color:${st.color}; border:1px solid ${st.border}; white-space:nowrap; display:inline-flex; align-items:center;">${p}</span>`;
+                            }).join(' ');
+                        }
                         item.innerHTML = `
                             <div class="item-left" style="flex:1; min-width:0; overflow:hidden;">
-                                <div style="display:flex; flex-direction:column; gap:2px;">
-                                    <div style="font-size:0.73rem; font-weight:700; color:#2563eb; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                        ${area}
+                                <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
+                                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                                        <span style="font-size:0.72rem; font-weight:700; color:#2563eb; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                            ${area}
+                                        </span>
+                                        <span style="font-size:0.70rem; font-weight:600; background:rgba(100,116,139,0.12); color:#475569; padding:1px 6px; border-radius:4px; white-space:nowrap; flex-shrink:0;">
+                                            ${type}
+                                        </span>
                                     </div>
-                                    <div style="font-size:0.88rem; font-weight:600; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                        ${plate} <span style="color:#64748b; font-weight:500;">— ${unit}</span> <span style="font-size:0.76rem; background:#f1f5f9; padding:2px 6px; border-radius:4px; color:#475569; margin-left:4px;">[${type}]</span> ${fBadge}
+                                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                        <span style="font-size:0.90rem; font-weight:700; color:var(--text-color, #0f172a); letter-spacing:0.3px;">
+                                            ${plate}
+                                        </span>
+                                        ${unit ? `<span style="font-size:0.82rem; font-weight:600; color:#64748b; white-space:nowrap;">— ${unit}</span>` : ''}
+                                        ${fBadge ? `<div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">${fBadge}</div>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -1110,15 +1836,32 @@
                         const receipt = opt.getAttribute('data-receipt');
                         const stockFormatted = opt.getAttribute('data-stock-formatted');
                         const supplier = opt.getAttribute('data-supplier');
-                        const uLabel = (fType || '').toLowerCase().includes('gnv') ? 'm³' : 'Gal';
+                        const st = getFuelStyle(fType);
                         item.innerHTML = `
                             <div class="item-left" style="flex:1; min-width:0; overflow:hidden;">
                                 <div style="display:flex; flex-direction:column; gap:2px;">
-                                    <div style="font-size:0.73rem; font-weight:700; color:#0284c7; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    <div style="font-size:0.73rem; font-weight:700; color:${st.color}; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                                         ${fType} — ${receipt}
                                     </div>
                                     <div style="font-size:0.88rem; font-weight:600; color:var(--text-color, #0f172a); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                        Stock: ${stockFormatted} ${uLabel} <span style="color:#64748b; font-weight:500;">(${supplier})</span>
+                                        Stock: ${stockFormatted} ${st.unit} <span style="color:#64748b; font-weight:500;">(${supplier})</span>
+                                    </div>
+                                </div>
+                            </div>
+                            ${isSelected ? `<span class="item-check" style="flex-shrink:0; margin-left:8px;">${uiIcon('check')}</span>` : ''}
+                        `;
+                    } else if (opt.hasAttribute('data-stock-formatted') && opt.getAttribute('data-stock-formatted') !== '') {
+                        const fName = opt.value;
+                        const fStock = opt.getAttribute('data-stock-formatted');
+                        const st = getFuelStyle(fName);
+                        item.innerHTML = `
+                            <div class="item-left" style="flex:1; min-width:0; overflow:hidden;">
+                                <div style="display:flex; flex-direction:column; gap:2px;">
+                                    <div style="font-size:0.88rem; font-weight:700; color:${st.color}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                        ${fName}
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:6px;">
+                                        <span style="font-size:0.8rem; font-weight:600; color:var(--text-color, #0f172a);">Stock disponible: ${fStock} ${st.unit}</span>
                                     </div>
                                 </div>
                             </div>
@@ -1239,10 +1982,535 @@
             updateUI();
         }
 
+        // =========================================================
+        // SELECTOR DE VEHÍCULO / UNIDAD CON AGRUPACIÓN POR ÁREA
+        // =========================================================
+        function initVehicleGroupedSelect(selector, placeholder = "Buscar por área, placa, unidad o tipo...") {
+            const selectEl = typeof selector === 'string' ? (document.getElementById(selector) || document.querySelector(`select[name="${selector}"]`)) : selector;
+            if (!selectEl) return;
+
+            const container = document.createElement('div');
+            container.className = 'custom-select-container vehicle-grouped-select-container';
+            selectEl.parentNode.insertBefore(container, selectEl);
+            container.appendChild(selectEl);
+            selectEl.style.display = 'none';
+
+            const trigger = document.createElement('div');
+            trigger.className = 'custom-select-trigger v-grouped-trigger';
+            trigger.tabIndex = 0;
+
+            const menu = document.createElement('div');
+            menu.className = 'v-grouped-menu';
+
+            container.appendChild(trigger);
+            container.appendChild(menu);
+
+            if (selectEl.disabled) {
+                trigger.classList.add('is-disabled');
+                trigger.style.opacity = '0.6';
+                trigger.style.cursor = 'not-allowed';
+                trigger.style.pointerEvents = 'none';
+            }
+
+            // Barra de búsqueda
+            const searchBox = document.createElement('div');
+            searchBox.className = 'v-search-box';
+
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.className = 'v-search-input custom-select-search-input';
+            searchInput.placeholder = placeholder;
+            searchInput.autocomplete = 'off';
+            searchInput.maxLength = 50;
+            searchBox.appendChild(searchInput);
+            menu.appendChild(searchBox);
+
+            // Contenedor scrolleable con lista de grupos
+            const listContainer = document.createElement('div');
+            listContainer.className = 'v-list-container custom-select-list-container';
+            menu.appendChild(listContainer);
+
+            // Pie de menú con conteo y sugerencias de teclado
+            const footer = document.createElement('div');
+            footer.className = 'v-select-footer';
+            footer.innerHTML = `
+                <span class="v-footer-count">0 vehículos</span>
+                <span class="v-footer-hints">↑↓ mover · Enter elegir · Esc cerrar</span>
+            `;
+            menu.appendChild(footer);
+            const footerCountEl = footer.querySelector('.v-footer-count');
+
+            // Renderizar insignias de combustible según el tipo de forma limpia y sin duplicados
+            function renderFuelBadges(fType) {
+                if (!fType) return '';
+                const rawParts = fType.split('/').map(p => p.trim()).filter(Boolean);
+                const seen = new Set();
+                const badges = [];
+
+                rawParts.forEach(p => {
+                    const lower = p.toLowerCase();
+                    let label = p;
+                    let badgeClass = 'v-badge-otro';
+
+                    if (lower.includes('diesel') || lower.includes('diésel')) {
+                        label = 'Diésel';
+                        badgeClass = 'v-badge-diesel';
+                    } else if (lower.includes('gasohol')) {
+                        // gasohol antes de gasolina para no ser capturado por 'gasolina'
+                        label = p; // preservar el nombre original (ej: 'Gasohol', 'Gasohol 90')
+                        badgeClass = 'v-badge-gasohol';
+                    } else if (lower.includes('gasolina')) {
+                        label = 'Gasolina';
+                        badgeClass = 'v-badge-gasolina';
+                    } else if (lower.includes('gnv') || lower.includes('gas natural')) {
+                        label = 'GNV';
+                        badgeClass = 'v-badge-gnv';
+                    } else if (lower.includes('glp')) {
+                        label = 'GLP';
+                        badgeClass = 'v-badge-glp';
+                    } else {
+                        // combustible personalizado: mostrar el nombre tal como está
+                        label = p;
+                        badgeClass = 'v-badge-custom';
+                    }
+
+                    if (!seen.has(label)) {
+                        seen.add(label);
+                        badges.push(`<span class="v-badge ${badgeClass}">${label}</span>`);
+                    }
+                });
+
+                return badges.join('');
+            }
+
+            // Actualizar la apariencia del botón disparador
+            function updateTrigger() {
+                const selectedOpt = selectEl.options[selectEl.selectedIndex];
+                if (!selectedOpt || selectedOpt.value === '') {
+                    trigger.innerHTML = `
+                        <div class="custom-select-selected-content" style="flex:1; min-width:0; overflow:hidden; display:flex; align-items:center;">
+                            <span class="custom-select-label-text" style="color:var(--text-muted, #94a3b8); font-size:0.86rem; font-weight:500;">Seleccione un vehículo...</span>
+                        </div>
+                        <span class="custom-select-chevron" style="display:inline-flex; align-items:center;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </span>
+                    `;
+                    return;
+                }
+
+                const plate = selectedOpt.getAttribute('data-plate') || selectedOpt.text;
+                const unit = selectedOpt.getAttribute('data-unit') || '';
+                const type = selectedOpt.getAttribute('data-type') || '';
+                const fType = selectedOpt.getAttribute('data-fuel-type') || '';
+
+                let subParts = [];
+                if (type && type !== 'Sin tipo') subParts.push(type);
+                if (unit) subParts.push(unit);
+                const subText = subParts.join(' · ');
+
+                const badgesHtml = renderFuelBadges(fType);
+
+                trigger.innerHTML = `
+                    <div class="v-trigger-layout">
+                        <div class="v-trigger-left">
+                            <span class="v-item-plate">${plate}</span>
+                            ${subText ? `<span class="v-item-sub">${subText}</span>` : ''}
+                        </div>
+                        <div class="v-trigger-right">
+                            ${badgesHtml ? `<div class="v-item-badges">${badgesHtml}</div>` : ''}
+                            <span class="custom-select-chevron" style="display:inline-flex; align-items:center;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let allVehicleItems = [];
+            let groupElements = [];
+            let activeFocusedIndex = -1;
+
+            // Construir los grupos y sus vehículos correspondientes
+            function buildList() {
+                listContainer.innerHTML = '';
+                allVehicleItems = [];
+                groupElements = [];
+
+                const groups = new Map();
+                for (let i = 1; i < selectEl.options.length; i++) {
+                    const opt = selectEl.options[i];
+                    const area = (opt.getAttribute('data-area') || 'Sin Área Asignada').trim();
+                    if (!groups.has(area)) {
+                        groups.set(area, []);
+                    }
+                    groups.get(area).push({
+                        index: i,
+                        id: opt.value,
+                        area: area,
+                        plate: opt.getAttribute('data-plate') || opt.text,
+                        unit: opt.getAttribute('data-unit') || '',
+                        type: opt.getAttribute('data-type') || '',
+                        fuelType: opt.getAttribute('data-fuel-type') || '',
+                        opt: opt
+                    });
+                }
+
+                if (groups.size === 0) {
+                    listContainer.innerHTML = `<div class="custom-select-no-results">No hay vehículos registrados</div>`;
+                    if (footerCountEl) footerCountEl.textContent = '0 vehículos';
+                    return;
+                }
+
+                let totalCount = 0;
+
+                // Ordenar las áreas alfabéticamente (A - Z), dejando 'Sin Área Asignada' al final
+                const sortedAreas = Array.from(groups.keys()).sort((a, b) => {
+                    const isSinA = a.toLowerCase().includes('sin área') || a.toLowerCase().includes('sin area');
+                    const isSinB = b.toLowerCase().includes('sin área') || b.toLowerCase().includes('sin area');
+                    if (isSinA && !isSinB) return 1;
+                    if (!isSinA && isSinB) return -1;
+                    return a.localeCompare(b, 'es', { sensitivity: 'base' });
+                });
+
+                sortedAreas.forEach(areaName => {
+                    const items = groups.get(areaName) || [];
+
+                    // Ordenar los vehículos dentro del área por Placa y Unidad (orden natural: ej. ABC-2 antes de ABC-10)
+                    items.sort((a, b) => {
+                        const plateCompare = (a.plate || '').localeCompare(b.plate || '', 'es', { numeric: true, sensitivity: 'base' });
+                        if (plateCompare !== 0) return plateCompare;
+                        return (a.unit || '').localeCompare(b.unit || '', 'es', { numeric: true, sensitivity: 'base' });
+                    });
+
+                    const groupWrap = document.createElement('div');
+                    groupWrap.className = 'v-group-wrap';
+
+                    const groupHeader = document.createElement('div');
+                    groupHeader.className = 'v-group-header';
+                    groupHeader.innerHTML = `
+                        <span class="v-group-title">${areaName}</span>
+                        <span class="v-group-count">${items.length}</span>
+                    `;
+                    groupWrap.appendChild(groupHeader);
+
+                    const itemsWrap = document.createElement('div');
+                    itemsWrap.className = 'v-group-items';
+
+                    items.forEach(v => {
+                        totalCount++;
+                        const isSelected = v.index === selectEl.selectedIndex;
+
+                        const item = document.createElement('div');
+                        item.className = `v-group-item custom-select-item ${isSelected ? 'selected' : ''}`;
+                        item.setAttribute('data-index', v.index);
+                        item.setAttribute('data-vehicle-id', v.id);
+                        // Guardar el tipo de combustible del vehículo en la propiedad del elemento
+                        // para que filterVehicles() pueda verificar compatibilidad sin re-leer el DOM
+                        item.__fuelType = v.fuelType;
+
+                        let subParts = [];
+                        if (v.type && v.type !== 'Sin tipo') subParts.push(v.type);
+                        if (v.unit) subParts.push(v.unit);
+                        const subText = subParts.join(' · ');
+
+                        const badgesHtml = renderFuelBadges(v.fuelType);
+                        const searchMeta = `${v.area} ${v.plate} ${v.unit} ${v.type} ${v.fuelType}`.toLowerCase();
+                        item.setAttribute('data-search', searchMeta);
+
+                        item.innerHTML = `
+                            <div class="v-item-top">
+                                <div class="v-item-plate-wrap">
+                                    <span class="v-item-plate">${v.plate}</span>
+                                    <span class="v-item-check" style="${isSelected ? '' : 'display:none;'}">✓</span>
+                                </div>
+                                <div class="v-item-badges">
+                                    ${badgesHtml}
+                                </div>
+                            </div>
+                            ${subText ? `<div class="v-item-sub">${subText}</div>` : ''}
+                        `;
+
+                        item.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            selectEl.selectedIndex = v.index;
+                            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                            container.classList.remove('open');
+                        });
+
+                        item.addEventListener('mouseenter', () => {
+                            setActiveItem(item);
+                        });
+
+                        itemsWrap.appendChild(item);
+                        allVehicleItems.push({
+                            el: item,
+                            index: v.index,
+                            meta: searchMeta,
+                            group: groupWrap,
+                            groupCountBadge: groupHeader.querySelector('.v-group-count')
+                        });
+                    });
+
+                    groupWrap.appendChild(itemsWrap);
+                    listContainer.appendChild(groupWrap);
+                    groupElements.push({
+                        wrap: groupWrap,
+                        countBadge: groupHeader.querySelector('.v-group-count'),
+                        totalInGroup: items.length
+                    });
+                });
+
+                if (footerCountEl) {
+                    footerCountEl.textContent = `${totalCount} vehículo${totalCount === 1 ? '' : 's'}`;
+                }
+            }
+
+            function getVisibleItems() {
+                return allVehicleItems.filter(v => !v.el.classList.contains('v-hidden'));
+            }
+
+            function setActiveItem(targetEl) {
+                allVehicleItems.forEach(v => v.el.classList.remove('is-focused'));
+                if (targetEl) {
+                    targetEl.classList.add('is-focused');
+                    const vis = getVisibleItems();
+                    activeFocusedIndex = vis.findIndex(v => v.el === targetEl);
+                } else {
+                    activeFocusedIndex = -1;
+                }
+            }
+
+            // Filtro activo de combustible (vacío = sin filtro)
+            let activeFuelFilter = '';
+
+            function fuelMatchesFilter(vehicleFuelType) {
+                if (!activeFuelFilter) return true;
+                return isFuelCompatible(vehicleFuelType, activeFuelFilter);
+            }
+
+            function filterVehicles(term) {
+                const clean = term.toLowerCase().trim();
+                let totalVisible = 0;
+
+                groupElements.forEach(g => {
+                    const groupItems = allVehicleItems.filter(v => v.group === g.wrap);
+                    let groupCount = 0;
+
+                    groupItems.forEach(v => {
+                        const matchesTerm = !clean || v.meta.includes(clean);
+                        const matchesFuel = fuelMatchesFilter(v.el.__fuelType || '');
+                        if (matchesTerm && matchesFuel) {
+                            v.el.classList.remove('v-hidden');
+                            groupCount++;
+                            totalVisible++;
+                        } else {
+                            v.el.classList.add('v-hidden');
+                            v.el.classList.remove('is-focused');
+                        }
+                    });
+
+                    if (groupCount > 0) {
+                        g.wrap.classList.remove('v-hidden');
+                        g.countBadge.textContent = groupCount;
+                    } else {
+                        g.wrap.classList.add('v-hidden');
+                    }
+                });
+
+                if (footerCountEl) {
+                    footerCountEl.textContent = `${totalVisible} vehículo${totalVisible === 1 ? '' : 's'}`;
+                }
+
+                let noRes = listContainer.querySelector('.custom-select-no-results');
+                const noResMsg = activeFuelFilter
+                    ? `Sin vehículos compatibles con "${activeFuelFilter}"`
+                    : 'No se encontraron vehículos que coincidan';
+                if (totalVisible === 0) {
+                    if (!noRes) {
+                        noRes = document.createElement('div');
+                        noRes.className = 'custom-select-no-results';
+                        listContainer.appendChild(noRes);
+                    }
+                    noRes.textContent = noResMsg;
+                } else if (noRes) {
+                    noRes.remove();
+                }
+
+                const vis = getVisibleItems();
+                if (vis.length > 0) {
+                    setActiveItem(vis[0].el);
+                } else {
+                    setActiveItem(null);
+                }
+            }
+
+            // Aplica un filtro externo por tipo de combustible y refresca la lista
+            function filterVehiclesByFuel(fuelType) {
+                activeFuelFilter = (fuelType || '').trim();
+
+                // Si el vehículo actualmente seleccionado no es compatible, deseleccionarlo
+                const selOpt = selectEl.options[selectEl.selectedIndex];
+                if (selOpt && selOpt.value !== '') {
+                    const vFuel = selOpt.getAttribute('data-fuel-type') || '';
+                    if (!fuelMatchesFilter(vFuel)) {
+                        selectEl.selectedIndex = 0;
+                        selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+
+                // Actualizar el texto de búsqueda en el selector agrupado
+                if (activeFuelFilter) {
+                    const searchBox = container.querySelector('.v-search-input');
+                    if (searchBox) searchBox.value = '';
+                }
+
+                filterVehicles(container.querySelector('.v-search-input')?.value || '');
+
+                // Badge informativo encima del trigger cuando hay filtro activo
+                const existingBadge = container.parentNode.querySelector('.v-fuel-filter-badge');
+                if (activeFuelFilter) {
+                    if (!existingBadge) {
+                        const badge = document.createElement('div');
+                        badge.className = 'v-fuel-filter-badge';
+                        badge.style.cssText = 'margin-top:5px; font-size:0.73rem; color:#2563eb; font-weight:600; display:flex; align-items:center; gap:4px;';
+                        badge.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Mostrando solo vehículos compatibles con <strong style="color:#1d4ed8;">${activeFuelFilter}</strong>`;
+                        container.parentNode.appendChild(badge);
+                    } else {
+                        existingBadge.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Mostrando solo vehículos compatibles con <strong style="color:#1d4ed8;">${activeFuelFilter}</strong>`;
+                        existingBadge.style.display = 'flex';
+                    }
+                } else if (existingBadge) {
+                    existingBadge.style.display = 'none';
+                }
+            }
+
+            // Registrar la función en el elemento para acceso externo
+            container.__filterByFuel = filterVehiclesByFuel;
+            container.__selectEl = selectEl;
+
+            function handleKeyNavigation(e) {
+                if (!container.classList.contains('open')) return;
+                const vis = getVisibleItems();
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (vis.length === 0) return;
+                    activeFocusedIndex = (activeFocusedIndex + 1) % vis.length;
+                    setActiveItem(vis[activeFocusedIndex].el);
+                    vis[activeFocusedIndex].el.scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (vis.length === 0) return;
+                    activeFocusedIndex = (activeFocusedIndex - 1 + vis.length) % vis.length;
+                    setActiveItem(vis[activeFocusedIndex].el);
+                    vis[activeFocusedIndex].el.scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (activeFocusedIndex >= 0 && activeFocusedIndex < vis.length) {
+                        vis[activeFocusedIndex].el.click();
+                    } else if (vis.length > 0) {
+                        vis[0].el.click();
+                    }
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    container.classList.remove('open');
+                    trigger.focus();
+                }
+            }
+
+            searchInput.addEventListener('click', (e) => e.stopPropagation());
+            searchInput.addEventListener('input', (e) => {
+                filterVehicles(e.target.value);
+            });
+            searchInput.addEventListener('keydown', handleKeyNavigation);
+
+            trigger.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (!container.classList.contains('open')) {
+                        openDropdown();
+                    }
+                }
+            });
+
+            function openDropdown() {
+                document.querySelectorAll('.custom-select-container.open').forEach(c => {
+                    if (c !== container) c.classList.remove('open');
+                });
+                container.classList.add('open');
+                searchInput.value = '';
+                filterVehicles('');
+
+                const currentSelected = allVehicleItems.find(v => v.index === selectEl.selectedIndex && !v.el.classList.contains('v-hidden'));
+                if (currentSelected) {
+                    setActiveItem(currentSelected.el);
+                    setTimeout(() => currentSelected.el.scrollIntoView({ block: 'nearest' }), 30);
+                } else {
+                    const vis = getVisibleItems();
+                    if (vis.length > 0) setActiveItem(vis[0].el);
+                }
+
+                setTimeout(() => searchInput.focus(), 50);
+            }
+
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (container.classList.contains('open')) {
+                    container.classList.remove('open');
+                } else {
+                    openDropdown();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!container.contains(e.target)) {
+                    container.classList.remove('open');
+                }
+            });
+
+            selectEl.addEventListener('change', () => {
+                updateTrigger();
+                allVehicleItems.forEach(v => {
+                    const isSel = v.index === selectEl.selectedIndex;
+                    v.el.classList.toggle('selected', isSel);
+                    const chk = v.el.querySelector('.v-item-check');
+                    if (chk) chk.style.display = isSel ? 'inline' : 'none';
+                });
+
+                if (selectEl.selectedIndex === 0) {
+                    filterVehicles('');
+                }
+
+                verificarCamposIncompletos();
+                if (selectEl.value !== '') {
+                    trigger.style.borderColor = '';
+                    trigger.style.boxShadow = '';
+                }
+            });
+
+            buildList();
+            updateTrigger();
+        }
+
         initCustomDispatchSelect('fuel_type_select', true, 'Buscar tipo de combustible...');
-        initCustomDispatchSelect('vehicle_id', true, 'Buscar por área, placa, unidad o tipo...', false, 20, false, true);
+        initVehicleGroupedSelect('vehicle_id', 'Buscar por área, placa, unidad o tipo...');
         initCustomDispatchSelect('driver_name', true, 'Buscar o escribir conductor...', true, 40, true);
-        initCustomDispatchSelect('destination', false);
+        initCustomDispatchSelect('destination', true, 'Buscar área o subgerencia...');
+
+        // Referencia al contenedor del selector de vehículos (para acceso a filterByFuel)
+        const vehicleGroupedContainer = document.querySelector('.vehicle-grouped-select-container');
+
+        // === FILTRO DE VEHÍCULOS POR TIPO DE COMBUSTIBLE ===
+        // Cuando cambia el combustible seleccionado, se filtran los vehículos
+        // mostrando únicamente los que son compatibles con ese combustible.
+        fuelTypeSelect.addEventListener('change', () => {
+            const selectedFuel = fuelTypeSelect.value || '';
+            if (vehicleGroupedContainer && vehicleGroupedContainer.__filterByFuel) {
+                vehicleGroupedContainer.__filterByFuel(selectedFuel);
+            }
+        });
 
         // Auto-sugerir combustible y área cuando se selecciona un vehículo
         const vehicleSelectEl = document.getElementById('vehicle_id');
@@ -1252,13 +2520,19 @@
                 if (opt) {
                     const fuelName = opt.getAttribute('data-fuel-type');
                     if (fuelName && fuelTypeSelect) {
-                        for (let i = 0; i < fuelTypeSelect.options.length; i++) {
-                            const ftVal = (fuelTypeSelect.options[i].value || '').toLowerCase();
-                            const fNameClean = fuelName.toLowerCase();
-                            if (ftVal && (ftVal === fNameClean || fNameClean.includes(ftVal) || ftVal.includes(fNameClean))) {
-                                fuelTypeSelect.selectedIndex = i;
-                                fuelTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                                break;
+                        const currentFuelVal = fuelTypeSelect.value || '';
+
+                        // Si el combustible ya seleccionado en el formulario es compatible con el vehículo, no lo sobreescribimos
+                        const alreadyCompatible = currentFuelVal && isFuelCompatible(fuelName, currentFuelVal);
+
+                        if (!alreadyCompatible) {
+                            for (let i = 1; i < fuelTypeSelect.options.length; i++) {
+                                const ftVal = fuelTypeSelect.options[i].value || '';
+                                if (ftVal && isFuelCompatible(fuelName, ftVal)) {
+                                    fuelTypeSelect.selectedIndex = i;
+                                    fuelTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                    break;
+                                }
                             }
                         }
                     }

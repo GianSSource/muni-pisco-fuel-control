@@ -19,22 +19,7 @@ final class User
 
         try {
             $db = Database::getConnection();
-
-            // Auto-creaciÃ³n de la tabla 'users' si no existiera en la base de datos activa
-            $db->exec('CREATE TABLE IF NOT EXISTS users (
-                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(120) NOT NULL,
-                email VARCHAR(160) NOT NULL UNIQUE,
-                password_hash VARCHAR(255) NOT NULL,
-                role VARCHAR(40) NOT NULL DEFAULT "operador",
-                is_active TINYINT(1) NOT NULL DEFAULT 1,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB');
-
-            // Agrega la columna is_active si la tabla ya existe sin ella
-            try {
-                $db->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1');
-            } catch (\Throwable $ignore) {}
+            self::ensureSchema($db);
 
             $sql = 'INSERT INTO users (name, email, password_hash, role) VALUES (:name, :email, :password_hash, :role)';
             $stmt = $db->prepare($sql);
@@ -44,33 +29,9 @@ final class User
                 'password_hash' => $hash,
                 'role' => $role,
             ]);
-        } catch (Throwable $e1) {
-            // Intentar inserciÃ³n en users sin columna role si fallara por esquema antiguo
-            try {
-                $db = Database::getConnection();
-                $sql = 'INSERT INTO users (name, email, password_hash) VALUES (:name, :email, :password_hash)';
-                $stmt = $db->prepare($sql);
-                return $stmt->execute([
-                    'name' => $name,
-                    'email' => $email,
-                    'password_hash' => $hash,
-                ]);
-            } catch (Throwable $e2) {
-                // Fallback secundario seguro a tabla 'usuarios'
-                try {
-                    $db = Database::getConnection();
-                    $sql = 'INSERT INTO usuarios (nombre, email, password_hash, rol, activo) VALUES (:name, :email, :password_hash, :role, 1)';
-                    $stmt = $db->prepare($sql);
-                    return $stmt->execute([
-                        'name' => $name,
-                        'email' => $email,
-                        'password_hash' => $hash,
-                        'role' => $role,
-                    ]);
-                } catch (Throwable $e3) {
-                    return false;
-                }
-            }
+        } catch (Throwable $e) {
+            error_log('User::create: ' . $e->getMessage());
+            return false;
         }
     }
 
@@ -82,22 +43,9 @@ final class User
             $stmt->execute(['email' => $email]);
             $user = $stmt->fetch();
 
-            if ($user) {
-                return $user;
-            }
-        } catch (\Throwable $e) {
-            error_log($e->getMessage());
-            // Fallback
-        }
-
-        try {
-            $db = Database::getConnection();
-            $stmt = $db->prepare('SELECT id, nombre AS name, email, password_hash, COALESCE(rol, "operador") AS role FROM usuarios WHERE email = :email LIMIT 1');
-            $stmt->execute(['email' => $email]);
-            $user = $stmt->fetch();
-
             return $user ?: null;
         } catch (Throwable $e) {
+            error_log('User::findByEmail: ' . $e->getMessage());
             return null;
         }
     }
@@ -124,14 +72,19 @@ final class User
         if (self::$schemaMigrated) {
             return;
         }
-        try {
-            $db->exec('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1');
-            $db->exec('ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at DATETIME NULL DEFAULT NULL');
-        } catch (\Throwable $e) {
-            try { $db->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1'); } catch (\Throwable $ignore) {}
-            try { $db->exec('ALTER TABLE users ADD COLUMN last_login_at DATETIME NULL DEFAULT NULL'); } catch (\Throwable $ignore) {}
-        }
         self::$schemaMigrated = true;
+        try {
+            $stmt = $db->query("SHOW COLUMNS FROM users LIKE 'is_active'");
+            if (!$stmt || !$stmt->fetch()) {
+                $db->exec('ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1');
+            }
+            $stmt2 = $db->query("SHOW COLUMNS FROM users LIKE 'last_login_at'");
+            if (!$stmt2 || !$stmt2->fetch()) {
+                $db->exec('ALTER TABLE users ADD COLUMN last_login_at DATETIME NULL DEFAULT NULL');
+            }
+        } catch (\Throwable $e) {
+            error_log('ensureSchema: ' . $e->getMessage());
+        }
     }
 
     public function getAll(): array
@@ -171,12 +124,8 @@ final class User
             $stmt = Database::getConnection()->prepare('DELETE FROM users WHERE id = :id');
             return $stmt->execute(['id' => $id]);
         } catch (Throwable $e) {
-            try {
-                $stmt = Database::getConnection()->prepare('DELETE FROM usuarios WHERE id = :id');
-                return $stmt->execute(['id' => $id]);
-            } catch (Throwable $e2) {
-                return false;
-            }
+            error_log('User::delete: ' . $e->getMessage());
+            return false;
         }
     }
 
@@ -217,23 +166,9 @@ final class User
                 $stmt->execute(['email' => trim((string) $idOrEmail)]);
             }
             $row = $stmt->fetch();
-            if ($row) {
-                return $row;
-            }
-        } catch (\Throwable $e) {}
-
-        try {
-            $db = Database::getConnection();
-            if (is_int($idOrEmail) || ctype_digit((string) $idOrEmail)) {
-                $stmt = $db->prepare('SELECT id, nombre AS name, email, password_hash, COALESCE(rol, "operador") AS role, 1 AS is_active FROM usuarios WHERE id = :id LIMIT 1');
-                $stmt->execute(['id' => (int) $idOrEmail]);
-            } else {
-                $stmt = $db->prepare('SELECT id, nombre AS name, email, password_hash, COALESCE(rol, "operador") AS role, 1 AS is_active FROM usuarios WHERE email = :email LIMIT 1');
-                $stmt->execute(['email' => trim((string) $idOrEmail)]);
-            }
-            $row = $stmt->fetch();
             return $row ?: null;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            error_log('User::findWithPassword: ' . $e->getMessage());
             return null;
         }
     }

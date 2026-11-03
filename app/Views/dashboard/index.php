@@ -18,7 +18,8 @@
     }
 
     /* Contenedor de botones (Filtros) */
-    .chart-view-switcher {
+    .chart-view-switcher,
+    .energy-filter-switcher {
         flex-shrink: 0 !important;
         /* Impide que la botonera se comprima o desplaze */
         display: flex !important;
@@ -39,18 +40,21 @@
             gap: 12px !important;
         }
 
-        .chart-view-switcher {
+        .chart-view-switcher,
+        .energy-filter-switcher {
             width: 100% !important;
             max-width: 100%;
             overflow-x: auto;
             scrollbar-width: none;
         }
 
-        .chart-view-switcher::-webkit-scrollbar {
+        .chart-view-switcher::-webkit-scrollbar,
+        .energy-filter-switcher::-webkit-scrollbar {
             display: none;
         }
 
-        .switcher-btn {
+        .switcher-btn,
+        .energy-btn {
             flex: 1 0 auto;
             padding: 6px 9px;
             font-size: 11px;
@@ -323,14 +327,14 @@
         </div>
 
         <div style="display: flex; gap: 10px;">
-            <a class="button secondary" href="<?= BASE_URL ?>despachos/nuevo"
+            <a class="button secondary" href="<?= BASE_URL ?>despachos/nuevo?from=dashboard"
                 style="background: #3b82f6; color: #ffffff; padding: 10px 16px; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M12 5v14M5 12h14"></path>
                 </svg>
                 Registrar Despacho
             </a>
-            <a class="button primary" href="<?= BASE_URL ?>ingresos/nuevo">
+            <a class="button primary" href="<?= BASE_URL ?>ingresos/nuevo?from=dashboard">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M12 5v14M5 12h14"></path>
                 </svg>
@@ -473,35 +477,53 @@
             <div class="stat-body">
                 <strong><?= number_format((float) $gnvIngresado, 2) ?> <small>m³</small></strong>
                 <span>Total GNV ingresado</span>
-                <span><?= (int) $gnvDespachos ?> despacho(s) &middot; <?= number_format((float) $gnvRemaining, 2) ?> m³ disponibles</span>
+                <span style="font-size: 0.98rem; margin-top: 4px;"><strong style="font-weight: 700; color: var(--text-color, #1e293b); font-size: 0.98rem;"><?= number_format((float) ($gnvDespachado ?? max(0, $gnvIngresado - $gnvRemaining)), 2) ?> m³</strong> despachados</span>
             </div>
         </article>
         <?php endif; ?>
     </section>
 
-
-
-
-    <!-- Visualizaciones: Gráfico Dinámico Multivista, Gráfico Circular de Stock y Resumen del Calendario -->
+    <!-- Visualizaciones: Gráfico Dinámico Multivista y Resumen de Stock por Tipo -->
     <section class="visuals-grid"
         style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px;">
         <article class="chart-container-card">
-            <div class="card-header-flex chart-header-wrap">
+            <div class="card-header-flex chart-header-wrap"
+                style="gap: 12px; align-items: center; justify-content: space-between;">
                 <div>
                     <h2 id="chartTitle">Combustible Despachado Semanal</h2>
-                    <p class="section-desc" id="chartSubtitle">Volumen diario consumido en galones (últimos 7 días)</p>
+                    <p class="section-desc" id="chartSubtitle">Volumen diario consumido (últimos 7 días)</p>
                 </div>
-                <div class="chart-view-switcher" role="tablist">
-                    <button type="button" class="switcher-btn active" data-view="semanal"
-                        onclick="switchChartView(event, 'semanal')">Semanal</button>
-                    <button type="button" class="switcher-btn" data-view="tipo"
-                        onclick="switchChartView(event, 'tipo')">Por Tipo</button>
-                    <button type="button" class="switcher-btn" data-view="mensual"
-                        onclick="switchChartView(event, 'mensual')">Mensual</button>
-                    <button type="button" class="switcher-btn" data-view="anual"
-                        onclick="switchChartView(event, 'anual')">Anual</button>
-                    <button type="button" class="switcher-btn" data-view="area"
-                        onclick="switchChartView(event, 'area')">Por Área</button>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                    <!-- Filtro de Unidad / Energía -->
+                    <div class="energy-filter-switcher" role="radiogroup" aria-label="Filtro de Energía">
+                        <button type="button" class="energy-btn active" data-energy="all"
+                            onclick="switchEnergyFilter(event, 'all')" title="Ver todos los tipos">Todos</button>
+                        <button type="button" class="energy-btn" data-energy="liquid"
+                            onclick="switchEnergyFilter(event, 'liquid')" title="Ver todos los combustibles líquidos desglosados (Gal)">Líquidos (Gal)</button>
+                        <?php foreach ($liquidFuelTypes ?? [] as $lType): ?>
+                        <button type="button" class="energy-btn" data-energy="<?= htmlspecialchars($lType) ?>"
+                            onclick="switchEnergyFilter(event, '<?= htmlspecialchars($lType, ENT_QUOTES) ?>')" title="Solo <?= htmlspecialchars($lType) ?> (Gal)">
+                            <?= htmlspecialchars($lType) ?>
+                        </button>
+                        <?php endforeach; ?>
+                        <?php if (!empty($hasGnv)): ?>
+                            <button type="button" class="energy-btn" data-energy="gnv"
+                                onclick="switchEnergyFilter(event, 'gnv')" title="Solo Gas Natural (m³)">GNV (m³)</button>
+                        <?php endif; ?>
+                    </div>
+                    <!-- Selector de Vista Temporal / Criterio -->
+                    <div class="chart-view-switcher" role="tablist">
+                        <button type="button" class="switcher-btn active" data-view="semanal"
+                            onclick="switchChartView(event, 'semanal')">Semanal</button>
+                        <button type="button" class="switcher-btn" data-view="tipo"
+                            onclick="switchChartView(event, 'tipo')">Por Tipo</button>
+                        <button type="button" class="switcher-btn" data-view="mensual"
+                            onclick="switchChartView(event, 'mensual')">Mensual</button>
+                        <button type="button" class="switcher-btn" data-view="anual"
+                            onclick="switchChartView(event, 'anual')">Anual</button>
+                        <button type="button" class="switcher-btn" data-view="area"
+                            onclick="switchChartView(event, 'area')">Por Área</button>
+                    </div>
                 </div>
             </div>
 
@@ -521,7 +543,24 @@
             ],
             $stockByFuelType ?? []
         );
-        $totalStock = array_sum(array_column($stockItems, 'value'));
+
+        $isGnvFuel = static function (string $fuelType): bool {
+            $type = mb_strtolower($fuelType);
+            return str_contains($type, 'gnv') || str_contains($type, 'gas natural');
+        };
+
+        $liquidStockItems = [];
+        $gnvStockItems = [];
+        foreach ($stockItems as $stockItem) {
+            if ($isGnvFuel($stockItem['label'])) {
+                $gnvStockItems[] = $stockItem;
+            } else {
+                $liquidStockItems[] = $stockItem;
+            }
+        }
+
+        $totalLiquidStock = array_sum(array_column($liquidStockItems, 'value'));
+        $totalGnvStock = array_sum(array_column($gnvStockItems, 'value'));
 
         // Paleta de colores únicos: cada tipo de combustible recibe un color distinto,
         // sin repetir, aunque compartan familia (p. ej. Gasohol Premium vs Regular).
@@ -535,7 +574,7 @@
                 str_contains($type, 'gasohol regular') => '#ec4899',
                 str_contains($type, 'gasohol') => '#a855f7',
                 str_contains($type, 'glp') || str_contains($type, 'gas licuado') => '#06b6d4',
-                str_contains($type, 'gnv') || str_contains($type, 'gas natural') => '#2563eb',
+                str_contains($type, 'gnv') || str_contains($type, 'gas natural') => '#10b981',
                 default => '#64748b',
             };
         };
@@ -567,57 +606,88 @@
         ?>
         <article class="chart-container-card stock-summary-card"
             style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0); padding: 20px; display: flex; flex-direction: column; justify-content: flex-start; align-self: start;">
-            <div style="margin-bottom: 12px;">
+            <div style="margin-bottom: 14px;">
                 <h2 class="icon-with-text"
                     style="font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-color, #1e293b);"><svg
                         class="ui-icon">
                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use>
-                    </svg>Stock
-                    Disponible por Tipo</h2>
-                <p class="section-desc" style="font-size: 0.85rem; color: var(--text-muted, #64748b); margin-top: 4px;">
-                    Distribución de galones restantes en inventario</p>
+                    </svg>Stock Disponible en Tanques</h2>
+                <p class="section-desc" style="font-size: 0.82rem; color: var(--text-muted, #64748b); margin-top: 4px;">
+                    Distribución de saldo restante en inventario</p>
             </div>
 
-            <div class="stock-chart-wrapper native-stock-chart-wrapper">
-                <?php if ($totalStock > 0): ?>
-                    <div class="native-stock-chart" role="img"
-                        aria-label="Resumen de stock disponible por tipo de combustible">
-                        <div class="native-stock-total">
-                            <span>Inventario total</span>
-                            <strong><?= number_format($totalStock, 2) ?> Gal</strong>
+            <!-- Bloque Combustibles Líquidos -->
+            <div class="native-stock-chart"
+                style="margin-bottom: <?= (!empty($hasGnv) || $totalGnvStock > 0) ? '14px' : '0' ?>;">
+                <div class="native-stock-total"
+                    style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #64748b);">Líquidos en
+                        Tanques</span>
+                    <strong style="color: #2563eb;"><?= number_format($totalLiquidStock, 2) ?> Gal</strong>
+                </div>
+                <?php if ($totalLiquidStock > 0): ?>
+                    <div class="native-stock-bars" style="margin-top: 8px;">
+                        <?php foreach ($liquidStockItems as $stockItem): ?>
+                            <?php
+                            $percentage = ($stockItem['value'] / $totalLiquidStock) * 100;
+                            $color = $stockColorForType($stockItem['label']);
+                            ?>
+                            <div class="native-stock-row">
+                                <div class="native-stock-row-header">
+                                    <strong
+                                        title="<?= htmlspecialchars($stockItem['label']) ?>"><?= htmlspecialchars($stockItem['label']) ?></strong>
+                                    <span class="native-stock-row-value"><?= number_format($percentage, 2) ?>%</span>
+                                </div>
+                                <div class="native-stock-track" aria-hidden="true">
+                                    <span class="native-stock-fill"
+                                        style="width: <?= number_format($percentage, 2, '.', '') ?>%; background: <?= $color ?>;"></span>
+                                </div>
+                                <span class="native-stock-row-gallons"><?= number_format($stockItem['value'], 2) ?> Gal</span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p class="empty-state" style="font-size: 0.85rem; margin: 6px 0;">Sin stock de combustibles líquidos.
+                    </p>
+                <?php endif; ?>
+            </div>
+
+            <!-- Bloque Separado GNV (Gas Natural) -->
+            <?php if (!empty($hasGnv) || $totalGnvStock > 0 || !empty($gnvStockItems)): ?>
+                <?php
+                $gnvDisplayStock = $totalGnvStock > 0 ? $totalGnvStock : (float) ($gnvRemaining ?? 0);
+                $hasMultipleGnv = count($gnvStockItems) > 1;
+                ?>
+                <div
+                    style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 12px; margin-top: auto;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center;<?= $hasMultipleGnv ? ' margin-bottom: 8px;' : '' ?>">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span
+                                style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+                            <span
+                                style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #047857;">Gas
+                                Natural (GNV)</span>
                         </div>
-                        <div class="native-stock-bars">
-                            <?php foreach ($stockItems as $stockItem): ?>
-                                <?php
-                                $percentage = ($stockItem['value'] / $totalStock) * 100;
-                                $color = $stockColorForType($stockItem['label']);
-                                ?>
-                                <div class="native-stock-row">
-                                    <div class="native-stock-row-header">
-                                        <strong
-                                            title="<?= htmlspecialchars($stockItem['label']) ?>"><?= htmlspecialchars($stockItem['label']) ?></strong>
-                                        <span class="native-stock-row-value"><?= number_format($percentage, 2) ?>%</span>
-                                    </div>
-                                    <div class="native-stock-track" aria-hidden="true">
-                                        <span class="native-stock-fill"
-                                            style="width: <?= number_format($percentage, 2, '.', '') ?>%; background: <?= $color ?>;"></span>
-                                    </div>
-                                    <span class="native-stock-row-gallons"><?= number_format($stockItem['value'], 2) ?> <?= \App\Models\Catalog::getFuelUnit($stockItem['label'] ?? '', true) ?></span>
+                        <span
+                            style="font-size: 0.88rem; font-weight: 800; color: #059669; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 6px;">
+                            <?= number_format($gnvDisplayStock, 2) ?> m³
+                        </span>
+                    </div>
+                    <?php if ($hasMultipleGnv): ?>
+                        <div style="padding-top: 6px; border-top: 1px dashed rgba(16, 185, 129, 0.25);">
+                            <?php foreach ($gnvStockItems as $gnvItem): ?>
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-top: 4px;">
+                                    <span
+                                        style="color: var(--text-muted, #64748b);"><?= htmlspecialchars($gnvItem['label']) ?></span>
+                                    <strong style="color: #047857;"><?= number_format($gnvItem['value'], 2) ?> m³</strong>
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                        <ul class="native-stock-legend" aria-label="Leyenda de tipos de combustible">
-                            <?php foreach ($stockItems as $stockItem): ?>
-                                <li><span class="native-stock-legend-dot"
-                                        style="background: <?= $stockColorForType($stockItem['label']) ?>;"></span><?= htmlspecialchars($stockItem['label']) ?>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                <?php else: ?>
-                    <p class="empty-state">Sin información de lotes.</p>
-                <?php endif; ?>
-            </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         </article>
     </section>
 
@@ -678,7 +748,8 @@
                                 ?>
                                 <span class="icon-with-text"><svg class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use>
-                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?> <?= $evUnit ?> - <svg class="ui-icon">
+                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?>         <?= $evUnit ?> - <svg
+                                        class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-user"></use>
                                     </svg>
                                     <?= htmlspecialchars($ev['driver'] ?? $ev['title'] ?? 'Responsable') ?></span>
@@ -721,7 +792,8 @@
                                 ?>
                                 <span class="icon-with-text"><svg class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-download"></use>
-                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?> <?= $evUnit ?> - <svg class="ui-icon">
+                                    </svg><?= number_format((float) ($ev['gallons'] ?? 0), 2) ?>         <?= $evUnit ?> - <svg
+                                        class="ui-icon">
                                         <use href="<?= BASE_URL ?>assets/icons.svg#icon-store"></use>
                                     </svg>
                                     <?= htmlspecialchars($ev['driver'] ?? 'Proveedor') ?></span>
@@ -750,21 +822,9 @@
         <div class="table-header">
             <div>
                 <h2>Últimos Despachos de Combustible</h2>
-                <p class="section-desc">Historial reciente con filtro y búsqueda instantánea</p>
+                <p class="section-desc">Historial reciente de despachos realizados</p>
             </div>
             <div class="table-header-right">
-                <form action="<?= BASE_URL ?>despachos" method="GET" class="dash-search-form" onsubmit="return false;">
-                    <div class="dash-search-input-wrap">
-                        <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor"
-                            stroke-width="2" viewBox="0 0 24 24">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        <input type="text" id="dashSearchInput" name="q" placeholder="Buscar vale, placa, conductor..."
-                            class="dash-search-input" maxlength="30"
-                            oninput="this.value = this.value.replace(/[^a-zA-Z0-9\-\s]/g, '')">
-                    </div>
-                </form>
                 <a href="<?= BASE_URL ?>despachos" class="link-more">Buscador Avanzado →</a>
             </div>
         </div>
@@ -787,7 +847,8 @@
                 <tbody>
                     <?php if (!empty($ultimasEntregas)): ?>
                         <?php foreach ($ultimasEntregas as $entrega): ?>
-                            <tr>
+                            <tr class="delivery-row" style="cursor:pointer;"
+                                onclick="dashOpenDetailModal(<?= htmlspecialchars(json_encode($entrega), ENT_QUOTES, 'UTF-8') ?>)">
                                 <td>
                                     <span class="receipt-tag"><?= htmlspecialchars($entrega['receipt_number']) ?></span>
                                 </td>
@@ -819,16 +880,26 @@
                                 </td>
                                 <td>
                                     <?php $dUnit = \App\Models\Catalog::getFuelUnit($entrega['fuel_type'] ?? '', true); ?>
-                                    <span class="quantity-highlight"><?= number_format((float) $entrega['gallons'], 2) ?> <?= $dUnit ?></span>
+                                    <span class="quantity-highlight"><?= number_format((float) $entrega['gallons'], 2) ?>
+                                        <?= $dUnit ?></span>
                                 </td>
                                 <td>
-                                    <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $entrega['id'] ?>" target="_blank"
-                                        title="Imprimir vale"
-                                        style="padding: 5px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
-                                        <svg class="ui-icon">
-                                            <use href="<?= BASE_URL ?>assets/icons.svg#icon-print"></use>
-                                        </svg>
-                                    </a>
+                                    <div style="display:inline-flex; gap:6px; align-items:center;">
+                                        <button type="button"
+                                            onclick="event.stopPropagation(); dashOpenDetailModal(<?= htmlspecialchars(json_encode($entrega), ENT_QUOTES, 'UTF-8') ?>)"
+                                            title="Ver detalle"
+                                            style="padding: 5px; background: #0f766e; color: #ffffff; border-radius: 6px; border:none; cursor:pointer; display: inline-flex; align-items: center; justify-content: center;">
+                                            <svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-eye"></use></svg>
+                                        </button>
+                                        <a href="<?= BASE_URL ?>despachos/imprimir?id=<?= $entrega['id'] ?>" target="_blank"
+                                            onclick="event.stopPropagation()"
+                                            title="Imprimir vale"
+                                            style="padding: 5px; background: #2563eb; color: #ffffff; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+                                            <svg class="ui-icon">
+                                                <use href="<?= BASE_URL ?>assets/icons.svg#icon-print"></use>
+                                            </svg>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -864,15 +935,38 @@
 
 </div>
 
+<!-- Modal Detalle del Despacho (Dashboard) -->
+<div id="dashDispatchModal" class="modal-overlay" onclick="dashCloseDetailModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3 class="icon-with-text">
+                <svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-fuel"></use></svg>
+                Detalle del Despacho de Combustible
+            </h3>
+            <button class="modal-close-btn" onclick="dashCloseDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="dashDispatchModalBody">
+            <!-- Inyectado por JavaScript -->
+        </div>
+        <div class="modal-footer">
+            <button class="button secondary" onclick="dashCloseDetailModal()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
 <script>
     let fuelChartInstance = null;
     let chartResizeObserver = null;
     let currentViewKey = 'semanal';
+    let currentEnergyKey = 'all';
+    const hasGnv = <?= !empty($hasGnv) ? 'true' : 'false' ?>;
+    const liquidFuelTypes = <?= json_encode(array_values($liquidFuelTypes ?? ['Diesel', 'Gasolina']), JSON_UNESCAPED_UNICODE) ?>;
+
     const chartDataSets = {
-        semanal: { title: 'Combustible Despachado Semanal', subtitle: 'Volumen diario consumido en galones (últimos 7 días)', colors: ['#2563eb'], lightColors: ['#60a5fa'], data: <?= json_encode($dailyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
-        tipo: { title: 'Despacho por Tipo de Combustible', subtitle: 'Distribución de galones consumidos según Diesel B5, Gasohol Regular o Premium', colors: ['#10b981', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ec4899'], lightColors: ['#6ee7b7', '#7dd3fc', '#fcd34d', '#c4b5fd', '#f9a8d4'], data: <?= json_encode($typeFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
-        mensual: { title: 'Combustible Despachado Mensualmente', subtitle: 'Evolución y total de galones despachados por mes (año actual)', colors: ['#0d9488'], lightColors: ['#5eead4'], data: <?= json_encode($monthlyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
-        anual: { title: 'Acumulado de Combustible Anual', subtitle: 'Consumo total de combustible en galones por año', colors: ['#7c3aed'], lightColors: ['#c4b5fd'], data: <?= json_encode($yearlyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
+        semanal: { title: 'Combustible Despachado Semanal', subtitle: 'Volumen diario consumido (últimos 7 días)', colors: ['#2563eb'], lightColors: ['#60a5fa'], data: <?= json_encode($dailyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
+        tipo: { title: 'Despacho por Tipo de Combustible', subtitle: 'Distribución consumida según tipo de combustible', colors: ['#10b981', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ec4899'], lightColors: ['#6ee7b7', '#7dd3fc', '#fcd34d', '#c4b5fd', '#f9a8d4'], data: <?= json_encode($typeFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
+        mensual: { title: 'Combustible Despachado Mensualmente', subtitle: 'Evolución y total despachado por mes (año actual)', colors: ['#0d9488'], lightColors: ['#5eead4'], data: <?= json_encode($monthlyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
+        anual: { title: 'Acumulado de Combustible Anual', subtitle: 'Consumo total de combustible por año', colors: ['#7c3aed'], lightColors: ['#c4b5fd'], data: <?= json_encode($yearlyFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> },
         area: { title: 'Despacho por Área o Destino', subtitle: 'Distribución del combustible entregado a cada área municipal', colors: ['#f97316', '#ef4444', '#eab308', '#14b8a6', '#3b82f6'], lightColors: ['#fdba74', '#fca5a5', '#fde047', '#5eead4', '#93c5fd'], data: <?= json_encode($areaFuel, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> }
     };
 
@@ -880,8 +974,16 @@
         return document.documentElement.getAttribute('data-theme') === 'dark';
     }
 
-    function formatGallons(value, decimals = 1) {
-        return `${Number(value || 0).toLocaleString('es-PE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })} Gal`;
+    function formatNumber(value, decimals = 2) {
+        return Number(value || 0).toLocaleString('es-PE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
+    function formatGallons(value, decimals = 2) {
+        return `${formatNumber(value, decimals)} Gal`;
+    }
+
+    function formatGnv(value, decimals = 2) {
+        return `${formatNumber(value, decimals)} m³`;
     }
 
     function getThemeColors() {
@@ -895,10 +997,6 @@
         };
     }
 
-    // Mantiene la paleta del gráfico "Por Tipo" sincronizada con el
-    // resumen de stock, incluso si cambia el orden de los combustibles.
-    // Cada tipo recibe un color único garantizado (no se repiten, aunque
-    // compartan familia, p. ej. Gasohol Premium vs Gasohol Regular).
     const FUEL_COLOR_PALETTE = [
         { color: '#f59e0b', lightColor: '#fcd34d' },
         { color: '#8b5cf6', lightColor: '#c4b5fd' },
@@ -922,7 +1020,7 @@
         if (fuelType.includes('gasohol regular')) return { color: '#ec4899', lightColor: '#f9a8d4' };
         if (fuelType.includes('gasohol')) return { color: '#a855f7', lightColor: '#d8b4fe' };
         if (fuelType.includes('glp') || fuelType.includes('gas licuado')) return { color: '#06b6d4', lightColor: '#67e8f9' };
-        if (fuelType.includes('gnv') || fuelType.includes('gas natural')) return { color: '#2563eb', lightColor: '#93c5fd' };
+        if (fuelType.includes('gnv') || fuelType.includes('gas natural')) return { color: '#10b981', lightColor: '#6ee7b7' };
 
         return { color: '#64748b', lightColor: '#cbd5e1' };
     }
@@ -958,6 +1056,47 @@
         return (colorMap && colorMap.get(String(label || ''))) || getPreferredFuelColor(label);
     }
 
+    function updateChartTitles() {
+        const config = chartDataSets[currentViewKey];
+        if (!config) return;
+
+        let title = config.title;
+        let subtitle = config.subtitle;
+
+        if (currentEnergyKey === 'liquid') {
+            title += ' (Líquidos)';
+            subtitle = 'Desglose por combustible líquido (Gal): ' + liquidFuelTypes.join(' • ');
+        } else if (currentEnergyKey === 'gnv') {
+            title += ' (GNV)';
+            subtitle = 'Consumo de Gas Natural Vehicular en metros cúbicos (m³)';
+        } else if (liquidFuelTypes.includes(currentEnergyKey)) {
+            title += ` (${currentEnergyKey})`;
+            subtitle = `Consumo exclusivo de ${currentEnergyKey} en Galones (Gal)`;
+        } else {
+            if (currentViewKey !== 'tipo') {
+                subtitle += ' - Comparativa Líquidos (Gal) y GNV (m³)';
+            }
+        }
+
+        const titleEl = document.getElementById('chartTitle');
+        const subEl = document.getElementById('chartSubtitle');
+        if (titleEl) titleEl.textContent = title;
+        if (subEl) subEl.textContent = subtitle;
+    }
+
+    function calcNiceMax(max) {
+        const num = Number(max || 0);
+        if (num <= 0) return 10;
+        const target = num * 1.25; // 25% de margen superior para evitar colisiones con leyendas o borde
+        if (target <= 10) return 10;
+        if (target <= 20) return 20;
+        if (target <= 25) return 25;
+        if (target <= 50) return 50;
+        if (target <= 100) return 100;
+        const mag = Math.pow(10, Math.floor(Math.log10(target)));
+        return Math.ceil(target / mag) * mag;
+    }
+
     function initChart(viewKey) {
         if (viewKey) currentViewKey = viewKey;
         if (typeof echarts === 'undefined') return;
@@ -969,69 +1108,407 @@
         fuelChartInstance = echarts.getInstanceByDom(element) || echarts.init(element);
         const theme = getThemeColors();
         const horizontal = currentViewKey === 'area';
-        const data = Array.isArray(config.data) ? config.data : [];
-        const palette = config.colors;
-        const lightPalette = config.lightColors;
+        const rawData = Array.isArray(config.data) ? config.data : [];
 
+        // Modo Por Tipo
+        if (currentViewKey === 'tipo') {
+            let data = rawData;
+            if (currentEnergyKey === 'liquid') {
+                data = rawData.filter(d => !d.is_gnv);
+            } else if (currentEnergyKey === 'gnv') {
+                data = rawData.filter(d => d.is_gnv);
+            } else if (liquidFuelTypes.includes(currentEnergyKey)) {
+                data = rawData.filter(d => String(d.label || '').toLowerCase() === currentEnergyKey.toLowerCase());
+            }
+
+            const tipoColorMap = buildFuelTypeColorMap(data);
+
+            fuelChartInstance.setOption({
+                animationDuration: 300,
+                legend: { show: false },
+                grid: { left: 8, right: 14, top: 38, bottom: 12, containLabel: true },
+                tooltip: {
+                    trigger: 'axis', axisPointer: { type: 'shadow' },
+                    backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
+                    textStyle: { color: theme.text },
+                    formatter: (params) => {
+                        const item = data[params[0]?.dataIndex];
+                        const unit = item?.unit || (item?.is_gnv ? 'm³' : 'Gal');
+                        return `${params[0]?.axisValueLabel || ''}<br/><strong>Total: ${formatNumber(params[0]?.value, 2)} ${unit}</strong>`;
+                    }
+                },
+                xAxis: {
+                    type: 'category', data: data.map((item) => item.label),
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { lineStyle: { color: theme.grid } }
+                },
+                yAxis: {
+                    type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
+                    axisLabel: { color: theme.text, formatter: (value) => `${Number(value).toLocaleString('es-PE')}` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
+                },
+                series: [{
+                    name: 'Consumo por Tipo', type: 'bar', barMaxWidth: 54,
+                    data: data.map((item) => {
+                        const fuelColors = getFuelTypeColors(item.label, tipoColorMap);
+                        return {
+                            value: Number(item.total_gallons || 0),
+                            itemStyle: {
+                                borderRadius: [6, 6, 0, 0],
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    { offset: 0, color: fuelColors.lightColor },
+                                    { offset: 0.45, color: fuelColors.color },
+                                    { offset: 1, color: fuelColors.color }
+                                ])
+                            }
+                        };
+                    }),
+                    label: {
+                        show: true, position: 'top', distance: 6, color: theme.text, fontSize: 10, fontWeight: 600,
+                        formatter: ({ dataIndex, value }) => {
+                            const u = data[dataIndex]?.unit || (data[dataIndex]?.is_gnv ? 'm³' : 'Gal');
+                            return `${formatNumber(value, 2)} ${u}`;
+                        }
+                    },
+                    emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
+                }]
+            }, { notMerge: true, lazyUpdate: true });
+            return;
+        }
+
+        // Vistas Semanal, Mensual, Anual, Área
+        const categories = rawData.map(d => d.label);
+
+        // Caso 1: Filtro exclusivo de un solo combustible líquido específico (p.ej. Solo Diesel o Solo Gasolina)
+        if (liquidFuelTypes.includes(currentEnergyKey)) {
+            const fuelName = currentEnergyKey;
+            const singleMap = buildFuelTypeColorMap([{ label: fuelName }]);
+            const fColors = getFuelTypeColors(fuelName, singleMap);
+            const values = rawData.map(d => Number(d.liquid_by_type?.[fuelName] || 0));
+
+            fuelChartInstance.setOption({
+                animationDuration: 300,
+                legend: { show: false },
+                grid: horizontal
+                    ? { left: 12, right: 36, top: 24, bottom: 24, containLabel: true }
+                    : { left: 8, right: 14, top: 38, bottom: 12, containLabel: true },
+                tooltip: {
+                    trigger: 'axis', axisPointer: { type: 'shadow' },
+                    backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
+                    textStyle: { color: theme.text },
+                    formatter: (params) => `${params[0]?.axisValueLabel || ''}<br/><strong>${fuelName}: ${formatGallons(params[0]?.value, 2)}</strong>`
+                },
+                xAxis: horizontal ? {
+                    type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
+                    axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} Gal` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { lineStyle: { color: theme.grid } }
+                } : {
+                    type: 'category', data: categories,
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { lineStyle: { color: theme.grid } }
+                },
+                yAxis: horizontal ? {
+                    type: 'category', data: categories,
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { show: false }
+                } : {
+                    type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
+                    axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} Gal` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
+                },
+                series: [{
+                    name: `${fuelName} (Gal)`, type: 'bar', barMaxWidth: horizontal ? 34 : 52,
+                    data: values.map(val => ({
+                        value: val,
+                        itemStyle: {
+                            borderRadius: horizontal ? [0, 6, 6, 0] : [6, 6, 0, 0],
+                            color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
+                                { offset: 0, color: fColors.lightColor },
+                                { offset: 1, color: fColors.color }
+                            ])
+                        }
+                    })),
+                    label: {
+                        show: true, position: horizontal ? 'right' : 'top', distance: 6, color: theme.text, fontSize: 10, fontWeight: 600,
+                        formatter: ({ value }) => value > 0 ? `${formatNumber(value, 2)} Gal` : ''
+                    },
+                    emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
+                }]
+            }, { notMerge: true, lazyUpdate: true });
+            return;
+        }
+
+        // Caso 2: Filtro GNV
+        if (currentEnergyKey === 'gnv') {
+            const unit = 'm³';
+            const seriesName = 'GNV (m³)';
+            const seriesColor = { c: '#10b981', light: '#6ee7b7' };
+            const values = rawData.map(d => Number(d.gnv_m3 || 0));
+
+            fuelChartInstance.setOption({
+                animationDuration: 300,
+                legend: { show: false },
+                grid: horizontal
+                    ? { left: 12, right: 36, top: 24, bottom: 24, containLabel: true }
+                    : { left: 8, right: 14, top: 38, bottom: 12, containLabel: true },
+                tooltip: {
+                    trigger: 'axis', axisPointer: { type: 'shadow' },
+                    backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
+                    textStyle: { color: theme.text },
+                    formatter: (params) => `${params[0]?.axisValueLabel || ''}<br/><strong>${seriesName}: ${formatGnv(params[0]?.value, 2)}</strong>`
+                },
+                xAxis: horizontal ? {
+                    type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
+                    axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} ${unit}` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { lineStyle: { color: theme.grid } }
+                } : {
+                    type: 'category', data: categories,
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { lineStyle: { color: theme.grid } }
+                },
+                yAxis: horizontal ? {
+                    type: 'category', data: categories,
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { show: false }
+                } : {
+                    type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
+                    axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} ${unit}` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
+                },
+                series: [{
+                    name: seriesName, type: 'bar', barMaxWidth: horizontal ? 34 : 52,
+                    data: values.map(val => ({
+                        value: val,
+                        itemStyle: {
+                            borderRadius: horizontal ? [0, 6, 6, 0] : [6, 6, 0, 0],
+                            color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
+                                { offset: 0, color: seriesColor.light },
+                                { offset: 1, color: seriesColor.c }
+                            ])
+                        }
+                    })),
+                    label: {
+                        show: true, position: horizontal ? 'right' : 'top', distance: 6, color: theme.text, fontSize: 10, fontWeight: 600,
+                        formatter: ({ value }) => value > 0 ? `${formatNumber(value, 2)} ${unit}` : ''
+                    },
+                    emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
+                }]
+            }, { notMerge: true, lazyUpdate: true });
+            return;
+        }
+
+        // Caso 3: Filtro Líquidos (Desglose interactivo por Diesel, Gasolina, etc.)
+        if (currentEnergyKey === 'liquid') {
+            const liquidColorMap = buildFuelTypeColorMap(liquidFuelTypes.map(f => ({ label: f })));
+            const seriesList = liquidFuelTypes.map((fuelName) => {
+                const fColors = getFuelTypeColors(fuelName, liquidColorMap);
+                return {
+                    name: `${fuelName} (Gal)`,
+                    type: 'bar',
+                    barMaxWidth: horizontal ? 16 : 26,
+                    barGap: '20%',
+                    data: rawData.map(d => Number(d.liquid_by_type?.[fuelName] || 0)),
+                    itemStyle: {
+                        borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
+                        color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
+                            { offset: 0, color: fColors.lightColor },
+                            { offset: 1, color: fColors.color }
+                        ])
+                    },
+                    label: {
+                        show: !horizontal,
+                        position: 'top',
+                        distance: 5,
+                        formatter: ({ value }) => value > 0 ? `{val|${formatNumber(value, 2)}}\n{unit|Gal}` : '',
+                        rich: {
+                            val: { color: theme.text, fontSize: 8.5, fontWeight: 700, lineHeight: 11, align: 'center' },
+                            unit: { color: theme.muted, fontSize: 7.5, fontWeight: 600, lineHeight: 10, align: 'center' }
+                        }
+                    },
+                    emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
+                };
+            });
+
+            fuelChartInstance.setOption({
+                animationDuration: 300,
+                legend: {
+                    show: true, top: 2, right: 14, itemGap: 14,
+                    textStyle: { color: theme.text, fontSize: 11, fontWeight: 600 }
+                },
+                grid: horizontal
+                    ? { left: 12, right: 36, top: 38, bottom: 24, containLabel: true }
+                    : { left: 8, right: 14, top: 50, bottom: 12, containLabel: true },
+                tooltip: {
+                    trigger: 'axis', axisPointer: { type: 'shadow' },
+                    backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
+                    textStyle: { color: theme.text },
+                    formatter: (params) => {
+                        const idx = params[0]?.dataIndex;
+                        const item = rawData[idx] || {};
+                        let html = `<strong>${params[0]?.axisValueLabel || ''}</strong><br/>`;
+                        let totalLiquido = 0;
+                        liquidFuelTypes.forEach((fName) => {
+                            const val = Number(item.liquid_by_type?.[fName] || 0);
+                            totalLiquido += val;
+                            const fColors = getFuelTypeColors(fName, liquidColorMap);
+                            html += `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${fColors.color};margin-right:6px;"></span>${fName}: <strong>${formatGallons(val, 2)}</strong><br/>`;
+                        });
+                        html += `<div style="margin-top:4px;padding-top:4px;border-top:1px solid ${theme.grid};font-size:0.85em;color:${theme.muted};">Total Líquidos: <strong>${formatGallons(totalLiquido, 2)}</strong></div>`;
+                        return html;
+                    }
+                },
+                xAxis: horizontal ? {
+                    type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
+                    axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} Gal` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { lineStyle: { color: theme.grid } }
+                } : {
+                    type: 'category', data: categories,
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { lineStyle: { color: theme.grid } }
+                },
+                yAxis: horizontal ? {
+                    type: 'category', data: categories,
+                    axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                    axisTick: { show: false }, axisLine: { show: false }
+                } : {
+                    type: 'value', min: 0,
+                    max: (val) => calcNiceMax(val.max),
+                    axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')} Gal` },
+                    splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
+                },
+                series: seriesList
+            }, { notMerge: true, lazyUpdate: true });
+            return;
+        }
+
+        // Caso 4: Modo TODOS (Líquidos en Gal + GNV en m3)
+        // Con desglose detallado en el tooltip
         fuelChartInstance.setOption({
             animationDuration: 300,
+            legend: {
+                show: true, top: 2, right: 14, itemGap: 14,
+                textStyle: { color: theme.text, fontSize: 11, fontWeight: 600 }
+            },
             grid: horizontal
-                ? { left: 12, right: 22, top: 24, bottom: 24, containLabel: true }
-                : { left: 8, right: 14, top: 28, bottom: 12, containLabel: true },
+                ? { left: 12, right: 36, top: 38, bottom: 24, containLabel: true }
+                : { left: 8, right: 14, top: 50, bottom: 12, containLabel: true },
             tooltip: {
                 trigger: 'axis', axisPointer: { type: 'shadow' },
                 backgroundColor: theme.tooltipBg, borderColor: theme.tooltipBorder, borderWidth: 1,
                 textStyle: { color: theme.text },
-                formatter: (params) => `${params[0]?.axisValueLabel || ''}<br/><strong>Total: ${formatGallons(params[0]?.value, 2)}</strong>`
+                formatter: (params) => {
+                    const idx = params[0]?.dataIndex;
+                    const item = rawData[idx] || {};
+                    let html = `<strong>${params[0]?.axisValueLabel || ''}</strong><br/>`;
+                    html += `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563eb;margin-right:6px;"></span>Líquidos: <strong>${formatGallons(item.liquid_gallons || 0, 2)}</strong>`;
+                    if (item.liquid_by_type) {
+                        const breakdown = [];
+                        liquidFuelTypes.forEach((fName) => {
+                            const val = Number(item.liquid_by_type[fName] || 0);
+                            if (val > 0) breakdown.push(`${fName}: ${formatNumber(val, 2)} Gal`);
+                        });
+                        if (breakdown.length > 0) {
+                            html += `<br/><span style="padding-left:14px;font-size:0.82em;color:${theme.muted};">${breakdown.join(' &bull; ')}</span>`;
+                        }
+                    }
+                    html += `<br/>`;
+                    if (Number(item.gnv_m3 || 0) > 0 || hasGnv) {
+                        html += `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;margin-right:6px;"></span>GNV: <strong>${formatGnv(item.gnv_m3 || 0, 2)}</strong>`;
+                    }
+                    return html;
+                }
             },
             xAxis: horizontal ? {
-                type: 'value', min: 0, axisLabel: { color: theme.text, formatter: (value) => `${Number(value).toLocaleString('es-PE')} Gal` },
+                type: 'value', min: 0,
+                max: (val) => calcNiceMax(val.max),
+                axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')}` },
                 splitLine: { lineStyle: { color: theme.grid } }, axisLine: { lineStyle: { color: theme.grid } }
             } : {
-                type: 'category', data: data.map((item) => item.label), axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                type: 'category', data: categories,
+                axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
                 axisTick: { show: false }, axisLine: { lineStyle: { color: theme.grid } }
             },
             yAxis: horizontal ? {
-                type: 'category', data: data.map((item) => item.label), axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
+                type: 'category', data: categories,
+                axisLabel: { color: theme.text, fontSize: window.innerWidth <= 480 ? 9 : 11 },
                 axisTick: { show: false }, axisLine: { show: false }
             } : {
-                type: 'value', min: 0, axisLabel: { color: theme.text, formatter: (value) => `${Number(value).toLocaleString('es-PE')} Gal` },
+                type: 'value', min: 0,
+                max: (val) => calcNiceMax(val.max),
+                axisLabel: { color: theme.text, formatter: (val) => `${Number(val).toLocaleString('es-PE')}` },
                 splitLine: { lineStyle: { color: theme.grid } }, axisLine: { show: false }
             },
-            series: [{
-                name: 'Galones Despachados', type: 'bar', barMaxWidth: horizontal ? 38 : 58,
-                data: (() => {
-                    const tipoColorMap = currentViewKey === 'tipo' ? buildFuelTypeColorMap(data) : null;
-                    return data.map((item, index) => {
-                    const fuelColors = currentViewKey === 'tipo'
-                        ? getFuelTypeColors(item.label, tipoColorMap)
-                        : { color: palette[index % palette.length], lightColor: lightPalette[index % lightPalette.length] };
-
-                    return {
-                        value: Number(item.total_gallons || 0),
-                        itemStyle: {
-                            borderRadius: 8,
-                            color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, horizontal ? 0 : 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
-                                { offset: 0, color: fuelColors.lightColor },
-                                { offset: 0.45, color: fuelColors.color },
-                                { offset: 1, color: fuelColors.color }
-                            ])
+            series: [
+                {
+                    name: 'Líquidos (Gal)', type: 'bar', barMaxWidth: horizontal ? 18 : 26, barGap: '30%',
+                    data: rawData.map(d => Number(d.liquid_gallons || 0)),
+                    itemStyle: {
+                        borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
+                        color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, horizontal ? 0 : 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
+                            { offset: 0, color: '#60a5fa' },
+                            { offset: 1, color: '#2563eb' }
+                        ])
+                    },
+                    label: {
+                        show: !horizontal, position: 'top', distance: 5,
+                        formatter: ({ value }) => value > 0 ? `{val|${formatNumber(value, 2)}}\n{unit|Gal}` : '',
+                        rich: {
+                            val: {
+                                color: theme.text,
+                                fontSize: 8.5,
+                                fontWeight: 700,
+                                lineHeight: 11,
+                                align: 'center'
+                            },
+                            unit: {
+                                color: theme.muted,
+                                fontSize: 7.5,
+                                fontWeight: 600,
+                                lineHeight: 10,
+                                align: 'center'
+                            }
                         }
-                    };
-                    });
-                })(),
-                label: { show: !horizontal, position: 'top', color: theme.text, fontSize: 10, fontWeight: 600, formatter: ({ value }) => formatGallons(value, 2) },
-                emphasis: { focus: 'series', itemStyle: { borderColor: '#ffffff', borderWidth: 2 } }
-            }]
+                    }
+                },
+                {
+                    name: 'GNV (m³)', type: 'bar', barMaxWidth: horizontal ? 18 : 26,
+                    data: rawData.map(d => Number(d.gnv_m3 || 0)),
+                    itemStyle: {
+                        borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0],
+                        color: new echarts.graphic.LinearGradient(horizontal ? 0 : 0, horizontal ? 0 : 0, horizontal ? 1 : 0, horizontal ? 0 : 1, [
+                            { offset: 0, color: '#6ee7b7' },
+                            { offset: 1, color: '#10b981' }
+                        ])
+                    },
+                    label: {
+                        show: !horizontal, position: 'top', distance: 5,
+                        formatter: ({ value }) => value > 0 ? `{val|${formatNumber(value, 2)}}\n{unit|m³}` : '',
+                        rich: {
+                            val: {
+                                color: theme.text,
+                                fontSize: 8.5,
+                                fontWeight: 700,
+                                lineHeight: 11,
+                                align: 'center'
+                            },
+                            unit: {
+                                color: theme.muted,
+                                fontSize: 7.5,
+                                fontWeight: 600,
+                                lineHeight: 10,
+                                align: 'center'
+                            }
+                        }
+                    }
+                }
+            ]
         }, { notMerge: true, lazyUpdate: true });
-
-        fuelChartInstance.off('click');
-        fuelChartInstance.on('click', (params) => {
-            const status = document.getElementById('chartInteractionStatus');
-            if (params.componentType === 'series' && status) {
-                status.textContent = `Seleccionado ${params.name}: ${formatGallons(params.value, 2)}.`;
-            }
-        });
     }
 
     function resizeCharts() {
@@ -1056,24 +1533,28 @@
         }
         window.addEventListener('themeChanged', () => initChart(currentViewKey));
         window.addEventListener('pagehide', disposeCharts, { once: true });
-
-        const dashInput = document.getElementById('dashSearchInput');
-        if (dashInput) dashInput.addEventListener('input', () => {
-            const term = dashInput.value.toLowerCase().trim();
-            document.querySelectorAll('.table-wrap tbody tr').forEach((row) => {
-                row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
-            });
-        });
     });
+
+    function switchEnergyFilter(evt, energyKey) {
+        evt?.preventDefault();
+        evt?.stopPropagation();
+        currentEnergyKey = energyKey;
+        document.querySelectorAll('.energy-btn').forEach((button) => {
+            button.classList.toggle('active', button.dataset.energy === energyKey);
+        });
+        updateChartTitles();
+        initChart(currentViewKey);
+        return false;
+    }
 
     function switchChartView(evt, viewKey) {
         evt?.preventDefault();
         evt?.stopPropagation();
-        const config = chartDataSets[viewKey];
-        if (!config) return false;
-        document.querySelectorAll('.switcher-btn').forEach((button) => button.classList.toggle('active', button.dataset.view === viewKey));
-        document.getElementById('chartTitle').textContent = config.title;
-        document.getElementById('chartSubtitle').textContent = config.subtitle;
+        currentViewKey = viewKey;
+        document.querySelectorAll('.switcher-btn').forEach((button) => {
+            button.classList.toggle('active', button.dataset.view === viewKey);
+        });
+        updateChartTitles();
         initChart(viewKey);
         return false;
     }
@@ -1163,6 +1644,92 @@
 
     function closeObsModal(e) {
         document.getElementById("obsInfoModal").classList.remove("active");
+    }
+
+    // ── Modal de detalle de despacho en Dashboard ─────────────────────────────
+    function dashEscapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function dashUiIcon(name) {
+        return `<svg class="ui-icon"><use href="<?= BASE_URL ?>assets/icons.svg#icon-${dashEscapeHtml(name)}"></use></svg>`;
+    }
+
+    function dashOpenDetailModal(d) {
+        const body = document.getElementById("dashDispatchModalBody");
+        const dateObj = new Date(String(d.created_at || '').replace(' ', 'T'));
+        const dateStr = !isNaN(dateObj) ? dateObj.toLocaleString('es-PE') : d.created_at;
+
+        const vehicleUnitText = d.vehicle_unit_code && d.vehicle_unit_code !== '-' ? ` (${dashEscapeHtml(d.vehicle_unit_code)})` : '';
+        const vehicleTypeText = d.vehicle_type_name || 'Vehículo Municipal';
+        const registeredByText = d.registered_by || 'Administrador';
+        const notesText = d.notes && d.notes.trim() !== '' ? d.notes : 'Sin observaciones';
+
+        body.innerHTML = `
+            <div class="modal-detail-card">
+                <div class="modal-badge-row">
+                    <span class="modal-date-tag icon-with-text">${dashUiIcon('calendar')}Fecha y Hora: <strong>${dashEscapeHtml(dateStr)}</strong></span>
+                </div>
+
+                <h4 style="margin-top: 10px; font-size: 1.15rem; color: var(--primary);">Vale N°: ${dashEscapeHtml(d.receipt_number)}</h4>
+
+                <div class="modal-grid">
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('vehicle')}Vehículo / Placa:</span>
+                        <strong>${dashEscapeHtml(d.vehicle_plate)}${vehicleUnitText}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('truck')}Tipo de Vehículo:</span>
+                        <strong>${dashEscapeHtml(vehicleTypeText)}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('user')}Conductor / Responsable:</span>
+                        <strong>${dashEscapeHtml(d.driver_name)}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('fuel')}Tipo de Combustible:</span>
+                        <strong style="color: var(--primary);">${dashEscapeHtml(d.fuel_type || 'Diesel B5 S-50')}</strong>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('pin')}Destino / Área:</span>
+                        <span>${dashEscapeHtml(d.destination || 'Despacho General')}</span>
+                    </div>
+                    <div class="modal-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('user')}Registrado por:</span>
+                        <span>${dashEscapeHtml(registeredByText)}</span>
+                    </div>
+
+                    <div class="modal-field" style="grid-column: span 2; background: var(--bg-body); padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--border-color, var(--line)); margin-top: 4px; overflow-wrap: break-word; word-break: break-word; hyphens: auto;">
+                        <span class="lbl icon-with-text">${dashUiIcon('note')}Observaciones:</span>
+                        <span style="color: var(--ink); font-style: italic; font-weight: 500; font-size: 0.92em; margin-top: 4px; display: block; word-break: break-word; white-space: pre-wrap;">${dashEscapeHtml(notesText)}</span>
+                    </div>
+
+                    <div class="modal-field highlight-field">
+                        <span class="lbl icon-with-text">${dashUiIcon('fuel')}Cantidad Despachada:</span>
+                        <strong class="qty-val">${parseFloat(d.gallons).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${((d.fuel_type || '').toUpperCase().includes('GNV') || (d.fuel_type || '').toUpperCase().includes('GAS NATURAL')) ? 'm³' : 'Galones'}</strong>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="<?= BASE_URL ?>despachos/imprimir?id=${d.id}" target="_blank" style="padding: 10px 20px; background: #2563eb; color: #ffffff; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        ${dashUiIcon('print')} Imprimir Vale Oficial
+                    </a>
+                </div>
+            </div>
+        `;
+
+        document.getElementById("dashDispatchModal").classList.add("active");
+        document.addEventListener('keydown', _dashModalEscHandler);
+    }
+
+    function _dashModalEscHandler(e) {
+        if (e.key === 'Escape') dashCloseDetailModal();
+    }
+
+    function dashCloseDetailModal(e) {
+        document.getElementById("dashDispatchModal").classList.remove("active");
+        document.removeEventListener('keydown', _dashModalEscHandler);
     }
 
     // Usa la hora local del equipo que abre el panel (formato de 24 horas).

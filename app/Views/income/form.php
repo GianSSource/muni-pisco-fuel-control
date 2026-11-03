@@ -81,8 +81,217 @@
     .btn-clear-styled:active {
         transform: translateY(0);
     }
+
+    /* ── Bloque integrado N° de Documento ────────────────── */
+    .doc-block {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #334155);
+        background: var(--input-bg, #1e293b);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        height: 42px;
+        box-sizing: border-box;
+    }
+
+    .doc-block:focus-within {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.22);
+    }
+
+    .doc-block__type {
+        position: relative;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        border-right: 1px solid var(--border-color, #334155);
+        background: var(--card-bg, #0f172a);
+        border-top-left-radius: 7px;
+        border-bottom-left-radius: 7px;
+        user-select: none;
+    }
+
+    .doc-type-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        height: 100%;
+        padding: 0 14px;
+        background: transparent;
+        border: none;
+        color: var(--text-color, #e2e8f0);
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        outline: none;
+        transition: background 0.15s ease, color 0.15s ease;
+        border-top-left-radius: 7px;
+        border-bottom-left-radius: 7px;
+        min-width: 156px;
+    }
+
+    .doc-type-trigger:hover {
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    .doc-type-trigger-left {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        overflow: hidden;
+    }
+
+    .doc-type-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #3b82f6;
+        flex-shrink: 0;
+        box-shadow: 0 0 6px rgba(59, 130, 246, 0.6);
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .doc-type-label {
+        font-weight: 600;
+        font-size: 0.88rem;
+        color: var(--text-color, #f1f5f9);
+        white-space: nowrap;
+    }
+
+    .doc-type-chevron {
+        display: inline-flex;
+        align-items: center;
+        color: var(--text-muted, #64748b);
+        transition: transform 0.2s ease, color 0.2s ease;
+        margin-left: 6px;
+    }
+
+    .doc-block__type.open .doc-type-chevron {
+        transform: rotate(180deg);
+        color: #3b82f6;
+    }
+
+    .doc-type-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        min-width: 230px;
+        background: var(--card-bg, #0f172a);
+        border: 1px solid var(--border-color, #334155);
+        border-radius: 10px;
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45), 0 4px 10px rgba(0, 0, 0, 0.25);
+        padding: 6px;
+        z-index: 1000;
+        display: none;
+        opacity: 0;
+        transform: translateY(-6px);
+        transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    .doc-block__type.open .doc-type-menu {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .doc-type-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 9px 12px;
+        border-radius: 7px;
+        font-size: 0.86rem;
+        font-weight: 600;
+        color: var(--text-color, #cbd5e1);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        margin-bottom: 2px;
+    }
+
+    .doc-type-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .doc-type-item:hover {
+        background: rgba(59, 130, 246, 0.12);
+        color: #fff;
+    }
+
+    .doc-type-item.selected {
+        background: rgba(59, 130, 246, 0.18);
+        color: #60a5fa;
+    }
+
+    .doc-type-item-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .doc-type-item-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .doc-type-item-badge {
+        font-size: 0.72rem;
+        font-family: monospace;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-muted, #94a3b8);
+        letter-spacing: 0.04em;
+    }
+
+    .doc-type-item.selected .doc-type-item-badge {
+        background: rgba(59, 130, 246, 0.25);
+        color: #93c5fd;
+    }
+
+    .doc-block__input {
+        flex: 1;
+        height: 100%;
+        padding: 0 14px;
+        border: none;
+        background: transparent;
+        color: var(--text-color, #e2e8f0);
+        font-size: 0.9rem;
+        font-family: 'Courier New', 'Consolas', monospace;
+        letter-spacing: 0.04em;
+        outline: none;
+        min-width: 0;
+        border-top-right-radius: 7px;
+        border-bottom-right-radius: 7px;
+    }
+
+    .doc-block__input::placeholder {
+        color: var(--text-muted, #475569);
+        font-family: inherit;
+        letter-spacing: 0.02em;
+    }
+
+    .doc-format-hint {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 5px;
+        font-size: 0.74rem;
+        color: var(--text-muted, #64748b);
+        transition: color 0.2s ease;
+    }
 </style>
 
+<?php
+$fromDashboard = (isset($_GET['from']) && $_GET['from'] === 'dashboard')
+    || (!empty($_SERVER['HTTP_REFERER']) && str_contains($_SERVER['HTTP_REFERER'], '/dashboard') && !str_contains($_SERVER['HTTP_REFERER'], '/ingresos'));
+$backUrl = $fromDashboard ? BASE_URL . 'dashboard' : BASE_URL . 'ingresos';
+$backLabel = $fromDashboard ? '← Volver al Dashboard' : '← Volver a Ingresos';
+?>
 <section class="container" style="max-width: 900px; margin: 40px auto; padding: 24px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
         <div>
@@ -91,8 +300,8 @@
             <p style="color: var(--text-muted, #64748b); margin-top: 4px; font-size: 0.95rem;">Ingresa una nueva recarga
                 o abastecimiento de combustible al stock municipal</p>
         </div>
-        <a href="<?= BASE_URL ?>dashboard" class="btn-cancel-styled" style="font-size: 0.9rem; font-weight: 500;">
-            ← Volver al Dashboard
+        <a href="<?= $backUrl ?>" class="btn-cancel-styled" style="font-size: 0.9rem; font-weight: 500;">
+            <?= $backLabel ?>
         </a>
     </div>
 
@@ -206,18 +415,94 @@
 
         <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px;">
             <div style="min-width: 0;">
-                <label for="invoice"
-                    style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px; color: var(--text-color, #1e293b);">N°
-                    Factura / Guía de Remisión</label>
-                <input type="text" name="invoice" id="invoice" required class="form-control-styled"
-                    placeholder="Ej: F001-0004582" maxlength="13" oninput="
-                        let val = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                        val = val.slice(0, 12);
-                        if (val.length > 4) {
-                             val = val.slice(0, 4) + '-' + val.slice(4);
-                            }
-                        this.value = val;
-                    " onblur="verificarCamposIncompletos()">
+                <label for="invoice" style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px; color: var(--text-color, #1e293b);">N° de documento</label>
+
+                <!-- Bloque integrado: Tipo + Número (SUNAT) -->
+                <div id="docBlock" class="doc-block">
+
+                    <!-- Parte 1: Tipo de documento con dropdown estilizado -->
+                    <div class="doc-block__type" id="docTypeContainer">
+                        <!-- Select nativo oculto sincronizado -->
+                        <select id="doc_type" name="doc_type" style="display:none;" onchange="aplicarFormatoDocumento(true)">
+                            <option value="FACTURA" selected>Factura</option>
+                            <option value="BOLETA">Boleta de venta</option>
+                            <option value="NOTA_CREDITO">Nota de crédito</option>
+                            <option value="NOTA_DEBITO">Nota de débito</option>
+                            <option value="GUIA_REMISION">Guía de remisión</option>
+                            <option value="LIBRE">Libre</option>
+                        </select>
+
+                        <!-- Botón Trigger Personalizado -->
+                        <button type="button" class="doc-type-trigger" id="docTypeTrigger" aria-label="Seleccionar tipo de comprobante">
+                            <span class="doc-type-trigger-left">
+                                <span class="doc-type-dot" id="docTypeDot"></span>
+                                <span class="doc-type-label" id="docTypeLabel">Factura</span>
+                            </span>
+                            <span class="doc-type-chevron">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </span>
+                        </button>
+
+                        <!-- Menú Desplegable Estilizado -->
+                        <div class="doc-type-menu" id="docTypeMenu">
+                            <div class="doc-type-item selected" data-value="FACTURA" onclick="seleccionarTipoDocumento('FACTURA')">
+                                <div class="doc-type-item-left">
+                                    <span class="doc-type-item-dot" style="background:#3b82f6; box-shadow:0 0 5px rgba(59,130,246,0.6);"></span>
+                                    <span>Factura</span>
+                                </div>
+                                <span class="doc-type-item-badge">F001</span>
+                            </div>
+                            <div class="doc-type-item" data-value="BOLETA" onclick="seleccionarTipoDocumento('BOLETA')">
+                                <div class="doc-type-item-left">
+                                    <span class="doc-type-item-dot" style="background:#10b981; box-shadow:0 0 5px rgba(16,185,129,0.6);"></span>
+                                    <span>Boleta de venta</span>
+                                </div>
+                                <span class="doc-type-item-badge">B001</span>
+                            </div>
+                            <div class="doc-type-item" data-value="NOTA_CREDITO" onclick="seleccionarTipoDocumento('NOTA_CREDITO')">
+                                <div class="doc-type-item-left">
+                                    <span class="doc-type-item-dot" style="background:#f59e0b; box-shadow:0 0 5px rgba(245,158,11,0.6);"></span>
+                                    <span>Nota de crédito</span>
+                                </div>
+                                <span class="doc-type-item-badge">FC01</span>
+                            </div>
+                            <div class="doc-type-item" data-value="NOTA_DEBITO" onclick="seleccionarTipoDocumento('NOTA_DEBITO')">
+                                <div class="doc-type-item-left">
+                                    <span class="doc-type-item-dot" style="background:#ef4444; box-shadow:0 0 5px rgba(239,68,68,0.6);"></span>
+                                    <span>Nota de débito</span>
+                                </div>
+                                <span class="doc-type-item-badge">FD01</span>
+                            </div>
+                            <div class="doc-type-item" data-value="GUIA_REMISION" onclick="seleccionarTipoDocumento('GUIA_REMISION')">
+                                <div class="doc-type-item-left">
+                                    <span class="doc-type-item-dot" style="background:#8b5cf6; box-shadow:0 0 5px rgba(139,92,246,0.6);"></span>
+                                    <span>Guía de remisión</span>
+                                </div>
+                                <span class="doc-type-item-badge">T001</span>
+                            </div>
+                            <div class="doc-type-item" data-value="LIBRE" onclick="seleccionarTipoDocumento('LIBRE')">
+                                <div class="doc-type-item-left">
+                                    <span class="doc-type-item-dot" style="background:#94a3b8; box-shadow:0 0 5px rgba(148,163,184,0.6);"></span>
+                                    <span>Libre</span>
+                                </div>
+                                <span class="doc-type-item-badge">Manual</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parte 2: Número de documento -->
+                    <input type="text" name="invoice" id="invoice" required
+                        class="doc-block__input"
+                        placeholder="F001-00004582"
+                        oninput="formatearNumeroDocumento(this)"
+                        onblur="verificarCamposIncompletos()">
+                </div>
+
+                <!-- Hint formato SUNAT -->
+                <div id="docFormatHint" class="doc-format-hint">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    <span id="docFormatHintText">Formato SUNAT: F + 3 dígitos serie - 8 dígitos correlativo</span>
+                </div>
             </div>
 
             <div style="min-width: 0;">
@@ -239,7 +524,7 @@
                 Limpiar Campos
             </button>
             <div style="display: flex; gap: 12px;">
-                <a href="<?= BASE_URL ?>dashboard" class="btn-cancel-styled">Cancelar</a>
+                <a href="<?= $backUrl ?>" class="btn-cancel-styled">Cancelar</a>
                 <button type="submit" id="submitBtn" class="btn-submit-styled">Guardar Ingreso</button>
             </div>
         </div>
@@ -275,6 +560,40 @@
             trigger.style.boxShadow = '';
         });
 
+        // Cerrar menús de custom dropdowns que estuviesen abiertos
+        document.querySelectorAll('.custom-select-container.open').forEach(c => c.classList.remove('open'));
+        document.getElementById('docTypeContainer')?.classList.remove('open');
+
+        // Reset completo del bloque de documento: volver a Factura por defecto
+        const docTypeSelect = document.getElementById('doc_type');
+        if (docTypeSelect) {
+            docTypeSelect.value = 'FACTURA';
+        }
+        if (typeof actualizarDocTypeUI === 'function') {
+            actualizarDocTypeUI('FACTURA');
+        }
+
+        const invoiceInput = document.getElementById('invoice');
+        if (invoiceInput) {
+            invoiceInput.value = 'F'; // prefijo automático de Factura
+            invoiceInput.placeholder = 'F001-00004582';
+        }
+
+        const docBlock = document.getElementById('docBlock');
+        if (docBlock) {
+            docBlock.style.borderColor = '';
+            docBlock.style.boxShadow = '';
+        }
+
+        const hintText = document.getElementById('docFormatHintText');
+        if (hintText) {
+            hintText.textContent = 'Formato SUNAT: F + 3 dígitos de serie - 8 dígitos (Ej: F001-00004582)';
+        }
+        const hintEl = document.getElementById('docFormatHint');
+        if (hintEl) {
+            hintEl.style.color = 'var(--text-muted, #64748b)';
+        }
+
         // Ocultar alerta de validación
         const alertBox = document.getElementById('formValidationAlert');
         if (alertBox) {
@@ -307,6 +626,7 @@
         const quantityVal = document.getElementById('quantity')?.value.trim();
         const supplier = document.getElementById('supplier')?.value.trim();
         const invoice = document.getElementById('invoice')?.value.trim();
+        const docType = document.getElementById('doc_type')?.value;
 
         const alertBox = document.getElementById('formValidationAlert');
         if (!alertBox) return [];
@@ -323,7 +643,7 @@
         if (!fuelType) faltantes.push('Tipo de Combustible (Ficha visual)');
         if (!quantityVal || parseFloat(quantityVal.replace(/,/g, '')) <= 0) faltantes.push(qtyLabel);
         if (!supplier) faltantes.push('Proveedor / Grifo');
-        if (!invoice) faltantes.push('N° Factura / Guía de Remisión');
+        if (!invoice) faltantes.push('N° Documento');
 
         if (faltantes.length > 0) {
             alertBox.style.display = 'block';
@@ -340,6 +660,7 @@
         const quantityVal = document.getElementById('quantity')?.value.trim();
         const supplier = document.getElementById('supplier')?.value.trim();
         const invoice = document.getElementById('invoice')?.value.trim();
+        const docType = document.getElementById('doc_type')?.value;
 
         const faltantes = [];
         const isGnvSubmit = (fuelType || '').toLowerCase().includes('gnv') || (fuelType || '').toLowerCase().includes('gas natural');
@@ -347,7 +668,7 @@
         if (!fuelType) faltantes.push('Tipo de Combustible (Ficha visual)');
         if (!quantityVal || parseFloat(quantityVal.replace(/,/g, '')) <= 0) faltantes.push(qtyLabelSubmit);
         if (!supplier) faltantes.push('Proveedor / Grifo');
-        if (!invoice) faltantes.push('N° Factura / Guía de Remisión');
+        if (!invoice) faltantes.push('N° Documento');
 
         const alertBox = document.getElementById('formValidationAlert');
 
@@ -375,7 +696,260 @@
         return true;
     }
 
+    /* =========================================================
+       FORMATOS DE DOCUMENTO SUNAT (legislación peruana)
+       ========================================================= */
+    const SUNAT_FORMATS = {
+        FACTURA: {
+            label: 'Factura Electrónica',
+            hint: 'Formato SUNAT: F + 3 dígitos de serie - 8 dígitos (Ej: F001-00004582)',
+            prefix: 'F',
+            serieLen: 4,     // 1 letra + 3 dígitos
+            correlativoLen: 8,
+            seriePattern: /^F[0-9]{0,3}$/,
+            placeholder: 'F001-00004582',
+            maxRaw: 12       // 4 serie + 8 correlativo
+        },
+        BOLETA: {
+            label: 'Boleta de Venta Electrónica',
+            hint: 'Formato SUNAT: B + 3 dígitos de serie - 8 dígitos (Ej: B001-00004582)',
+            prefix: 'B',
+            serieLen: 4,
+            correlativoLen: 8,
+            seriePattern: /^B[0-9]{0,3}$/,
+            placeholder: 'B001-00004582',
+            maxRaw: 12
+        },
+        NOTA_CREDITO: {
+            label: 'Nota de Crédito Electrónica',
+            hint: 'Formato SUNAT: FC/BC + 2 dígitos - 8 dígitos (Ej: FC01-00004582)',
+            prefix: '',
+            serieLen: 4,
+            correlativoLen: 8,
+            placeholder: 'FC01-00004582',
+            maxRaw: 12
+        },
+        NOTA_DEBITO: {
+            label: 'Nota de Débito Electrónica',
+            hint: 'Formato SUNAT: FD/BD + 2 dígitos - 8 dígitos (Ej: FD01-00004582)',
+            prefix: '',
+            serieLen: 4,
+            correlativoLen: 8,
+            placeholder: 'FD01-00004582',
+            maxRaw: 12
+        },
+        GUIA_REMISION: {
+            label: 'Guía de Remisión Electrónica',
+            hint: 'Formato SUNAT: T + 3 dígitos de serie - 8 dígitos (Ej: T001-00004582)',
+            prefix: 'T',
+            serieLen: 4,
+            correlativoLen: 8,
+            placeholder: 'T001-00004582',
+            maxRaw: 12
+        },
+        LIBRE: {
+            label: 'Documento Libre',
+            hint: 'Ingrese el número de documento libremente',
+            prefix: '',
+            serieLen: null,
+            correlativoLen: null,
+            placeholder: 'Número de documento',
+            maxRaw: 30
+        }
+    };
+
+    /* =========================================================
+       METADATA Y ESTILOS VISUALES DEL TIPO DE COMPROBANTE
+       ========================================================= */
+    const DOC_TYPE_META = {
+        FACTURA:      { label: 'Factura',          color: '#3b82f6' },
+        BOLETA:       { label: 'Boleta de venta',   color: '#10b981' },
+        NOTA_CREDITO: { label: 'Nota de crédito',   color: '#f59e0b' },
+        NOTA_DEBITO:  { label: 'Nota de débito',    color: '#ef4444' },
+        GUIA_REMISION:{ label: 'Guía de remisión',  color: '#8b5cf6' },
+        LIBRE:        { label: 'Libre',             color: '#94a3b8' }
+    };
+
+    function actualizarDocTypeUI(val) {
+        const meta = DOC_TYPE_META[val] || DOC_TYPE_META.FACTURA;
+        const label = document.getElementById('docTypeLabel');
+        const dot = document.getElementById('docTypeDot');
+        if (label) label.textContent = meta.label;
+        if (dot) {
+            dot.style.background = meta.color;
+            dot.style.boxShadow = `0 0 6px ${meta.color}99`;
+        }
+
+        document.querySelectorAll('.doc-type-item').forEach(item => {
+            if (item.getAttribute('data-value') === val) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    function seleccionarTipoDocumento(val) {
+        const select = document.getElementById('doc_type');
+        const container = document.getElementById('docTypeContainer');
+        if (select) {
+            select.value = val;
+        }
+        actualizarDocTypeUI(val);
+        if (container) {
+            container.classList.remove('open');
+        }
+        aplicarFormatoDocumento(true);
+
+        const invoiceInput = document.getElementById('invoice');
+        if (invoiceInput) {
+            invoiceInput.focus();
+        }
+    }
+
+    function aplicarFormatoDocumento(highlight = false) {
+        const docType = document.getElementById('doc_type')?.value || 'FACTURA';
+        const invoiceInput = document.getElementById('invoice');
+        const hintText = document.getElementById('docFormatHintText');
+        const docBlock = document.getElementById('docBlock');
+        if (!docType || !invoiceInput) return;
+
+        const fmt = SUNAT_FORMATS[docType];
+        if (!fmt) return;
+
+        invoiceInput.placeholder = fmt.placeholder;
+        if (hintText) hintText.textContent = fmt.hint;
+
+        // Pre-rellenar automáticamente la letra del formato (F, B, T…)
+        // para que el usuario solo tenga que escribir los dígitos
+        if (fmt.prefix) {
+            invoiceInput.value = fmt.prefix;
+            // Mover el cursor al final del prefijo
+            setTimeout(() => {
+                if (document.activeElement === invoiceInput || highlight) {
+                    invoiceInput.setSelectionRange(invoiceInput.value.length, invoiceInput.value.length);
+                }
+            }, 0);
+        } else {
+            invoiceInput.value = '';
+        }
+
+        const colors = {
+            FACTURA:      '#3b82f6',
+            BOLETA:       '#10b981',
+            NOTA_CREDITO: '#f59e0b',
+            NOTA_DEBITO:  '#ef4444',
+            GUIA_REMISION:'#8b5cf6',
+            LIBRE:        '#64748b'
+        };
+
+        if (highlight && docBlock) {
+            docBlock.style.borderColor = colors[docType] || 'var(--border-color, #cbd5e1)';
+            docBlock.style.boxShadow = `0 0 0 3px ${colors[docType] || '#3b82f6'}22`;
+        } else if (docBlock) {
+            docBlock.style.borderColor = '';
+            docBlock.style.boxShadow = '';
+        }
+
+        // Colorear hint según tipo
+        const hintEl = document.getElementById('docFormatHint');
+        if (hintEl) {
+            hintEl.style.color = highlight && colors[docType] ? `${colors[docType]}cc` : 'var(--text-muted, #64748b)';
+        }
+
+        verificarCamposIncompletos();
+    }
+
+    function formatearNumeroDocumento(input) {
+        const docType = document.getElementById('doc_type')?.value || 'FACTURA';
+        const fmt = SUNAT_FORMATS[docType];
+        if (!fmt) return;
+
+        if (docType === 'LIBRE') {
+            // Sin restricción de formato
+            input.value = input.value.slice(0, fmt.maxRaw);
+            return;
+        }
+
+        // Limpiar: solo letras A-Z y dígitos, convertir a mayúsculas
+        let raw = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        raw = raw.slice(0, fmt.maxRaw); // máx caracteres sin guión
+
+        // Proteger el prefijo: si el usuario lo borrió, reponerlo automáticamente
+        if (fmt.prefix && !raw.startsWith(fmt.prefix)) {
+            // Quitar cualquier otra letra al inicio que no sea el prefijo esperado
+            raw = fmt.prefix + raw.replace(/^[A-Z]+/, '');
+            raw = raw.slice(0, fmt.maxRaw);
+        }
+
+        // Insertar guión en posición de separación serie-correlativo
+        let result = '';
+        if (raw.length <= fmt.serieLen) {
+            result = raw;
+        } else {
+            result = raw.slice(0, fmt.serieLen) + '-' + raw.slice(fmt.serieLen);
+        }
+
+        input.value = result;
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
+        // Inicializar formato del documento al cargar (sin highlight inicial agresivo)
+        aplicarFormatoDocumento(false);
+        actualizarDocTypeUI('FACTURA');
+
+        // Toggle del dropdown de tipo de documento
+        const docTrigger = document.getElementById('docTypeTrigger');
+        const docContainer = document.getElementById('docTypeContainer');
+        if (docTrigger && docContainer) {
+            docTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Cerrar otros dropdowns si estuvieran abiertos
+                document.querySelectorAll('.custom-select-container.open').forEach(c => c.classList.remove('open'));
+                docContainer.classList.toggle('open');
+            });
+        }
+
+        // Cerrar menú al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (docContainer && !docContainer.contains(e.target)) {
+                docContainer.classList.remove('open');
+            }
+        });
+
+        // Cerrar menú con tecla Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                docContainer?.classList.remove('open');
+            }
+        });
+
+        // Efectos visuales del bloque de documento al enfocar/desenfocar
+        const invoiceInput = document.getElementById('invoice');
+        const docBlock = document.getElementById('docBlock');
+        if (invoiceInput && docBlock) {
+            invoiceInput.addEventListener('focus', () => {
+                const docType = document.getElementById('doc_type')?.value || 'FACTURA';
+                const colors = { FACTURA:'#3b82f6', BOLETA:'#10b981', NOTA_CREDITO:'#f59e0b', NOTA_DEBITO:'#ef4444', GUIA_REMISION:'#8b5cf6', LIBRE:'#64748b' };
+                const c = colors[docType] || '#3b82f6';
+                docBlock.style.borderColor = c;
+                docBlock.style.boxShadow = `0 0 0 3px ${c}33`;
+            });
+            invoiceInput.addEventListener('blur', () => {
+                if (invoiceInput.value.trim() === '') {
+                    docBlock.style.borderColor = '';
+                    docBlock.style.boxShadow = '';
+                } else {
+                    const docType = document.getElementById('doc_type')?.value || 'FACTURA';
+                    const colors = { FACTURA:'#3b82f6', BOLETA:'#10b981', NOTA_CREDITO:'#f59e0b', NOTA_DEBITO:'#ef4444', GUIA_REMISION:'#8b5cf6', LIBRE:'#64748b' };
+                    const c = colors[docType] || '#3b82f6';
+                    docBlock.style.borderColor = c;
+                    docBlock.style.boxShadow = `0 0 0 2px ${c}22`;
+                }
+                verificarCamposIncompletos();
+            });
+        }
+
         // Función para obtener metadata enriquecida de cada opción (Icono, Título, Subtítulo y Estilo de Badge)
         function getOptionMeta(selectType, val) {
             const v = val.toLowerCase();

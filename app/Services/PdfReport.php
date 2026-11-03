@@ -234,57 +234,66 @@ final class PdfReport
         $this->line = 720;
     }
 
-    public function output(string $filename): never
+    public function getPdfContent(): string
     {
-        $this->pages[] = [
+        $pages = $this->pages;
+        $pages[] = [
             'graphics' => $this->graphics,
             'content' => $this->content,
         ];
-        $pageCount = count($this->pages);
+        $pageCount = count($pages);
 
         $firstPageObjNum = 3;
         $fontObjNum = $firstPageObjNum + $pageCount;
 
-        $this->addObject('<< /Type /Catalog /Pages 2 0 R >>');
+        $objects = [];
+        $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
 
         $kids = [];
         for ($i = 0; $i < $pageCount; $i++) {
             $kids[] = ($firstPageObjNum + $i) . ' 0 R';
         }
-        $this->addObject('<< /Type /Pages /Kids [' . implode(' ', $kids) . '] /Count ' . $pageCount . ' >>');
+        $objects[2] = '<< /Type /Pages /Kids [' . implode(' ', $kids) . '] /Count ' . $pageCount . ' >>';
 
         for ($i = 0; $i < $pageCount; $i++) {
             $contentObjNum = $fontObjNum + 1 + $i;
-            $this->addObject(
+            $objects[$firstPageObjNum + $i] = 
                 '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] '
                 . '/Resources << /Font << /F1 ' . $fontObjNum . ' 0 R >> >> '
-                . '/Contents ' . $contentObjNum . ' 0 R >>'
-            );
+                . '/Contents ' . $contentObjNum . ' 0 R >>';
         }
 
-        $this->addObject('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+        $objects[$fontObjNum] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
 
-        foreach ($this->pages as $page) {
+        $streamStart = $fontObjNum + 1;
+        foreach ($pages as $idx => $page) {
             $stream = "q\n" . $page['graphics'] . "Q\nBT\n" . $page['content'] . "ET";
-            $this->addObject('<< /Length ' . strlen($stream) . " >>\nstream\n" . $stream . "\nendstream");
+            $objects[$streamStart + $idx] = '<< /Length ' . strlen($stream) . " >>\nstream\n" . $stream . "\nendstream";
         }
 
         $pdf     = "%PDF-1.4\n";
         $offsets = [];
 
-        foreach ($this->objects as $number => $object) {
+        foreach ($objects as $number => $object) {
             $offsets[$number] = strlen($pdf);
             $pdf .= $number . " 0 obj\n" . $object . "\nendobj\n";
         }
 
         $xref  = strlen($pdf);
-        $count = count($this->objects);
+        $count = count($objects);
         $pdf  .= "xref\n0 " . ($count + 1) . "\n0000000000 65535 f \n";
         for ($i = 1; $i <= $count; $i++) {
             $pdf .= sprintf("%010d 00000 n \n", $offsets[$i]);
         }
         $pdf .= "trailer\n<< /Size " . ($count + 1) . " /Root 1 0 R >>\n";
         $pdf .= "startxref\n" . $xref . "\n%%EOF";
+
+        return $pdf;
+    }
+
+    public function output(string $filename = 'reporte.pdf'): never
+    {
+        $pdf = $this->getPdfContent();
 
         header('Content-Type: application/pdf');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
